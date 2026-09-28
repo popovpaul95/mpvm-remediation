@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>MaxPatrol VM: устранение уязвимостей</title>
+  <style>
+    body { width: 340px; margin: 0; font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #1c1f27; background: #fff; }
+    .wrap { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+    h1 { font-size: 14px; margin: 0; }
+    label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #6f7580; }
+    input { font: inherit; font-size: 13px; padding: 7px 9px; border: 1px solid #cfd3da; border-radius: 6px; outline: none; }
+    input:focus { border-color: #2f80ed; }
+    .row { display: flex; gap: 8px; }
+    button { font: inherit; font-size: 13px; padding: 7px 12px; border-radius: 6px; border: 1px solid #cfd3da; background: #fff; cursor: pointer; }
+    button.acc { background: #2f80ed; border-color: #2f80ed; color: #fff; font-weight: 600; }
+    .st { font-size: 12px; min-height: 16px; }
+    .st.ok { color: #1b8f4a; } .st.err { color: #d23c3c; }
+    .hint { font-size: 11.5px; color: #6f7580; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>MaxPatrol VM: устранение уязвимостей</h1>
+  <label>Сервер MaxPatrol VM<input type="text" id="host" placeholder="maxpvm.company.ru"></label>
+  <label>Порт (оставьте пустым: API отвечает на порту интерфейса, обычно 443)<input type="text" id="port" placeholder="пусто"></label>
+  <label>Персональный токен (PT MC → Токены доступа)<input type="password" id="token" placeholder="pat_..."></label>
+  <div class="row">
+    <button class="acc" id="save">Сохранить</button>
+    <button id="test">Проверить</button>
+  </div>
+  <div class="st" id="st"></div>
+  <div class="hint">После сохранения откройте или обновите вкладку MaxPatrol VM: в левом меню появится пункт «Устранение». Проверка подключения выполняется из открытой вкладки сервера.</div>
+</div>
+<script src="popup.js"></script>
+</body>
+</html>

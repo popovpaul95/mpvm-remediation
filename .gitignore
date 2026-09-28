@@ -1,0 +1,8 @@
+# результаты прогонов на стенде и снимки данных стенда (имена узлов, уязвимости)
+tests/out/
+tests/uitest/fixtures.json
+# копии content/*.js для обвязки собираются командой cp content/*.js tests/uitest/content/
+tests/uitest/content/
+.DS_Store
+*.log
+node_modules/

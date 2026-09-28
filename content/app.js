@@ -1,0 +1,1288 @@
+'use strict';
+// Точка входа в интерфейсе MaxPatrol VM: пункт "Устранение" в левом меню (клон пункта
+// Koobiq navbar) и рабочая область поверх контента справа от меню.
+(function (VR) {
+  if (window.__VR_APP_MOUNTED) return;
+  window.__VR_APP_MOUNTED = true;
+  console.info('[vr] app.js загружен, версия расширения', (chrome.runtime && chrome.runtime.getManifest && chrome.runtime.getManifest().version) || '?');
+
+  const CVE_RE = /CVE-\d{4}-\d{4,}/gi;
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmt = n => Number(n || 0).toLocaleString('ru-RU');
+  const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
+  const today = () => new Date().toISOString().slice(0, 10);
+  const plusDays = d => { const x = new Date(); x.setDate(x.getDate() + d); return x.toISOString().slice(0, 10); };
+  const ICON = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.5 2.5 3.6v4.1c0 3.3 2.3 5.6 5.5 6.8 3.2-1.2 5.5-3.5 5.5-6.8V3.6L8 1.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="m5.6 8 1.7 1.7 3.2-3.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  const CSS = `
+:host { all: initial; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+.root { position: absolute; inset: 0; display: flex; flex-direction: column;
+  font-family: var(--kbq-typography-text-normal-font-family, Inter, -apple-system, "Segoe UI", sans-serif);
+  font-size: var(--kbq-typography-text-normal-font-size, 14px); line-height: var(--kbq-typography-text-normal-line-height, 20px);
+  color: var(--kbq-foreground-contrast, #262a35); background: var(--kbq-background-bg, #fff); overflow: hidden; }
+a { color: var(--kbq-link-text, #2f80ed); text-decoration: none; } a:hover { text-decoration: underline; }
+.hdr { display: flex; align-items: center; gap: var(--kbq-size-m, 12px); padding: var(--kbq-size-s, 8px) var(--kbq-size-xxl, 24px) 0; border-bottom: 1px solid var(--kbq-line-contrast-less, #e3e5ea); flex-shrink: 0; min-height: 56px; overflow: hidden; }
+.crumbs { display: flex; align-items: center; gap: 4px; font-family: var(--kbq-typography-subheading-font-family, 'TT-Positive', Inter, sans-serif); font-size: var(--kbq-typography-subheading-font-size, 18px); line-height: var(--kbq-typography-subheading-line-height, 26px); font-weight: var(--kbq-typography-subheading-font-weight, 600); color: var(--kbq-foreground-contrast-secondary, #8a8fa8); padding-bottom: var(--kbq-size-s, 8px); white-space: nowrap; }
+.crumbs .cur { color: var(--kbq-foreground-contrast, #c4c7d4); }
+.crumbs .sep { color: var(--kbq-foreground-contrast-tertiary, #6f7580); }
+.rep { display: flex; align-items: center; gap: 4px; padding-bottom: var(--kbq-size-s, 8px); margin-left: var(--kbq-size-s, 8px); flex-shrink: 0; }
+.rep .lbl { font-size: 12px; color: var(--kbq-foreground-contrast-tertiary, #6f7580); margin-right: 2px; white-space: nowrap; }
+.rep .btn { height: 26px; padding: 0 8px; font-size: 12px; }
+.hdr .ver { font-size: var(--kbq-typography-text-normal-font-size, 14px); line-height: 20px; color: var(--kbq-foreground-contrast-secondary, #8a8fa8); padding-bottom: var(--kbq-size-s, 8px); white-space: nowrap; }
+.hdr h1 { display: none; }
+.tabs { display: flex; gap: 2px; margin-left: auto; align-self: stretch; align-items: stretch; flex-shrink: 0; }
+.tabs button { white-space: nowrap; background: transparent; border: none; border-bottom: 2px solid transparent; padding: 0 var(--kbq-size-s, 8px); font: inherit; color: var(--kbq-foreground-contrast-secondary, #6f7580); cursor: pointer; border-radius: var(--kbq-size-border-radius, 8px) var(--kbq-size-border-radius, 8px) 0 0; }
+.tabs button:hover { background: var(--kbq-tabs-tab-item-filled-on-background-states-hover-background, rgba(120,130,160,.16)); color: var(--kbq-foreground-contrast, #262a35); }
+.tabs button.active { color: var(--kbq-foreground-contrast, #262a35); border-bottom-color: var(--kbq-line-theme, #2f80ed); font-weight: 600; }
+.close { background: none; border: none; font-size: 22px; line-height: 1; color: var(--kbq-icon-contrast-fade, #8a90a0); cursor: pointer; padding: 0 0 var(--kbq-size-s, 8px) var(--kbq-size-s, 8px); border-radius: var(--kbq-size-border-radius, 8px); }
+.close:hover { color: var(--kbq-foreground-contrast, #262a35); }
+.body { flex: 1; overflow: auto; padding: var(--kbq-size-l, 16px) var(--kbq-size-xxl, 24px) 40px; }
+.pane { display: none; flex-direction: column; gap: var(--kbq-size-l, 16px); max-width: 1440px; }
+.pane.active { display: flex; }
+.box { background: var(--kbq-background-card, #fff); border: 1px solid var(--kbq-line-contrast-less, #e3e5ea); border-radius: 12px; padding: var(--kbq-size-l, 16px); display: flex; flex-direction: column; gap: var(--kbq-size-m, 12px); min-width: 0; overflow-x: auto; contain: layout paint; }
+.two > * { min-width: 0; }
+.box h3 { font-family: var(--kbq-typography-subheading-font-family, 'TT-Positive', Inter, sans-serif); font-size: var(--kbq-typography-subheading-font-size, 18px); line-height: var(--kbq-typography-subheading-line-height, 26px); font-weight: var(--kbq-typography-subheading-font-weight, 600); color: var(--kbq-foreground-contrast, #c4c7d4); }
+.muted { font-size: var(--kbq-typography-text-normal-font-size, 14px); line-height: 20px; color: var(--kbq-foreground-contrast-secondary, #8a8fa8); }
+.note { font-size: var(--kbq-typography-text-compact-font-size, 12px); color: var(--kbq-foreground-warning, #b26a00); }
+.err { font-size: var(--kbq-typography-text-compact-font-size, 12px); color: var(--kbq-foreground-error, #d23c3c); white-space: pre-wrap; }
+.row { display: flex; gap: var(--kbq-size-s, 8px); align-items: center; flex-wrap: wrap; }
+.row label { font-size: var(--kbq-typography-text-compact-font-size, 12px); color: var(--kbq-foreground-contrast-secondary, #6f7580); display: flex; align-items: center; gap: var(--kbq-size-xs, 6px); }
+input[type=text], input[type=number], input[type=date], input[type=password], select, textarea {
+  font-family: inherit; font-size: var(--kbq-typography-text-normal-font-size, 14px); font-weight: 400; color: var(--kbq-form-field-default-text, var(--kbq-foreground-contrast, #262a35)); background: var(--kbq-form-field-default-background, #fff);
+  border: var(--kbq-form-field-size-border-width, 1px) solid var(--kbq-form-field-default-border-color, #cfd3da); border-radius: var(--kbq-form-field-size-border-radius, 8px);
+  height: var(--kbq-form-field-size-height, 32px); padding: 0 var(--kbq-size-m, 12px); outline: none; }
+input::placeholder, textarea::placeholder { color: var(--kbq-form-field-default-placeholder, #8a90a0); }
+input:focus, select:focus, textarea:focus { border-color: var(--kbq-form-field-states-focused-border-color, #2f80ed); box-shadow: 0 0 0 1px var(--kbq-form-field-states-focused-focus-outline, #2f80ed); }
+input[type=number] { width: 90px; } input[type=date] { width: 150px; }
+input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--kbq-checkbox-theme-states-checked-background, #2f80ed); margin: 0; }
+textarea { width: 100%; min-height: 72px; height: auto; padding: var(--kbq-size-s, 8px) var(--kbq-size-m, 12px); resize: vertical; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+select { padding-right: 28px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%238a90a0' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+.btn { font: inherit; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: var(--kbq-size-xs, 6px);
+  height: var(--kbq-button-size-height, 32px); padding: 0 var(--kbq-button-size-horizontal-padding, 12px); border-radius: var(--kbq-button-size-border-radius, 8px);
+  border: var(--kbq-button-size-border-width, 1px) solid var(--kbq-button-filled-contrast-fade-off-border, transparent);
+  background: var(--kbq-button-filled-contrast-fade-off-background, #e3e5ea); color: var(--kbq-button-filled-contrast-fade-off-foreground, #262a35); cursor: pointer; white-space: nowrap; }
+.btn:hover { background: var(--kbq-button-filled-contrast-fade-off-states-hover-background, #d3d6dd); }
+.btn:active { background: var(--kbq-button-filled-contrast-fade-off-states-active-background, #b9bdc7); }
+.btn.acc { background: var(--kbq-background-theme, #2f80ed); border-color: transparent; color: var(--kbq-foreground-white, #fff); font-weight: 600; }
+.btn.acc:hover { filter: brightness(1.08); } .btn.acc:active { filter: brightness(.92); }
+.btn:disabled, .btn.acc:disabled { background: var(--kbq-button-filled-contrast-fade-off-states-disabled-background, rgba(120,130,160,.16)); color: var(--kbq-button-filled-contrast-fade-off-states-disabled-foreground, rgba(120,130,160,.6)); cursor: default; filter: none; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: var(--kbq-size-m, 12px); }
+.kpi { border: 1px solid var(--kbq-line-contrast-less, #e3e5ea); border-radius: var(--kbq-size-border-radius, 8px); padding: var(--kbq-size-m, 12px); background: var(--kbq-background-bg-secondary, #f5f6f8); }
+.kpi .v { font-family: var(--kbq-typography-title-font-family, 'TT-Positive', Inter, sans-serif); font-size: 22px; line-height: 28px; font-weight: 700; } .kpi .l { font-size: var(--kbq-typography-text-compact-font-size, 12px); line-height: 16px; color: var(--kbq-foreground-contrast-secondary, #6f7580); margin-top: 2px; }
+.kpi.bad .v { color: var(--kbq-foreground-error, #d23c3c); } .kpi.warn .v { color: var(--kbq-foreground-warning, #b26a00); } .kpi.ok .v { color: var(--kbq-foreground-success, #1b8f4a); }
+table { width: 100%; border-collapse: collapse; font-size: var(--kbq-typography-text-normal-font-size, 14px); line-height: 20px; letter-spacing: -0.084px; }
+th { text-align: left; font-weight: 400; color: var(--kbq-foreground-contrast-secondary, #8a8fa8); padding: 6px 22px 6px 0; height: 32px; white-space: nowrap; vertical-align: middle; position: relative; user-select: none; }
+th.sortable { cursor: pointer; } th.sortable:hover { color: var(--kbq-foreground-contrast, #c4c7d4); }
+th .sort { display: inline-block; color: var(--kbq-foreground-contrast-tertiary, #6f7580); font-size: 10px; margin-left: 2px; }
+th .vf { position: absolute; right: 2px; top: 50%; margin-top: -9px; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 4px; color: var(--kbq-foreground-contrast-tertiary, #6f7580); cursor: pointer; opacity: 0; }
+th:hover .vf, th .vf.on { opacity: 1; } th .vf.on { color: var(--kbq-link-text, #4d94ff); background: var(--kbq-background-theme-less, rgba(77,148,255,.15)); } th .vf:hover { color: var(--kbq-foreground-contrast, #c4c7d4); }
+td { padding: 6px 8px 6px 0; height: 37px; vertical-align: middle; color: var(--kbq-foreground-contrast, #c4c7d4); }
+table { table-layout: auto; }
+.scroll table { min-width: 100%; }
+tr.hasf td { cursor: context-menu; }
+.vf-pop { position: fixed; z-index: 20; width: 280px; max-height: 360px; display: flex; flex-direction: column; background: var(--kbq-background-card, #fff); border: 1px solid var(--kbq-line-contrast-less, #e3e5ea); border-radius: var(--kbq-size-border-radius, 8px); box-shadow: 0 8px 24px rgba(0,0,0,.35); padding: var(--kbq-size-s, 8px); gap: 6px; font-size: 14px; }
+.vf-pop input[type=text] { width: 100%; box-sizing: border-box; }
+.vf-pop .lst { overflow: auto; display: flex; flex-direction: column; gap: 2px; max-height: 240px; }
+.vf-pop label { display: flex; align-items: center; gap: 8px; padding: 3px 4px; border-radius: 4px; cursor: pointer; } .vf-pop label:hover { background: var(--kbq-background-bg-secondary, #f2f3f5); }
+.vf-pop label span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .vf-pop label i { font-style: normal; color: var(--kbq-foreground-contrast-tertiary, #6f7580); font-size: 12px; }
+.vf-pop .ft { display: flex; gap: 6px; justify-content: space-between; align-items: center; font-size: 12px; }
+.vf-pop .ft a { color: var(--kbq-link-text, #4d94ff); cursor: pointer; }
+.vf-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; font-size: 12px; }
+.vf-chips .chip { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 4px 0 8px; border-radius: 11px; background: var(--kbq-background-theme-less, rgba(77,148,255,.15)); color: var(--kbq-link-text, #4d94ff); }
+.vf-chips .chip b { font-weight: 500; color: var(--kbq-foreground-contrast, #c4c7d4); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vf-chips .chip button, .vf-chips .clr { background: none; border: none; cursor: pointer; color: inherit; font-size: 14px; line-height: 1; padding: 0 4px; }
+.vf-chips .clr { color: var(--kbq-foreground-contrast-secondary, #8a8fa8); font-size: 12px; }
+.cnt { display: inline-block; min-width: 40px; box-sizing: border-box; padding: 2px 6px; border-radius: 3px; text-align: left; font-variant-numeric: tabular-nums; }
+.cnt.red { background: hsla(7, 97%, 20%, 1); color: hsla(7, 97%, 60%, 1); } .cnt.yellow { background: hsl(38, 100%, 15%); color: rgb(255,180,51); } .cnt.green { background: rgb(27,63,14); color: rgb(80,188,41); } .cnt.grey { background: var(--kbq-background-bg-secondary, #f2f3f5); color: var(--kbq-foreground-contrast-secondary, #8a8fa8); }
+td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; padding-right: 8px; } th.n { text-align: right; }
+td.ell { max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+td.ver { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+td.sig { white-space: nowrap; }
+tr.click { cursor: pointer; } tr.click:hover { background: var(--kbq-background-bg-secondary, #f2f3f5); } tbody tr:hover { background: var(--kbq-states-background-transparent-hover, rgba(120,130,160,.06)); }
+tr.sel { background: var(--kbq-background-theme-less, rgba(47,128,237,.12)); }
+.badge { display: inline-flex; align-items: center; gap: 4px; height: 24px; font-size: var(--kbq-typography-text-normal-font-size, 14px); line-height: 20px; padding: 2px 8px; border-radius: 3px; font-weight: 400; margin-right: var(--kbq-size-xxs, 4px); white-space: nowrap; }
+.badge.sm { height: 20px; font-size: 12px; line-height: 16px; padding: 0 6px; }
+.ttag { color: rgb(252,77,54); white-space: nowrap; margin-right: 8px; } .ttag.blue { color: rgb(77,148,255); } .ttag.yellow { color: rgb(255,180,51); } .ttag.green { color: rgb(80,188,41); }
+.P0 { background: var(--kbq-badge-filled-fade-off-error-background, #d23c3c); color: var(--kbq-badge-filled-fade-off-error-color, #fff); }
+.P1 { background: var(--kbq-badge-filled-fade-off-warning-background, #f0883e); color: var(--kbq-badge-filled-fade-off-warning-color, #fff); }
+.P2 { background: var(--kbq-badge-filled-fade-on-warning-background, #fdf1d6); color: var(--kbq-badge-filled-fade-on-warning-color, #8a5a00); }
+.P3 { background: var(--kbq-badge-filled-fade-on-contrast-background, #e3e5ea); color: var(--kbq-badge-filled-fade-on-contrast-color, #262a35); }
+.tag { background: var(--kbq-badge-filled-fade-on-contrast-background, #eef0f3); color: var(--kbq-badge-filled-fade-on-contrast-color, inherit); }
+.tag.hot { background: var(--kbq-badge-filled-fade-on-error-background, #fde2e2); color: var(--kbq-badge-filled-fade-on-error-color, #b02a37); }
+.tag.kev { background: var(--kbq-badge-filled-fade-off-error-background, #ce1b03); color: #fff; }
+.tag.trend { background: var(--kbq-badge-filled-fade-on-theme-background, #dbe7fb); color: var(--kbq-badge-filled-fade-on-theme-color, #1f5fbf); }
+.cves { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: var(--kbq-size-m, 12px); }
+.cve { border: 1px solid var(--kbq-line-contrast-less, #e3e5ea); border-radius: 12px; padding: var(--kbq-size-m, 12px) var(--kbq-size-l, 16px); display: flex; flex-direction: column; gap: var(--kbq-size-xs, 6px); background: var(--kbq-background-card, #fff); }
+.cve .hd { display: flex; justify-content: space-between; align-items: center; gap: var(--kbq-size-s, 8px); }
+.cve .id { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; font-weight: 600; color: var(--kbq-link-text, #2f80ed); }
+.cve .line { font-size: var(--kbq-typography-text-compact-font-size, 12px); line-height: 16px; } .cve .line b { font-weight: 600; }
+.cve .links a { font-size: var(--kbq-typography-text-compact-font-size, 12px); margin-right: var(--kbq-size-m, 12px); }
+.bar { height: 6px; background: var(--kbq-background-contrast-less, #eef0f3); border-radius: 3px; overflow: hidden; margin-top: 3px; } .bar i { display: block; height: 100%; background: var(--kbq-background-error, #d23c3c); }
+.slabar { display: flex; height: 8px; background: var(--kbq-background-contrast-less, #eef0f3); border-radius: 4px; overflow: hidden; } .slabar i { display: block; height: 100%; } .slabar .ok { background: var(--kbq-background-success, #1b8f4a); } .slabar .soon { background: var(--kbq-background-warning, #f0883e); } .slabar .over { background: var(--kbq-background-error, #d23c3c); }
+.drv { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--kbq-background-contrast-less, #eef0f3); min-width: 120px; } .drv i { display: block; height: 100%; }
+.prog { display: flex; align-items: center; gap: 8px; } .prog .pbar { flex: 1; height: 8px; border-radius: 4px; background: var(--kbq-background-contrast-less, #eef0f3); overflow: hidden; } .prog .pbar i { display: block; height: 100%; background: var(--kbq-background-success, #1b8f4a); }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--kbq-size-l, 16px); } @media (max-width: 1100px) { .two { grid-template-columns: 1fr; } }
+.scroll { max-height: 420px; overflow: auto; }
+.spin { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--kbq-line-contrast-fade, #cfd3da); border-top-color: var(--kbq-icon-theme, #2f80ed); border-radius: 50%; animation: r .6s linear infinite; vertical-align: -2px; margin-right: var(--kbq-size-xs, 6px); }
+@keyframes r { to { transform: rotate(360deg); } }
+.chk { display: flex; align-items: center; gap: var(--kbq-size-s, 8px); }
+.field { display: flex; flex-direction: column; gap: var(--kbq-size-xxs, 4px); } .field span { font-size: var(--kbq-typography-text-compact-font-size, 12px); color: var(--kbq-foreground-contrast-secondary, #6f7580); }
+.kpi.click { cursor: pointer; } .kpi.click:hover { border-color: var(--kbq-line-theme, #2f80ed); background: var(--kbq-background-theme-less, rgba(47,128,237,.08)); }
+.kpi .l small { display: block; color: var(--kbq-foreground-contrast-tertiary, #9aa1b1); }
+.tfilter { display: flex; gap: var(--kbq-size-s, 8px); align-items: center; margin-bottom: var(--kbq-size-s, 8px); } .tfilter input { flex: 1; max-width: 360px; } .tfilter .tcnt { font-size: 12px; color: var(--kbq-foreground-contrast-secondary, #8a8fa8); white-space: nowrap; }
+tr.hide { display: none; }
+a.lnk { color: var(--kbq-link-text, #4d94ff); text-decoration: none; } a.lnk:hover { text-decoration: underline; }
+.comp { display: flex; gap: 3px; align-items: flex-end; height: 18px; } .comp i { display: block; width: 14px; border-radius: 2px 2px 0 0; background: var(--kbq-background-contrast-fade, #9aa1b1); } .comp i.e { background: #4d94ff; } .comp i.v { background: #ffb433; } .comp i.t { background: #fc4d36; } .comp i.f { background: #a06fff; }
+.rw { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; } .rw label { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--kbq-foreground-contrast-secondary, #8a8fa8); } .rw input { width: 100%; box-sizing: border-box; }
+a.badge { text-decoration: none; }
+.drill { border-color: var(--kbq-line-theme, #2f80ed); } .drill h3 { display: flex; align-items: center; gap: var(--kbq-size-s, 8px); } .drill h3 .x { margin-left: auto; background: transparent; border: none; cursor: pointer; font-size: 18px; color: var(--kbq-foreground-contrast-secondary, #6f7580); }
+.zone { display: inline-block; padding: 0 6px; border-radius: 4px; font-size: 12px; font-weight: 600; } .zone.critical { background: #d23c3c; color: #fff; } .zone.high { background: #f0883e; color: #fff; } .zone.medium { background: #fdf1d6; color: #8a5a00; } .zone.low { background: #e3e5ea; color: #262a35; }
+.rules { display: flex; flex-direction: column; gap: 10px; } .rules h4 { font-size: 14px; font-weight: 600; margin: 4px 0 0; color: var(--kbq-foreground-contrast, #c4c7d4); } .rules .grp { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: var(--kbq-size-xs, 6px); } .rules label { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; line-height: 20px; } .rules code { font-size: 11px; color: var(--kbq-foreground-contrast-tertiary, #6f7580); display: block; word-break: break-all; line-height: 14px; }
+tr.click td a.lnk { position: relative; z-index: 1; }
+td a.lnk { white-space: nowrap; }
+`;
+
+  const HTML = `
+<div class="root">
+  <div class="hdr">
+    <div class="crumbs"><span>Устранение уязвимостей</span><span class="sep">/</span><span class="cur" id="crumb">Обзор</span></div>
+    <span class="ver" id="sub" title="Сервер и версия MaxPatrol VM">MaxPatrol VM</span>
+    <div class="tabs">
+      <button data-t="overview" class="active">Обзор</button>
+      <button data-t="queue">Очередь устранения</button>
+      <button data-t="assets">Риск активов</button>
+      <button data-t="excl">Исключения</button>
+      <button data-t="proj">Проекты</button>
+      <button data-t="cw">Контейнеры и веб</button>
+      <button data-t="inv">Инвентаризация</button>
+      <button data-t="cve">CVE-контекст</button>
+      <button data-t="settings">Настройки</button>
+    </div>
+    <div class="rep" title="Отчет по открытой вкладке из последних загруженных данных"><span class="lbl">Отчет</span><button class="btn" id="r-html" disabled>HTML</button><button class="btn" id="r-pdf" disabled>PDF</button><button class="btn" id="r-csv" disabled>CSV</button></div>
+    <button class="close" id="close" title="Закрыть">×</button>
+  </div>
+  <div class="body">
+
+    <div class="pane active" data-t="overview">
+      <div class="box">
+        <div class="row">
+          <button class="btn acc" id="m-run">Обновить показатели</button>
+          <label><input type="checkbox" id="m-deep"> с историей за 30 дней (медленно, минуты)</label>
+          <button class="btn" id="m-report" disabled>Отчет для руководства</button>
+          <button class="btn" id="m-dl" disabled title="Сохранить отчет файлом .html">Скачать HTML</button>
+          <button class="btn" id="m-print" disabled title="Открыть отчет и вызвать печать: сохраните как PDF">Печать / PDF</button>
+          <button class="btn" id="m-json" disabled>JSON</button>
+          <span class="muted" id="m-info"></span>
+        </div>
+        <div class="muted">Срез по всем уязвимостям инфраструктуры: статусы, просрочки по срокам (приказ ФСТЭК 117: критические 1 день, высокие 7), возраст, сигналы эксплуатации, покрытие активов.</div>
+        <div class="err" id="m-err"></div>
+      </div>
+      <div id="m-drill"></div>
+      <div id="m-out" style="display:flex;flex-direction:column;gap:14px"></div>
+    </div>
+
+    <div class="pane" data-t="queue">
+      <div class="box">
+        <h3>Очередь устранения по решениям</h3>
+        <div class="muted">Открытые уязвимости сгруппированы по ПО и версии (или по ОС и ее версии): одно обновление закрывает всю группу. Сортировка по устраняемому риску (трендовые x8, KEV x12, эксплойт x3, critical x4). Клик по строке открывает детали, смену статуса, задачу Jira и создание проекта.</div>
+        <div class="row">
+          <label>Источник <select id="q-scope"><option value="softs">ПО на узлах</option><option value="packages">Пакеты Unix</option><option value="os">Операционные системы</option></select></label>
+          <label>CVSS от <input type="number" id="q-min" min="0" max="10" step="0.5" value="0"></label>
+          <label>Групп <input type="number" id="q-limit" min="20" max="2000" value="300"></label>
+          <button class="btn acc" id="q-run">Построить очередь</button>
+          <label><input type="checkbox" id="q-byprod"> свернуть по продукту</label>
+          <label title="Только группы с трендовыми уязвимостями"><input type="checkbox" id="q-f-trend" class="q-filter"> трендовые</label>
+          <label title="Только группы с публичным эксплойтом"><input type="checkbox" id="q-f-expl" class="q-filter"> эксплойт</label>
+          <label title="Только группы с critical"><input type="checkbox" id="q-f-crit" class="q-filter"> critical</label>
+          <label title="Только группы с патчем"><input type="checkbox" id="q-f-patch" class="q-filter"> есть патч</label>
+          <button class="btn" id="q-csv" disabled>CSV</button>
+          <button class="btn" id="q-pdql" disabled>Скопировать PDQL</button>
+          <span class="muted" id="q-info"></span>
+        </div>
+        <div class="err" id="q-err"></div>
+      </div>
+      <div class="box" id="q-sum" style="display:none"></div>
+      <div class="two" id="q-grid" style="display:none">
+        <div class="box scroll" id="q-out"></div>
+        <div class="box" id="q-detail"><div class="muted">Выберите группу слева.</div></div>
+      </div>
+    </div>
+
+    <div class="pane" data-t="assets">
+      <div class="box">
+        <h3>Риск активов</h3>
+        <div class="muted">Гибридная оценка 0-1000 на узел из четырех компонентов с потолками: <b>экспозиция</b> (объем открытых уязвимостей: critical x40, high x8, medium x1.5, low x0.3, логарифмическая шкала), <b>опасность</b> (максимальный и средний CVSS), <b>угроза</b> (трендовые по экспертизе PT, публичные эксплойты, RCE, CISA KEV), <b>критичность по методике ФСТЭК</b> (оценка худшей уязвимости; коэффициент значимости kK берется из значимости актива в MaxPatrol: высокая 0.4, средняя 0.32, низкая 0.2). Сумма умножается на контекст: значимость актива и устаревший скан. Потолки и множители настраиваются во вкладке «Настройки». Клик по узлу открывает его открытые уязвимости.</div>
+        <div class="row">
+          <button class="btn acc" id="a-run">Рассчитать</button>
+          <button class="btn" id="a-kev" disabled title="Проверить CVE с эксплойтом по каталогу CISA KEV и уточнить компонент «угроза»">Уточнить по KEV</button>
+          <button class="btn" id="a-tags" disabled title="Поставить активам теги auto:risk-critical / high / medium / low по зоне риска">Теги зон риска</button>
+
+          <label>Значимость <select id="a-imp"><option value="">все</option><option value="H">высокая</option><option value="M">средняя</option><option value="L">низкая</option><option value="ND">не задана</option></select></label>
+          <label>Показать <input type="number" id="a-top" min="10" max="500" value="50"></label>
+          <button class="btn" id="a-csv" disabled>CSV</button>
+          <span class="muted" id="a-info"></span>
+        </div>
+        <div class="err" id="a-err"></div>
+      </div>
+      <div id="a-out" style="display:flex;flex-direction:column;gap:14px"></div>
+    </div>
+
+    <div class="pane" data-t="excl">
+      <div class="box">
+        <h3>Исключения и принятые риски</h3>
+        <div class="muted">Аналог Vulnerability Exceptions (Rapid7) и Recast/Accept (Tenable): реестр всех исключенных уязвимостей с причиной и комментарием. Отдельно «сомнительные» исключения: трендовые, с эксплойтом, CVSS 9+ или high на важных активах. Их стоит пересмотреть и вернуть в работу.</div>
+        <div class="row"><button class="btn acc" id="x-run">Загрузить реестр</button><button class="btn" id="x-csv" disabled>CSV</button><span class="muted" id="x-info"></span></div>
+        <div class="err" id="x-err"></div>
+      </div>
+      <div id="x-out" style="display:flex;flex-direction:column;gap:14px"></div>
+    </div>
+
+    <div class="pane" data-t="proj">
+      <div class="box">
+        <h3>Проекты устранения</h3>
+        <div class="muted">Аналог Remediation Projects (Rapid7): прогресс считается по факту сканирования, а не по отчету исполнителя. Проект = метка на экземплярах уязвимостей: <b>jira:KEY</b> ставится при создании задачи из очереди или карточки актива, <b>proj:название</b> можно ставить вручную в MaxPatrol. Прогресс = устранено + исключено / всего с меткой. Клик по строке показывает уязвимости и узлы проекта. Создать проект можно из деталей группы в очереди или из любой выборки (кнопка «В проект»).</div>
+        <div class="row"><button class="btn acc" id="p-run">Обновить</button><label>Префикс метки <input type="text" id="p-prefix" placeholder="jira: или proj:" style="width:140px"></label><span class="muted" id="p-info"></span></div>
+        <div class="err" id="p-err"></div>
+      </div>
+      <div id="p-drill"></div>
+      <div id="p-out" style="display:flex;flex-direction:column;gap:14px"></div>
+    </div>
+
+    <div class="pane" data-t="cw">
+      <div class="box">
+        <h3>Образы контейнеров и веб-сайты</h3>
+        <div class="muted">Отдельные типы активов MaxPatrol: наборы образов (ImageSet: образы и их пакеты) и веб-сайты (WebSite: результаты веб-сканирования). В основной очереди они не участвуют, потому что устраняются иначе: пересборкой образа и правкой приложения.</div>
+        <div class="row">
+          <button class="btn acc" id="w-images">Образы: сводка</button>
+          <button class="btn" id="w-imgq">Образы: очередь по пакетам</button>
+          <button class="btn" id="w-web">Веб-сайты</button>
+          <label>CVSS от <input type="number" id="w-min" min="0" max="10" step="0.5" value="0"></label>
+          <button class="btn" id="w-csv" disabled>CSV</button>
+          <span class="muted" id="w-info"></span>
+        </div>
+        <div class="err" id="w-err"></div>
+      </div>
+      <div id="w-out" style="display:flex;flex-direction:column;gap:14px"></div>
+    </div>
+
+    <div class="pane" data-t="inv">
+      <div class="box">
+        <h3>Инвентаризация: автоматические теги активов</h3>
+        <div class="muted">Модель MaxPatrol: актив (Host, ImageSet, WebSite) имеет группы (динамические по PDQL и статические), значимость, теги. Теги видны в списке активов, фильтруются в PDQL (<b>Host.@Tags.Item = "..."</b>), ими удобно строить дашборды и выборки. Здесь тег назначается всем активам PDQL-выборки одной операцией (батч через selectionId). Правила ниже: отметьте нужные и нажмите «Применить». Повторное применение безопасно: тег уже стоящий у актива не дублируется. Все теги с префиксом <b>auto:</b> удаляются одной кнопкой.</div>
+        <div class="rules" id="i-rules"></div>
+        <div class="row">
+          <button class="btn acc" id="i-apply">Применить отмеченные</button>
+          <button class="btn" id="i-cover">Покрытие тегами</button>
+          <button class="btn" id="i-tags">Список тегов</button>
+          <button class="btn" id="i-remove" style="color:var(--kbq-foreground-error,#d23c3c)">Удалить все auto:*</button>
+          <span class="muted" id="i-info"></span>
+        </div>
+        <div class="row"><label>Свое правило: тег <input type="text" id="i-name" placeholder="auto:my-rule" style="width:160px"></label><label>PDQL <input type="text" id="i-pdql" placeholder='filter(Host.OsName like "Astra%") | select(@Host)' style="width:420px"></label><button class="btn" id="i-add">Добавить и применить</button></div>
+        <div class="err" id="i-err"></div>
+      </div>
+      <div id="i-out" style="display:flex;flex-direction:column;gap:14px"></div>
+    </div>
+
+    <div class="pane" data-t="cve">
+      <div class="box">
+        <h3>Внешний контекст по CVE</h3>
+        <div class="muted">EPSS (FIRST), CISA KEV, NVD (CVSS 4.0, SSVC), БДУ ФСТЭК (из импорта), PoC на GitHub. Вердикт P0-P3 и срок устранения по приказу ФСТЭК 117.</div>
+        <div class="row">
+          <button class="btn" id="c-scan">Найти CVE на открытой странице MaxPatrol</button>
+          <span class="muted" id="c-scan-info"></span>
+        </div>
+        <textarea id="c-cves" placeholder="CVE-2021-44228, CVE-2020-1472 ... (можно вставить любой текст)"></textarea>
+        <div class="row">
+          <button class="btn acc" id="c-run">Обогатить</button>
+          <label><input type="checkbox" id="c-skipnvd"> без NVD (быстрее)</label>
+          <span class="muted" id="c-info"></span>
+        </div>
+        <div class="err" id="c-err"></div>
+      </div>
+      <div class="cves" id="c-out"></div>
+    </div>
+
+    <div class="pane" data-t="settings">
+      <div class="two">
+        <div class="box">
+          <h3>Внешние источники</h3>
+          <label class="chk"><input type="checkbox" id="s-epss"> EPSS (api.first.org)</label>
+          <label class="chk"><input type="checkbox" id="s-kev"> CISA KEV (каталог кэшируется на сутки)</label>
+          <label class="chk"><input type="checkbox" id="s-nvd"> NVD (CVSS 4.0, SSVC; без ключа 5 CVE за запрос)</label>
+          <div class="field"><span>NVD API key (необязательно)</span><input type="text" id="s-nvdkey" placeholder="uuid"></div>
+          <label class="chk"><input type="checkbox" id="s-gh"> GitHub PoC (кнопка в карточке CVE)</label>
+          <div class="field"><span>GitHub token (необязательно)</span><input type="text" id="s-ghtoken" placeholder="ghp_..."></div>
+          <div class="row"><button class="btn" id="s-kevref">Обновить KEV сейчас</button><span class="muted" id="s-kevinfo"></span></div>
+          <h3>Интерфейс MaxPatrol</h3>
+          <label class="chk"><input type="checkbox" id="s-sametab"> переходы с дашборда открывать в текущей вкладке (Ctrl/Cmd+клик: в новой)</label>
+          <div class="muted">Блок «Внешний контекст» в карточке уязвимости и кнопка выгрузки CSV в карточке актива включены всегда.</div>
+        </div>
+        <div class="box">
+          <h3>Сроки устранения (дней)</h3>
+          <div class="row">
+            <label>critical <input type="number" id="s-crit" min="0"></label>
+            <label>high <input type="number" id="s-high" min="0"></label>
+            <label>medium <input type="number" id="s-med" min="0"></label>
+            <label>low <input type="number" id="s-low" min="0"></label>
+          </div>
+          <div class="muted">По приказу ФСТЭК 117: критические 24 часа, высокие 7 дней. Остальное внутренняя норма.</div>
+          <h3>Модель риска активов</h3>
+          <div class="muted">Потолки компонентов (сумма 1000 = максимум без контекста) и множители контекста.</div>
+          <div class="rw">
+            <label>Экспозиция E <input type="number" id="s-rw-E" min="0" max="1000"></label>
+            <label>Опасность V <input type="number" id="s-rw-V" min="0" max="1000"></label>
+            <label>Угроза T <input type="number" id="s-rw-T" min="0" max="1000"></label>
+            <label>ФСТЭК F <input type="number" id="s-rw-F" min="0" max="1000"></label>
+            <label>Значимость высокая <input type="number" id="s-rw-impH" step="0.05" min="0"></label>
+            <label>Значимость средняя <input type="number" id="s-rw-impM" step="0.05" min="0"></label>
+            <label>Значимость низкая <input type="number" id="s-rw-impL" step="0.05" min="0"></label>
+            <label>Значимость не задана <input type="number" id="s-rw-impND" step="0.05" min="0"></label>
+            <label>Скан старше 30 дн <input type="number" id="s-rw-stale" step="0.05" min="0"></label>
+          </div>
+          <div class="row"><button class="btn" id="s-rw-reset">По умолчанию</button></div>
+          <h3>БДУ ФСТЭК (офлайн-импорт)</h3>
+          <div class="muted">Сайт bdu.fstec.ru не отдает данные скриптам. Скачайте выгрузку вручную (vulxml.zip распаковать в XML, или vullist сохранить как CSV) и загрузите файл: построится карта CVE - BDU.</div>
+          <div class="row">
+            <input type="file" id="s-bdufile" style="display:none" accept=".xml,.csv,.txt,.tsv">
+            <button class="btn" id="s-bdubtn">Загрузить файл БДУ</button>
+            <span class="muted" id="s-bduinfo"></span>
+          </div>
+          <div class="row"><button class="btn acc" id="s-save">Сохранить настройки</button><span class="muted" id="s-info"></span></div>
+          <div class="muted">Подключение к серверу (адрес, порт, токен) задается в окне расширения на панели браузера.</div>
+        </div>
+      </div>
+      <div class="box">
+        <h3>Jira</h3>
+        <div class="muted">Задачи создаются из деталей группы в очереди устранения: одна задача на решение (ПО + версия) со списком CVE и узлов. Cloud: email и API token (Basic). Server / Data Center: персональный токен (Bearer).</div>
+        <div class="two">
+          <div class="field"><span>Адрес Jira</span><input type="text" id="s-jurl" placeholder="https://jira.company.ru или https://xxx.atlassian.net"></div>
+          <div class="field"><span>Тип аутентификации</span><select id="s-jauth"><option value="basic">Cloud: email + API token</option><option value="bearer">Server / DC: персональный токен</option></select></div>
+          <div class="field"><span>Email (только Cloud)</span><input type="text" id="s-juser" placeholder="user@company.ru"></div>
+          <div class="field"><span>API token или персональный токен</span><input type="password" id="s-jtoken" placeholder="..."></div>
+          <div class="field"><span>Проект (ключ)</span><input type="text" id="s-jproject" placeholder="VM"></div>
+          <div class="field"><span>Тип задачи</span><input type="text" id="s-jtype" placeholder="Task"></div>
+          <div class="field"><span>Метки (через запятую)</span><input type="text" id="s-jlabels" placeholder="maxpatrol-vm"></div>
+          <label class="chk"><input type="checkbox" id="s-jtag"> ставить метку jira:KEY на экземпляры уязвимостей в MaxPatrol</label>
+        </div>
+        <div class="row">
+          <button class="btn acc" id="s-jsave">Сохранить Jira</button>
+          <button class="btn" id="s-jtest">Проверить подключение</button>
+          <button class="btn" id="s-jprojects">Список проектов</button>
+          <span class="muted" id="s-jinfo"></span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>`;
+
+  // ── Сбор CVE со страницы ──────────────────────────────────────────────────
+  function collectText(root, acc, depth) {
+    if (!root || depth > 25) return;
+    if (root.nodeType === Node.TEXT_NODE) { acc.push(root.nodeValue); return; }
+    if (root.id === 'vr-root') return;
+    if (root.shadowRoot) collectText(root.shadowRoot, acc, depth + 1);
+    const kids = root.childNodes || [];
+    for (let i = 0; i < kids.length; i++) collectText(kids[i], acc, depth + 1);
+  }
+  function scanPageCves() {
+    const acc = [location.href, document.title];
+    try { collectText(document.body, acc, 0); } catch (_) {}
+    const set = new Set(); acc.join('\n').replace(CVE_RE, m => { set.add(m.toUpperCase()); return m; });
+    return [...set];
+  }
+
+  // ── Файлы ─────────────────────────────────────────────────────────────────
+  function download(name, content, type) {
+    const blob = new Blob([content], { type: type || 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 1500);
+  }
+  function csv(rows, cols) {
+    const q = v => { const s = String(v ?? ''); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    return '﻿' + [cols.map(c => c[0]).join(';'), ...rows.map(r => cols.map(c => q(typeof c[1] === 'function' ? c[1](r) : r[c[1]])).join(';'))].join('\n');
+  }
+  function openHtml(html, name) {
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const w = window.open(url, '_blank');
+    if (!w) download(name, html, 'text/html;charset=utf-8');
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }
+
+  // ── Рендер: CVE ───────────────────────────────────────────────────────────
+  // ── Таблицы как в Excel: сортировка по клику на заголовок, фильтр по значениям колонки (значок в заголовке),
+  //    правый клик по ячейке = фильтр по этому значению, чипы активных фильтров, общий текстовый поиск ──
+  const FILTER_ICON = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 3h12l-4.5 5.5V13l-3 1V8.5L2 3Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>';
+  let vfPop = null;
+  const closePop = () => { if (vfPop) { vfPop.remove(); vfPop = null; } };
+  const cellText = td => (td.getAttribute('data-v') ?? td.textContent).replace(/\s+/g, ' ').trim();
+  const numOf = s => { const x = parseFloat(String(s).replace(/\s/g, '').replace(',', '.')); return isNaN(x) ? null : x; };
+  function tableState(table) {
+    if (!table.__vf) table.__vf = { cols: {}, q: '', sort: null };
+    return table.__vf;
+  }
+  function applyTable(table) {
+    const st = tableState(table); const rows = [...table.querySelectorAll('tr')].filter(tr => tr.querySelector('td'));
+    let shown = 0;
+    rows.forEach(tr => {
+      const tds = tr.children; let ok = true;
+      for (const c in st.cols) { const set = st.cols[c]; if (set && set.size && !set.has(cellText(tds[c] || tr))) { ok = false; break; } }
+      if (ok && st.q && !tr.textContent.toLowerCase().includes(st.q)) ok = false;
+      tr.classList.toggle('hide', !ok); if (ok) shown++;
+    });
+    if (st.sort) {
+      const { col, dir } = st.sort; const tbody = rows[0]?.parentElement; if (tbody) {
+        const sorted = rows.slice().sort((a, b) => { const x = cellText(a.children[col] || a), y = cellText(b.children[col] || b); const nx = numOf(x), ny = numOf(y); const r = nx != null && ny != null ? nx - ny : x.localeCompare(y, 'ru'); return dir === 'asc' ? r : -r; });
+        sorted.forEach(tr => tbody.appendChild(tr));
+      }
+    }
+    table.querySelectorAll('th').forEach((th, i) => { const s = th.querySelector('.sort'); if (s) s.textContent = st.sort && st.sort.col === i ? (st.sort.dir === 'asc' ? '▲' : '▼') : ''; const v = th.querySelector('.vf'); if (v) v.classList.toggle('on', !!(st.cols[i] && st.cols[i].size)); });
+    // Чипы активных фильтров
+    let chips = table.__chips; if (!chips) { chips = table.__chips = document.createElement('div'); chips.className = 'vf-chips'; table.parentElement.insertBefore(chips, table); }
+    const ths = [...table.querySelectorAll('th')];
+    const active = Object.entries(st.cols).filter(([, s]) => s && s.size);
+    chips.innerHTML = active.length ? active.map(([c, s]) => `<span class="chip">${esc((ths[c]?.textContent || '').replace(/[▲▼]/g, '').trim())}: <b title="${esc([...s].join(', '))}">${esc([...s].slice(0, 2).join(', '))}${s.size > 2 ? ` +${s.size - 2}` : ''}</b><button data-c="${c}" title="Снять фильтр">×</button></span>`).join('') + `<button class="clr">сбросить все</button>` : '';
+    chips.querySelectorAll('.chip button').forEach(b => b.addEventListener('click', () => { delete st.cols[b.dataset.c]; applyTable(table); }));
+    chips.querySelector('.clr')?.addEventListener('click', () => { st.cols = {}; applyTable(table); });
+    const cnt = table.__cnt; if (cnt) cnt.textContent = shown !== rows.length ? `${fmt(shown)} из ${fmt(rows.length)}` : `${fmt(rows.length)} строк`;
+    return shown;
+  }
+  function openValuePop(table, col, anchor) {
+    closePop();
+    const st = tableState(table); const rows = [...table.querySelectorAll('tr')].filter(tr => tr.querySelector('td'));
+    const counts = {}; rows.forEach(tr => { const v = cellText(tr.children[col] || tr); counts[v] = (counts[v] || 0) + 1; });
+    const values = Object.keys(counts).sort((a, b) => { const na = numOf(a), nb = numOf(b); return na != null && nb != null ? na - nb : a.localeCompare(b, 'ru'); });
+    const sel = new Set(st.cols[col] && st.cols[col].size ? st.cols[col] : values);
+    const pop = document.createElement('div'); pop.className = 'vf-pop'; pop.__t = Date.now(); vfPop = pop;
+    const render = q => { const ql = q.toLowerCase(); pop.querySelector('.lst').innerHTML = values.filter(v => !ql || v.toLowerCase().includes(ql)).slice(0, 300).map(v => `<label><input type="checkbox" data-v="${esc(v)}" ${sel.has(v) ? 'checked' : ''}><span title="${esc(v)}">${esc(v || '(пусто)')}</span><i>${fmt(counts[v])}</i></label>`).join('') || '<div class="muted">нет значений</div>'; pop.querySelectorAll('input[type=checkbox]').forEach(c => c.addEventListener('change', () => { c.checked ? sel.add(c.dataset.v) : sel.delete(c.dataset.v); })); };
+    pop.innerHTML = `<input type="text" placeholder="поиск среди ${values.length} значений"><div class="ft"><span><a data-a="all">все</a> · <a data-a="none">ничего</a></span><span class="muted">${fmt(rows.length)} строк</span></div><div class="lst"></div><div class="ft"><a data-a="clear">сбросить</a><button class="btn acc" data-a="ok">Применить</button></div>`;
+    render('');
+    pop.querySelector('input[type=text]').addEventListener('input', e => render(e.target.value));
+    pop.querySelector('[data-a=all]').addEventListener('click', () => { values.forEach(v => sel.add(v)); render(pop.querySelector('input[type=text]').value); });
+    pop.querySelector('[data-a=none]').addEventListener('click', () => { sel.clear(); render(pop.querySelector('input[type=text]').value); });
+    pop.querySelector('[data-a=clear]').addEventListener('click', () => { delete st.cols[col]; applyTable(table); closePop(); });
+    pop.querySelector('[data-a=ok]').addEventListener('click', () => { st.cols[col] = sel.size === values.length ? null : new Set(sel); applyTable(table); closePop(); });
+    pop.addEventListener('click', e => e.stopPropagation());
+    sh.querySelector('.root').appendChild(pop);
+    const r = anchor.getBoundingClientRect(), hostR = host.getBoundingClientRect();
+    pop.style.left = Math.max(8, Math.min(r.left - hostR.left, hostR.width - 300)) + 'px'; pop.style.top = (r.bottom - hostR.top + 4) + 'px';
+    setTimeout(() => pop.querySelector('input[type=text]').focus(), 0);
+  }
+  function enhanceTable(table) {
+    if (table.dataset.vf) return; table.dataset.vf = '1';
+    const ths = [...table.querySelectorAll('th')]; if (!ths.length || table.dataset.plain != null) return;
+    ths.forEach((th, i) => {
+      if (!th.textContent.trim()) return;
+      const tn = [...th.childNodes].find(n => n.nodeType === 3 && n.textContent.trim()); if (tn) tn.textContent = tn.textContent.replace(/^(\s*)(\S)/, (m, a, b) => a + b.toUpperCase());
+      th.classList.add('sortable');
+      th.insertAdjacentHTML('beforeend', `<span class="sort"></span><span class="vf" title="Фильтр по значениям">${FILTER_ICON}</span>`);
+      th.addEventListener('click', e => { if (e.target.closest('.vf')) return; const st = tableState(table); st.sort = st.sort && st.sort.col === i && st.sort.dir === 'asc' ? { col: i, dir: 'desc' } : { col: i, dir: 'asc' }; applyTable(table); });
+      th.querySelector('.vf').addEventListener('click', e => { e.stopPropagation(); openValuePop(table, i, th); });
+    });
+    // Правый клик по ячейке: оставить только строки с этим значением в колонке (как «Фильтр по значению ячейки» в Excel)
+    table.addEventListener('contextmenu', e => {
+      const td = e.target.closest('td'); if (!td || e.target.closest('a, button')) return;
+      e.preventDefault(); const col = [...td.parentElement.children].indexOf(td); const st = tableState(table);
+      st.cols[col] = new Set([cellText(td)]); applyTable(table);
+    });
+    table.querySelectorAll('tr').forEach(tr => { if (tr.querySelector('td')) tr.classList.add('hasf'); });
+    table.title = table.title || 'Клик по заголовку: сортировка. Значок в заголовке: фильтр по значениям. Правый клик по ячейке: только это значение.';
+  }
+  function bindFilters(root) {
+    root.querySelectorAll('.tfilter').forEach(f => {
+      if (f.dataset.bound) return; f.dataset.bound = '1';
+      const inp = f.querySelector('input'), cnt = f.querySelector('.tcnt');
+      const table = f.nextElementSibling && (f.nextElementSibling.tagName === 'TABLE' ? f.nextElementSibling : f.nextElementSibling.querySelector('table'));
+      if (!table) return;
+      table.__cnt = cnt;
+      inp.addEventListener('input', () => { tableState(table).q = inp.value.trim().toLowerCase(); applyTable(table); });
+    });
+    root.querySelectorAll('table').forEach(tb => { enhanceTable(tb); applyTable(tb); });
+  }
+  const tfilter = ph => `<div class="tfilter"><input type="text" placeholder="${esc(ph || 'фильтр по тексту')}"><span class="tcnt"></span></div>`;
+  const cnt = (v, cls) => `<span class="cnt ${cls || (v > 0 ? 'red' : 'green')}">${fmt(v)}</span>`;
+  const plink = (guid, text) => guid ? `<a class="lnk" href="${esc(VR.passportUrl(guid))}" title="Открыть паспорт уязвимости">${esc(text)}</a>` : esc(text);
+  const alink = (id, text) => id ? `<a class="lnk" href="${esc(VR.assetUrl(id))}" title="Открыть карточку актива">${esc(text)}</a>` : esc(text);
+  const kevBadge = cve => `<a class="badge tag kev" href="${esc(VR.kevUrl(cve))}" target="_blank" rel="noopener" title="Каталог CISA KEV">KEV</a>`;
+  // Страница активов 28.0 принимает запрос в параметре pdqlQuery (так переходят виджеты дашборда); параметр pdql игнорируется
+  const mpListUrl = pdql => `${location.origin}/mpx/common/am/assets?groupId=00000000-0000-0000-0000-000000000002&pdqlQuery=${encodeURIComponent(pdql)}`;
+  const SEV_RU = { critical: 'критический', high: 'высокий', medium: 'средний', low: 'низкий' };
+  const ST_RU = { new: 'Новая', inProgress: 'В работе', awaitingFix: 'Исправляется', overdue: 'Просрочена', stale: 'Устарела', fixed: 'Устранена', excluded: 'Исключена' };
+
+  // Панель выборки (drill-down): таблица уязвимостей по PDQL с фильтром, CSV, ссылками и созданием проекта
+  async function showDrill(container, title, pdql, opts = {}) {
+    if (!pdql) return;
+    container.innerHTML = `<div class="box drill"><h3>${esc(title)}<button class="x" title="Закрыть">×</button></h3><div class="muted"><span class="spin"></span>выборка, до 30 секунд</div></div>`;
+    container.querySelector('.x').addEventListener('click', () => { container.innerHTML = ''; });
+    try {
+      const d = await VR.drill({ pdql, limit: opts.limit || 500 });
+      const items = d.items;
+      const hasHost = items.some(i => i.host);
+      const rows = items.map(i => `<tr><td>${plink(i.vulnId, i.CVE || i.Name || '')}</td><td class="ell" title="${esc(i.Name || '')}">${esc(i.Name || '')}</td>${hasHost ? `<td class="ell">${alink(i.hostId, i.host)}</td>` : ''}<td class="n">${esc(i.Score ?? '')}</td><td>${esc(SEV_RU[String(i.Sev || '').toLowerCase()] || i.Sev || '')}</td><td>${esc(ST_RU[i.St] || i.St || '')}</td><td class="n">${esc(String(i.Found || '').slice(0, 10))}</td><td>${VR.bool(i.T) ? '<span class="badge tag kev sm">Трендовая</span>' : ''}${VR.bool(i.E) ? '<span class="ttag">Есть эксплойт</span>' : ''}</td></tr>`).join('');
+      container.innerHTML = `<div class="box drill"><h3>${esc(title)}<button class="x" title="Закрыть">×</button></h3>
+        <div class="muted">${fmt(items.length)} экземпляров${d.truncated ? ' (показаны первые ' + fmt(opts.limit || 500) + ', полный список в MaxPatrol по кнопке)' : ''}.</div>
+        <div class="row"><a class="btn" href="${esc(mpListUrl(pdql))}" style="text-decoration:none">Открыть в MaxPatrol</a><button class="btn" data-a="csv">CSV</button><button class="btn" data-a="pdql">Скопировать PDQL</button><button class="btn" data-a="proj">В проект (метка proj:)</button><span class="muted" data-role="st"></span></div>
+        ${tfilter('фильтр: CVE, узел, статус, уровень')}<div class="scroll" style="max-height:480px"><table><tr><th>CVE</th><th>уязвимость</th>${hasHost ? '<th>узел</th>' : ''}<th>CVSS</th><th>уровень</th><th>статус</th><th>обнаружена</th><th>сигналы</th></tr>${rows || '<tr><td colspan=8 class="muted">пусто</td></tr>'}</table></div></div>`;
+      container.querySelector('.x').addEventListener('click', () => { container.innerHTML = ''; });
+      bindFilters(container);
+      container.querySelector('[data-a=csv]').addEventListener('click', () => download(`selection_${today()}.csv`, csv(items, [['CVE', 'CVE'], ['Уязвимость', 'Name'], ['Узел', 'host'], ['ID узла', 'hostId'], ['CVSS', 'Score'], ['Уровень', 'Sev'], ['Статус', 'St'], ['Обнаружена', 'Found'], ['Трендовая', i => VR.bool(i.T) ? 'да' : ''], ['Эксплойт', i => VR.bool(i.E) ? 'да' : ''], ['ID экземпляра', 'Id']]), 'text/csv;charset=utf-8'));
+      container.querySelector('[data-a=pdql]').addEventListener('click', () => { navigator.clipboard.writeText(pdql).catch(() => {}); container.querySelector('[data-role=st]').textContent = 'PDQL скопирован'; });
+      container.querySelector('[data-a=proj]').addEventListener('click', async () => {
+        const ids = items.map(i => i.Id).filter(Boolean); if (!ids.length) return;
+        const name = prompt(`Название проекта (метка proj:название) для ${ids.length} экземпляров:`); if (!name) return;
+        const st = container.querySelector('[data-role=st]'); st.innerHTML = '<span class="spin"></span>ставим метку';
+        try { await VR.tagInstances(ids, 'proj:' + name.trim()); st.textContent = `метка proj:${name.trim()} поставлена на ${fmt(ids.length)} экз. Прогресс во вкладке «Проекты».`; } catch (e) { st.textContent = 'ошибка: ' + e.message; }
+      });
+      container.scrollIntoView({ block: 'nearest' });
+    } catch (e) { container.innerHTML = `<div class="box drill"><h3>${esc(title)}<button class="x">×</button></h3><div class="err">${esc(e.message)}</div></div>`; container.querySelector('.x').addEventListener('click', () => { container.innerHTML = ''; }); }
+  }
+
+  function renderCve(cve, r) {
+    const v = r.verdict || {}, ep = r.epss?.epss, lines = [];
+    if (r.mp) lines.push(`<div class="line">MP VM: <b>CVSS ${esc(r.mp.score ?? '?')}</b>${r.mp.trend ? ' <span class="badge tag trend">трендовая</span>' : ''}${r.mp.exploit ? ' <span class="badge tag hot">эксплойт</span>' : ''}</div>`);
+    lines.push(ep != null ? `<div class="line">EPSS: <b>${(ep * 100).toFixed(1)}%</b> (перцентиль ${(r.epss.percentile * 100).toFixed(0)}, ${esc(r.epss.date)})<div class="bar"><i style="width:${Math.max(1, ep * 100)}%"></i></div></div>` : `<div class="line">EPSS: <span class="muted">${r.epss ? 'нет в базе' : 'не запрошено'}</span></div>`);
+    lines.push(r.kev ? `<div class="line"><span class="badge tag kev">CISA KEV</span> добавлена ${esc(r.kev.dateAdded)}, срок ${esc(r.kev.dueDate)}${r.kev.ransomware === 'Known' ? ', <b>ransomware</b>' : ''}: ${esc(r.kev.vendor)} ${esc(r.kev.product)}</div>` : '<div class="line">KEV: <span class="muted">нет в каталоге</span></div>');
+    if (r.nvd && !r.nvd.missing) {
+      const n = r.nvd, p = [];
+      if (n.cvss40) p.push(`CVSS 4.0 <b>${esc(n.cvss40.score)}</b> ${esc(n.cvss40.severity || '')}`);
+      if (n.cvss31) p.push(`CVSS 3.1 <b>${esc(n.cvss31.score)}</b>`);
+      if (n.ssvc?.exploitation) p.push(`SSVC: ${esc(n.ssvc.exploitation)} / ${esc(n.ssvc.automatable || '?')} / ${esc(n.ssvc.impact || '?')}`);
+      lines.push(`<div class="line">NVD: ${p.join(' | ') || 'без метрик'}; опубликована ${esc((n.published || '').slice(0, 10))}${n.cwes?.length ? '; ' + esc(n.cwes.join(', ')) : ''}</div>`);
+      if (n.description) lines.push(`<div class="line muted">${esc(n.description.slice(0, 260))}${n.description.length > 260 ? '...' : ''}</div>`);
+    } else if (r.nvd?.missing) lines.push('<div class="line">NVD: <span class="muted">не найдена</span></div>');
+    if (r.bdu?.length) lines.push(`<div class="line">БДУ: <b>${r.bdu.map(b => esc(b.id)).join(', ')}</b>${r.bdu[0].level ? ' (' + esc(r.bdu[0].level) + ')' : ''}</div>`);
+    if (r.gh) lines.push(`<div class="line">GitHub: <b>${fmt(r.gh.count)}</b> репозиториев${r.gh.items?.length ? ': ' + r.gh.items.slice(0, 3).map(i => `<a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.name)}</a> (${i.stars}*)`).join(', ') : ''}</div>`);
+    const links = [['NVD', `https://nvd.nist.gov/vuln/detail/${cve}`], ['БДУ', `https://bdu.fstec.ru/search?q=%22${cve}%22&yt0=%D0%98%D1%81%D0%BA%D0%B0%D1%82%D1%8C`], ['PT dbugs', `https://dbu.gs/vulnerability/${cve}`], ['Vulners', `https://vulners.com/search?query=${cve}`], ['GitHub', `https://github.com/search?q=${cve}&type=repositories`]]
+      .map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${t}</a>`).join('');
+    return `<div class="cve" data-cve="${esc(cve)}"><div class="hd"><span class="id">${esc(cve)}</span><span><span class="badge ${esc(v.level || 'P3')}">${esc(v.level || '')}</span><span class="muted">срок ${esc(v.slaDays)} дн</span></span></div>
+<div class="line"><b>${esc(v.title || '')}</b>${v.reasons?.length ? ': ' + esc(v.reasons.join('; ')) : ''}</div>${lines.join('')}
+<div class="links">${links}<a href="#" class="gh" data-cve="${esc(cve)}">PoC на GitHub?</a></div></div>`;
+  }
+
+  // ── Рендер: метрики ───────────────────────────────────────────────────────
+  function renderMetrics(m) {
+    const c = VR.computeMetrics(m);
+    const kpi = (v, l, cls, drill) => `<div class="kpi ${cls || ''}${drill ? ' click' : ''}"${drill ? ` data-drill="${esc(drill)}" title="Показать выборку"` : ''}><div class="v">${v}</div><div class="l">${l}</div></div>`;
+    const sevRows = ['critical', 'high', 'medium', 'low'].map(s => { const b = c.bySev[s] || { open: 0, over: 0, soon: 0, ok: 0 }; const w = v => b.open ? Math.round(v / b.open * 100) : 0; return `<tr><td>${SEV_RU[s]}</td><td class="n" data-v="${b.open}"><a class="lnk" href="#" data-drill="sev:${s}">${fmt(b.open)}</a></td><td class="n" data-v="${b.ok || 0}">${cnt(b.ok || 0, 'green')}</td><td class="n" data-v="${b.soon || 0}">${cnt(b.soon || 0, b.soon ? 'yellow' : 'grey')}</td><td class="n" data-v="${b.over}"><a class="lnk" href="#" data-drill="sevOverdue:${s}">${cnt(b.over, b.over ? 'red' : 'grey')}</a></td><td style="min-width:110px" title="просрочено ${pct(b.over, b.open)}%"><div class="slabar"><i class="ok" style="width:${w(b.ok || 0)}%"></i><i class="soon" style="width:${w(b.soon || 0)}%"></i><i class="over" style="width:${w(b.over)}%"></i></div></td></tr>`; }).join('');
+    const ageRows = Object.entries(c.age).map(([k, v]) => `<tr><td><a class="lnk" href="#" data-drill="age:${esc(k)}">${k} дн</a></td><td class="n">${fmt(v)}</td><td class="n">${pct(v, c.open)}%</td></tr>`).join('');
+    const impRu = { H: 'высокая', M: 'средняя', L: 'низкая', ND: 'не задана' };
+    const hostRows = (Array.isArray(m.topHosts) ? m.topHosts : []).map(r => `<tr><td class="ell">${alink(r.HostId, r['@Host'])}</td><td>${esc(r.OS)}</td><td>${esc(impRu[r.Imp] || r.Imp || '')}</td><td class="n">${esc(r.CV)}</td><td><a class="lnk" href="#" data-drill="asset:${esc(r.HostId || '')}" title="Открытые уязвимости узла">уязвимости</a></td></tr>`).join('');
+    const trendRows = (Array.isArray(m.trendTop) ? m.trendTop : []).map(r => `<tr><td><a class="lnk" href="#" data-passport="${esc(r.CVE)}" title="Открыть паспорт уязвимости">${esc(r.CVE)}</a></td><td class="n">${esc(r.Score)}</td><td class="n"><a class="lnk" href="#" data-drill="cve:${esc(r.CVE)}" title="Экземпляры на узлах">${fmt(r.Hosts)}</a></td><td class="n">${fmt(r.N)}</td><td>${r.kev ? kevBadge(r.CVE) : ''}${r.epss != null ? 'EPSS ' + (r.epss * 100).toFixed(0) + '%' : ''}</td></tr>`).join('');
+    let past = '';
+    if (m.past30 && !m.past30.error) {
+      const p = {}; m.past30.forEach(r => { p[String(r.Sev).toLowerCase()] = VR.num(r.N) || 0; });
+      past = `<div class="box"><h3>Динамика за 30 дней (открытые)</h3><table><tr><th>severity</th><th>30 дн назад</th><th>сейчас</th><th>изм.</th></tr>${['critical', 'high', 'medium', 'low'].map(s => { const a = p[s] || 0, b = (c.bySev[s] || {}).open || 0; return `<tr><td>${s}</td><td class="n">${fmt(a)}</td><td class="n">${fmt(b)}</td><td class="n">${b - a >= 0 ? '+' : ''}${fmt(b - a)}</td></tr>`; }).join('')}</table></div>`;
+    } else if (m.past30?.error) past = `<div class="err">История: ${esc(m.past30.error)}</div>`;
+    return `
+<div class="box"><h3>Ключевые показатели</h3><div class="kpis">
+  ${kpi(fmt(c.open), 'открытых уязвимостей', '', 'open')}
+  ${kpi(fmt(c.overdue), 'просрочено по SLA (' + pct(c.overdue, c.open) + '%)', c.overdue ? 'bad' : 'ok', 'overdue')}
+  ${kpi(fmt(c.soon), 'истекает (прошло 80% срока)', c.soon ? 'warn' : 'ok', 'soon')}
+  ${kpi(fmt(c.critOver) + ' / ' + fmt(c.critOpen), 'critical просрочено / открыто', c.critOver ? 'bad' : 'ok', 'sevOverdue:critical')}
+  ${kpi(fmt(c.highOver) + ' / ' + fmt(c.highOpen), 'high просрочено / открыто', c.highOver ? 'bad' : 'ok', 'sevOverdue:high')}
+  ${kpi(fmt(c.trend), 'трендовых открыто', c.trend ? 'bad' : 'ok', 'trend')}
+  ${kpi(fmt(c.expl), 'с публичным эксплойтом', 'warn', 'exploit')}
+  ${kpi(fmt(c.new30), 'новых за 30 дней (' + fmt(c.new7) + ' за 7)', '', 'new30')}
+  ${kpi(fmt(c.fixed), 'устранено всего, ' + fmt(c.excluded) + ' исключено', 'ok', 'status:fixed')}
+  ${kpi(fmt(c.st.new || 0), 'в статусе Новая (' + pct(c.st.new || 0, c.open) + '% открытых)', pct(c.st.new || 0, c.open) > 50 ? 'bad' : 'warn', 'status:new')}
+  ${kpi(fmt(c.noImp) + ' / ' + fmt(c.assets), 'активов без значимости', c.noImp ? 'warn' : 'ok', 'noImportance')}
+  ${kpi(fmt(c.stale + c.obsolete), 'активов с устаревшим сканом', c.stale + c.obsolete ? 'warn' : 'ok', 'staleScan')}
+</div><div class="muted">Сроки: critical ${m.sla.crit} дн, high ${m.sla.high}, medium ${m.sla.med}, low ${m.sla.low}. Снимок ${esc(m.generatedAt.replace('T', ' ').slice(0, 16))} UTC. Клик по показателю открывает выборку: таблица, CSV, PDQL, переход в MaxPatrol.</div></div>
+<div class="two">
+  <div class="box"><h3>Соблюдение сроков по уровню опасности</h3><table><tr><th>уровень</th><th class="n">открыто</th><th class="n">в срок</th><th class="n">истекает</th><th class="n">просрочено</th><th>шкала</th></tr>${sevRows}</table><div class="muted">Зеленый: в срок, желтый: прошло 80% срока, красный: просрочено. Числа кликабельны.</div></div>
+  <div class="box"><h3>Возраст открытых</h3><table><tr><th>возраст</th><th>штук</th><th>доля</th></tr>${ageRows}</table></div>
+</div>
+${past}
+<div class="two">
+  <div class="box"><h3>Трендовые уязвимости с наибольшим охватом</h3>${tfilter('фильтр по CVE')}<table><tr><th>CVE (паспорт)</th><th>CVSS</th><th>узлов</th><th>экземпляров</th><th>внешние сигналы</th></tr>${trendRows || '<tr><td colspan=5 class="muted">нет</td></tr>'}</table></div>
+  <div class="box"><h3>Топ-10 узлов по интегральной уязвимости</h3><table><tr><th>узел (карточка)</th><th>ОС</th><th>значимость</th><th>оценка</th><th></th></tr>${hostRows}</table></div>
+</div>`;
+  }
+
+  function reportHtml(m, host) {
+    const c = VR.computeMetrics(m);
+    const row = (a, b) => `<tr><td>${a}</td><td class="n">${b}</td></tr>`;
+    const sev = ['critical', 'high', 'medium', 'low'].map(s => { const b = c.bySev[s] || { open: 0, over: 0 }; return `<tr><td>${s}</td><td class="n">${fmt(b.open)}</td><td class="n">${fmt(b.over)}</td><td class="n">${pct(b.over, b.open)}%</td></tr>`; }).join('');
+    const age = Object.entries(c.age).map(([k, v]) => `<tr><td>${k} дн</td><td class="n">${fmt(v)}</td><td class="n">${pct(v, c.open)}%</td></tr>`).join('');
+    const maxSev = Math.max(1, ...['critical', 'high', 'medium', 'low'].map(s => (c.bySev[s] || {}).open || 0));
+    const bar = (v, color) => `<div class="bar"><i style="width:${Math.round(v / maxSev * 100)}%;background:${color}"></i></div>`;
+    const sevBars = ['critical', 'high', 'medium', 'low'].map(s => { const b = c.bySev[s] || { open: 0, over: 0 }; return `<div class="brow"><span>${s}</span>${bar(b.open, '#c7c7c7')}${bar(b.over, '#d9534f')}<span class="n">${fmt(b.open)} / ${fmt(b.over)}</span></div>`; }).join('');
+    const trend = (Array.isArray(m.trendTop) ? m.trendTop : []).map(r => `<tr><td>${esc(r.CVE || '')}</td><td class="n">${esc(r.Score)}</td><td class="n">${fmt(r.Hosts)}</td><td class="n">${fmt(r.N || '')}</td><td>${r.kev ? 'KEV' : ''}${r.epss != null ? ' EPSS ' + (r.epss * 100).toFixed(0) + '%' : ''}</td></tr>`).join('');
+    const hosts = (Array.isArray(m.topHosts) ? m.topHosts : []).map(r => `<tr><td>${esc(r['@Host'])}</td><td>${esc(r.OS)}</td><td>${esc(r.Imp)}</td><td class="n">${esc(r.CV)}</td></tr>`).join('');
+    const verdict117 = c.critOver || c.highOver ? `<p class="bad">Требования приказа ФСТЭК 117 по срокам не выполняются: критических просрочено ${fmt(c.critOver)}, высоких ${fmt(c.highOver)}.</p>` : '<p class="ok">Просроченных критических и высоких уязвимостей по срокам приказа ФСТЭК 117 нет.</p>';
+    let past = '';
+    if (m.past30 && !m.past30.error) { const p = {}; m.past30.forEach(r => { p[String(r.Sev).toLowerCase()] = VR.num(r.N) || 0; }); past = `<h2>Динамика за 30 дней</h2><table><tr><th>severity</th><th>30 дней назад</th><th>сейчас</th><th>изменение</th></tr>${['critical', 'high', 'medium', 'low'].map(s => { const a = p[s] || 0, b = (c.bySev[s] || {}).open || 0; return `<tr><td>${s}</td><td class="n">${fmt(a)}</td><td class="n">${fmt(b)}</td><td class="n">${b - a >= 0 ? '+' : ''}${fmt(b - a)}</td></tr>`; }).join('')}</table>`; }
+    return `<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Отчет по процессу управления уязвимостями</title>
+<style>body{font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:960px;margin:24px auto;padding:0 16px;color:#222;line-height:1.45}h1{font-size:22px}h2{font-size:16px;margin-top:26px;border-bottom:1px solid #ddd;padding-bottom:4px}table{border-collapse:collapse;width:100%;font-size:13px;margin:8px 0}th,td{border:1px solid #ddd;padding:5px 8px;text-align:left}td.n{text-align:right;font-variant-numeric:tabular-nums}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}.kpi{border:1px solid #ddd;border-radius:6px;padding:10px}.kpi b{font-size:22px;display:block}.kpi span{font-size:11px;color:#666}.bad{color:#b02a37;font-weight:600}.ok{color:#1b7f3b;font-weight:600}.muted{color:#777;font-size:12px}.brow{display:grid;grid-template-columns:70px 1fr 1fr 130px;gap:8px;align-items:center;font-size:12px;margin:4px 0}.bar{height:12px;background:#f1f1f1;border-radius:3px;overflow:hidden}.bar i{display:block;height:100%}@media print{body{margin:0}}</style></head><body>
+<h1>Отчет по процессу управления уязвимостями</h1>
+<p class="muted">MaxPatrol VM, ${esc(host)}. Снимок ${esc(m.generatedAt.replace('T', ' ').slice(0, 16))} UTC. Сроки: critical ${m.sla.crit} дн, high ${m.sla.high} дн, medium ${m.sla.med} дн, low ${m.sla.low} дн.</p>
+<h2>Резюме</h2><div class="kpis">
+<div class="kpi"><b>${fmt(c.open)}</b><span>открытых уязвимостей</span></div>
+<div class="kpi"><b class="${c.overdue ? 'bad' : 'ok'}">${fmt(c.overdue)}</b><span>просрочено по SLA (${pct(c.overdue, c.open)}%)</span></div>
+<div class="kpi"><b class="${c.trend ? 'bad' : 'ok'}">${fmt(c.trend)}</b><span>трендовых открыто</span></div>
+<div class="kpi"><b>${fmt(c.expl)}</b><span>с публичным эксплойтом</span></div>
+<div class="kpi"><b>${fmt(c.new30)}</b><span>новых за 30 дней (${fmt(c.new7)} за 7)</span></div>
+<div class="kpi"><b>${fmt(c.fixed)}</b><span>устранено всего, ${fmt(c.excluded)} исключено</span></div>
+<div class="kpi"><b>${fmt(c.st.new || 0)}</b><span>в статусе Новая (${pct(c.st.new || 0, c.open)}% открытых)</span></div>
+<div class="kpi"><b>${fmt(c.noImp)}</b><span>активов без значимости из ${fmt(c.assets)}</span></div></div>
+${verdict117}
+<p>Доля не разобранных уязвимостей (статус Новая) показывает, работает ли процесс: если она выше половины, политики обработки не настроены или не покрывают инфраструктуру. За 30 дней появилось ${fmt(c.new30)} уязвимостей при ${fmt(c.fixed)} устраненных за все время.</p>
+<h2>Просрочки по уровню опасности</h2>${sevBars}<p class="muted">Серая полоса: открыто, красная: просрочено.</p>
+<table><tr><th>severity</th><th>открыто</th><th>просрочено</th><th>доля</th></tr>${sev}</table>
+<h2>Возраст открытых уязвимостей</h2><table><tr><th>возраст</th><th>шт</th><th>доля</th></tr>${age}</table>
+${past}
+<h2>Статусы</h2><table>${Object.entries(c.st).map(([k, v]) => row(k, fmt(v))).join('')}</table>
+<h2>Трендовые уязвимости с наибольшим охватом</h2><table><tr><th>CVE</th><th>CVSS</th><th>узлов</th><th>экземпляров</th><th>внешние сигналы</th></tr>${trend || '<tr><td colspan=5>нет</td></tr>'}</table>
+<h2>Покрытие активов</h2><table>${row('Всего активов', fmt(c.assets))}${row('Без значимости', fmt(c.noImp))}${row('Высокой значимости', fmt(c.highImp))}${row('Аудит старше 90 дней', fmt(c.stale))}${row('Скан устарел или не выполнялся', fmt(c.obsolete))}</table>
+<h2>Топ-10 узлов по интегральной уязвимости</h2><table><tr><th>узел</th><th>ОС</th><th>значимость</th><th>оценка</th></tr>${hosts}</table>
+<h2>Рекомендации</h2><ul>
+<li>Закрыть просроченные critical и high в первую очередь через очередь устранения по решениям: одно обновление ПО закрывает десятки уязвимостей.</li>
+<li>Настроить политики статусов так, чтобы доля Новая не превышала 20% открытых: плановое устранение с датой для critical и high, исключения с причиной для ложных срабатываний и компенсирующих мер.</li>
+<li>Присвоить значимость всем активам и восстановить сканирование там, где аудит старше 30 дней: без этого приоритизация по методике ФСТЭК не работает.</li>
+<li>Для трендовых и KEV использовать срок 24 часа независимо от CVSS.</li></ul></body></html>`;
+  }
+
+  // ── Универсальный отчет по вкладке: HTML для печати (PDF) и скачивания ────
+  // spec: { title, subtitle, note, kpis: [[value, label, cls?]], sections: [{ title, note, cols: [[header, key|fn]], rows, limit? }] }
+  const REPORT_CSS = 'body{font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:1100px;margin:24px auto;padding:0 16px;color:#222;line-height:1.45}h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin-top:26px;border-bottom:1px solid #ddd;padding-bottom:4px}table{border-collapse:collapse;width:100%;font-size:12px;margin:8px 0}th,td{border:1px solid #ddd;padding:4px 7px;text-align:left;vertical-align:top}th{background:#f5f5f5}td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}.kpi{border:1px solid #ddd;border-radius:6px;padding:10px}.kpi b{font-size:22px;display:block}.kpi span{font-size:11px;color:#666}.bad b{color:#b02a37}.ok b{color:#1b7f3b}.warn b{color:#b26a00}.muted{color:#777;font-size:12px}@media print{body{margin:0;max-width:none}h2{page-break-after:avoid}tr{page-break-inside:avoid}}';
+  function buildReport(spec) {
+    const cell = (row, c) => { const v = typeof c[1] === 'function' ? c[1](row) : row[c[1]]; return v == null ? '' : v; };
+    const isNum = v => typeof v === 'number' || (/^-?[\d\s,.]+%?$/.test(String(v)) && String(v).trim() !== '');
+    const sections = (spec.sections || []).map(s => {
+      const rows = (s.rows || []).slice(0, s.limit || 1000);
+      const body = rows.map(r => `<tr>${s.cols.map(c => { const v = cell(r, c); return `<td class="${isNum(v) ? 'n' : ''}">${esc(typeof v === 'number' ? fmt(v) : v)}</td>`; }).join('')}</tr>`).join('');
+      return `<h2>${esc(s.title)}</h2>${s.note ? `<p class="muted">${esc(s.note)}</p>` : ''}<table><tr>${s.cols.map(c => `<th>${esc(c[0])}</th>`).join('')}</tr>${body || '<tr><td colspan="' + s.cols.length + '" class="muted">нет данных</td></tr>'}</table>${(s.rows || []).length > rows.length ? `<p class="muted">Показаны первые ${fmt(rows.length)} из ${fmt(s.rows.length)}; полный список в CSV.</p>` : ''}`;
+    }).join('');
+    const kpis = (spec.kpis || []).length ? `<div class="kpis">${spec.kpis.map(k => `<div class="kpi ${k[2] || ''}"><b>${esc(k[0])}</b><span>${esc(k[1])}</span></div>`).join('')}</div>` : '';
+    return `<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>${esc(spec.title)}</title><style>${REPORT_CSS}</style></head><body><h1>${esc(spec.title)}</h1><p class="muted">${esc(spec.subtitle || '')}</p>${spec.note ? `<p>${esc(spec.note)}</p>` : ''}${kpis}${sections}<p class="muted">Сформировано расширением «Устранение уязвимостей» для MaxPatrol VM, ${new Date().toLocaleString('ru-RU')}.</p></body></html>`;
+  }
+  function printHtml(html, name) {
+    const w = window.open('', '_blank');
+    if (!w) { download(name, html, 'text/html;charset=utf-8'); return; }
+    w.document.write(html); w.document.close();
+    setTimeout(() => { try { w.focus(); w.print(); } catch (_) {} }, 400);
+  }
+  const reportSubtitle = () => `MaxPatrol VM, ${VR.config().host || location.hostname}, ${new Date().toLocaleString('ru-RU')}`;
+
+  // ── Снимки состояния вкладок: chrome.storage.local через background, живут сутки ──
+  const SNAP_TTL = 24 * 3600 * 1000;
+  const snapSave = (key, value) => VR.ext('cache-set', { key, value }).catch(() => {});
+  const snapLoad = async key => { try { const c = await VR.ext('cache-get', { key }); return c && c.value && Date.now() - c.ts < SNAP_TTL ? c : null; } catch (_) { return null; } };
+  const snapNote = ts => `снимок от ${new Date(ts).toLocaleString('ru-RU')}, обновление по кнопке`;
+
+  // ── Рабочая область ───────────────────────────────────────────────────────
+  let host = null, sh = null, opened = false;
+  let restoreSnapshots = async () => {}, updateReportButtons = () => {}; // назначаются в bind()
+  const state = { metrics: null, queue: null, detail: null, enrich: null, metricsLoaded: false };
+
+  function $(id) { return sh.getElementById(id); }
+
+  function positionRoot() {
+    if (!host) return;
+    // Реальный контейнер меню на 28.0: <platform-nav-bar> > kbq-vertical-navbar (241 px, сворачивается)
+    const item = document.querySelector('.kbq-navbar-item:not(#vr-menu-item)');
+    const nav = document.querySelector('platform-nav-bar, kbq-vertical-navbar, .kbq-vertical-navbar, .kbq-navbar, kbq-navbar')
+      || (item && item.closest('platform-nav-bar, kbq-vertical-navbar, nav'));
+    const left = nav ? Math.round(nav.getBoundingClientRect().right) : (item ? Math.round(item.getBoundingClientRect().right) : 0);
+    host.style.left = left + 'px';
+  }
+
+  function mountRoot() {
+    if (host) return;
+    host = document.createElement('div');
+    host.id = 'vr-root';
+    host.style.cssText = 'position:fixed;top:0;right:0;bottom:0;left:0;z-index:950;display:none;';
+    document.body.appendChild(host);
+    sh = host.attachShadow({ mode: 'open' });
+    const style = document.createElement('style'); style.textContent = CSS; sh.appendChild(style);
+    const wrap = document.createElement('div'); wrap.innerHTML = HTML; sh.appendChild(wrap);
+    bind();
+    sh.addEventListener('click', e => { if (vfPop && !e.target.closest('.vf-pop') && !e.target.closest('.vf')) closePop(); });
+    sh.addEventListener('scroll', () => { if (vfPop && Date.now() - (vfPop.__t || 0) > 400) closePop(); }, true);
+    window.addEventListener('resize', positionRoot);
+  }
+
+  function open() {
+    mountRoot(); positionRoot();
+    host.style.display = ''; opened = true;
+    document.querySelectorAll('.kbq-navbar-item.kbq-selected, .kbq-navbar-item.kbq-active').forEach(el => { if (el.id !== 'vr-menu-item') { el.dataset.vrWasSelected = el.classList.contains('kbq-active') ? 'active' : 'selected'; el.classList.remove('kbq-selected', 'kbq-active'); } });
+    const mi = document.getElementById('vr-menu-item'); if (mi) mi.classList.add('kbq-active');
+    const c = VR.config(); $('sub').textContent = 'MaxPatrol VM'; $('sub').title = c.host || location.hostname;
+    VR.systemInfo().then(d => { $('sub').textContent = `MaxPatrol VM ${d?.productVersion || ''}`; $('sub').title = `${c.host || location.hostname}, версия ${d?.productVersion || '?'}`; }).catch(e => { $('sub').textContent = 'нет подключения'; $('sub').title = e.message; });
+    if (!state.metricsLoaded) {
+      state.metricsLoaded = true;
+      // Не нагружаем систему при каждом открытии: показываем последний снимок, обновление по кнопке
+      snapLoad('metrics').then(c => {
+        if (c) { state.metrics = c.value; $('m-out').innerHTML = renderMetrics(state.metrics); bindFilters($('m-out')); ['m-report', 'm-dl', 'm-print', 'm-json'].forEach(id => { $(id).disabled = false; }); $('m-info').textContent = snapNote(c.ts); }
+        else $('m-info').textContent = 'снимка за сутки нет: нажмите «Обновить показатели»';
+        updateReportButtons();
+      });
+      restoreSnapshots();
+    }
+  }
+  function close() {
+    if (!host || !opened) return;
+    host.style.display = 'none'; opened = false;
+    const mi = document.getElementById('vr-menu-item'); if (mi) mi.classList.remove('kbq-selected', 'kbq-active');
+    document.querySelectorAll('.kbq-navbar-item[data-vr-was-selected]').forEach(el => { el.classList.add(el.dataset.vrWasSelected === 'active' ? 'kbq-active' : 'kbq-selected'); delete el.dataset.vrWasSelected; });
+  }
+
+  // ── Пункт меню ────────────────────────────────────────────────────────────
+  // Якорь: «Активы»; если меню свернуто и основные пункты спрятаны в «Еще», вставляем перед «Еще»/«Система»
+  function findAnchorItem() {
+    const items = [...document.querySelectorAll('.kbq-navbar-item')].filter(el => el.id !== 'vr-menu-item');
+    const title = el => (el.querySelector('.kbq-navbar-title')?.textContent || '').replace(/\s+/g, ' ').trim();
+    const byTitle = rx => items.find(el => rx.test(title(el)));
+    const assets = byTitle(/^Активы$/i) || items.find(el => /\/assets(\b|$)/.test(el.getAttribute('href') || el.querySelector('a')?.getAttribute('href') || ''));
+    if (assets) return { el: assets, where: 'afterend' };
+    const dash = byTitle(/^Дашборды$/i); if (dash) return { el: dash, where: 'afterend' };
+    const more = byTitle(/^(Еще|Ещё|More)$/i); if (more) return { el: more, where: 'beforebegin' };
+    const sys = byTitle(/^Система$/i); if (sys) return { el: sys, where: 'beforebegin' };
+    return null;
+  }
+  function ensureMenuItem() {
+    try { return ensureMenuItemUnsafe(); }
+    catch (e) { console.error('[vr] не удалось вставить пункт меню:', e); return false; }
+  }
+  function ensureMenuItemUnsafe() {
+    if (document.getElementById('vr-menu-item')) return true;
+    const found = findAnchorItem();
+    if (!found) { if (!ensureMenuItem._warned && document.querySelectorAll('.kbq-navbar-item').length) { ensureMenuItem._warned = true; console.warn('[vr] пункты меню есть, но якорь не найден:', [...document.querySelectorAll('.kbq-navbar-item')].map(e => (e.querySelector('.kbq-navbar-title')?.textContent || '').trim()).join(' | ')); } return false; }
+    const anchor = found.el;
+    // Клонируем ссылочный пункт, если якорь не ссылка (у «Еще» нет href и есть вложенное меню)
+    const template = anchor.tagName === 'A' ? anchor : ([...document.querySelectorAll('a.kbq-navbar-item')].find(a => a.id !== 'vr-menu-item') || anchor);
+    const item = template.cloneNode(true);
+    item.id = 'vr-menu-item';
+    item.classList.remove('kbq-selected', 'kbq-active');
+    item.querySelectorAll('.kbq-selected, .kbq-active').forEach(x => x.classList.remove('kbq-selected', 'kbq-active'));
+    item.removeAttribute('ng-reflect-router-link'); item.removeAttribute('routerlink');
+    item.querySelectorAll('[href]').forEach(a => a.setAttribute('href', '#vr-remediation'));
+    if (item.tagName === 'A') item.setAttribute('href', '#vr-remediation');
+    const title = item.querySelector('.kbq-navbar-title'); if (title) title.textContent = 'Устранение';
+    const icon = item.querySelector('.kbq-icon-item, .kbq-icon, i');
+    if (icon) { [...icon.classList].filter(c => /_\d+$|^kbq-[a-z-]+_[a-z]/.test(c)).forEach(c => icon.classList.remove(c)); icon.innerHTML = ICON; icon.style.display = 'inline-flex'; icon.style.alignItems = 'center'; }
+    item.title = 'Устранение уязвимостей: очередь по решениям, внешние сигналы, метрики процесса';
+    item.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); opened ? close() : open(); }, true);
+    item.querySelectorAll('.kbq-navbar-item__arrow-icon, [class*="arrow"]').forEach(x => x.remove());
+    anchor.insertAdjacentElement(found.where, item);
+    return true;
+  }
+
+  // Клик по любому другому пункту меню или смена маршрута закрывает область
+  document.addEventListener('click', e => {
+    const it = e.target.closest && e.target.closest('.kbq-navbar-item');
+    if (it && it.id !== 'vr-menu-item') close();
+  }, true);
+  window.addEventListener('popstate', close);
+
+  // ── Обработчики UI ────────────────────────────────────────────────────────
+  // Клик по показателю обзора или ссылке с data-drill: выборка в панели
+  function drillFromMetrics(spec) {
+    const m = state.metrics; if (!m) return;
+    const sla = { slaCritDays: m.sla.crit, slaHighDays: m.sla.high, slaMedDays: m.sla.med, slaLowDays: m.sla.low };
+    const soon = d => Math.max(1, Math.round(d * 0.8));
+    const [kind, arg] = spec.split(':');
+    const titles = { open: 'Открытые уязвимости', overdue: 'Просроченные по SLA', soon: 'Истекает срок (прошло 80%)', trend: 'Трендовые открытые', exploit: 'С публичным эксплойтом', new30: 'Новые за 30 дней', noImportance: 'Активы без значимости', staleScan: 'Активы с устаревшим сканом' };
+    let pdql, title = titles[kind] || spec;
+    switch (kind) {
+      case 'open': case 'trend': case 'exploit': case 'new30': case 'noImportance': case 'staleScan': pdql = VR.drillPdql(kind); break;
+      case 'overdue': pdql = VR.drillPdql('overdue', sla); break;
+      case 'soon': pdql = VR.drillPdql('soon', { ...sla, h: soon(sla.slaHighDays), m: soon(sla.slaMedDays), l: soon(sla.slaLowDays) }); break;
+      case 'sev': pdql = VR.drillPdql('sev', arg); title = `Открытые: ${SEV_RU[arg] || arg}`; break;
+      case 'sevOverdue': { const days = { critical: sla.slaCritDays, high: sla.slaHighDays, medium: sla.slaMedDays, low: sla.slaLowDays }[arg]; pdql = VR.drillPdql('sevOverdue', { sev: arg, days }); title = `Просрочено: ${SEV_RU[arg] || arg} (старше ${days} дн)`; break; }
+      case 'status': pdql = VR.drillPdql('status', arg); title = `Статус: ${ST_RU[arg] || arg}`; break;
+      case 'cve': pdql = VR.drillPdql('cve', arg); title = `Экземпляры ${arg}`; break;
+      case 'asset': if (!arg) return; pdql = VR.drillPdql('asset', arg); title = 'Открытые уязвимости узла'; break;
+      case 'age': { const [a, b] = arg.replace('+', '').split('-').map(x => parseInt(x)); pdql = VR.drillPdql('age', arg.includes('+') ? { from: a } : { from: a, to: b + 1 }); title = `Возраст ${arg} дн`; break; }
+    }
+    showDrill($('m-drill'), title, pdql);
+  }
+
+  async function runMetrics() {
+    $('m-err').textContent = ''; $('m-run').disabled = true;
+    $('m-info').innerHTML = `<span class="spin"></span>${$('m-deep').checked ? 'сбор с историей: до 5 минут' : 'сбор показателей, 20-40 секунд'}`;
+    try {
+      state.metrics = await VR.metrics({ deep: $('m-deep').checked });
+      snapSave('metrics', state.metrics);
+      $('m-out').innerHTML = renderMetrics(state.metrics); bindFilters($('m-out'));
+      $('m-info').textContent = 'готово'; ['m-report', 'm-dl', 'm-print', 'm-json'].forEach(id => { $(id).disabled = false; }); updateReportButtons();
+    } catch (e) { $('m-err').textContent = e.message; $('m-info').textContent = ''; }
+    $('m-run').disabled = false;
+  }
+
+  function renderQueue() {
+    const q0 = state.queue; if (!q0) return;
+    const fT = $('q-f-trend').checked, fE = $('q-f-expl').checked, fC = $('q-f-crit').checked, fP = $('q-f-patch').checked;
+    const pass = g => (!fT || g.trend > 0) && (!fE || g.expl > 0) && (!fC || g.crit > 0) && (!fP || g.patch > 0);
+    const q = { ...q0, groups: q0.groups.filter(pass), products: q0.products.filter(pass) };
+    q.totalGroups = q.groups.length;
+    const byProd = $('q-byprod').checked;
+    const totalN = q.groups.reduce((a, g) => a + g.n, 0), trend = q.groups.reduce((a, g) => a + g.trend, 0);
+    $('q-sum').style.display = '';
+    $('q-sum').innerHTML = `<div class="kpis">
+      <div class="kpi"><div class="v">${fmt(q.totalGroups)}${q.totalGroups !== q0.totalGroups ? ' <span class="muted">из ' + fmt(q0.totalGroups) + '</span>' : ''}</div><div class="l">решений (${q.scope === 'os' ? 'ОС + версия' : q.scope === 'images' ? 'образ + пакет' : 'ПО + версия'})</div></div>
+      <div class="kpi"><div class="v">${fmt(totalN)}</div><div class="l">уязвимостей закроют</div></div>
+      <div class="kpi ${trend ? 'bad' : 'ok'}"><div class="v">${fmt(trend)}</div><div class="l">из них трендовых</div></div>
+      <div class="kpi"><div class="v">${pct(q.groups.slice(0, 5).reduce((a, g) => a + g.n, 0), totalN)}%</div><div class="l">закрывают топ-5 решений</div></div></div>`;
+    const sig = g => `${g.trend ? '<span class="badge tag kev sm" title="трендовых">' + fmt(g.trend) + '</span>' : ''}${g.expl ? '<span class="ttag" title="с эксплойтом">' + fmt(g.expl) + ' expl</span>' : ''}${g.patch ? '<span class="ttag green" title="есть патч">патч</span>' : ''}`;
+    const rows = byProd
+      ? q.products.map(p => `<tr class="click" data-soft="${esc(p.soft)}" data-ver=""><td class="ell" title="${esc(p.soft)}">${esc(p.soft)}</td><td class="n">${p.versions} верс.</td><td class="n">${fmt(p.n)}</td><td class="n">${fmt(p.hosts)}</td><td class="n">${p.maxScore}</td><td class="sig">${sig(p)}</td></tr>`).join('')
+      : q.groups.map(g => `<tr class="click${state.detail && state.detail.soft === g.soft && state.detail.ver === g.ver ? ' sel' : ''}" data-soft="${esc(g.soft)}" data-ver="${esc(g.ver)}"><td class="ell" title="${esc(g.soft)}">${esc(g.soft)}</td><td class="ver" title="${esc(g.ver)}">${esc(g.ver)}</td><td class="n">${fmt(g.n)}</td><td class="n">${fmt(g.hosts)}</td><td class="n">${g.maxScore ?? ''}</td><td class="sig">${sig(g)}</td></tr>`).join('');
+    $('q-grid').style.display = '';
+    const col1 = q.scope === 'os' ? 'ОС' : q.scope === 'images' ? 'образ : пакет' : q.scope === 'packages' ? 'пакет' : 'ПО';
+    $('q-out').innerHTML = `${tfilter('фильтр по названию')}<table><tr><th>${col1}</th><th>${byProd ? '' : 'версия'}</th><th>уязвимостей</th><th>${q.scope === 'images' ? 'образов' : 'узлов'}</th><th>CVSS</th><th>сигналы</th></tr>${rows}</table>`;
+    bindFilters($('q-out'));
+    sh.querySelectorAll('#q-out tr.click').forEach(tr => tr.addEventListener('click', () => {
+      if (!tr.dataset.ver) { $('q-byprod').checked = false; renderQueue(); return; }
+      loadDetail(tr.dataset.soft, tr.dataset.ver);
+    }));
+  }
+
+  async function loadDetail(soft, ver) {
+    const box = $('q-detail');
+    box.innerHTML = `<div class="muted"><span class="spin"></span>Детали: ${esc(soft)} ${esc(ver)}</div>`;
+    try {
+      const g0 = state.queue.groups.find(g => g.soft === soft && g.ver === ver);
+      const d = await VR.queueDetail({ scope: state.queue.scope, soft, ver, pkg: g0?.pkg });
+      state.detail = d;
+      sh.querySelectorAll('#q-out tr.click').forEach(tr => tr.classList.toggle('sel', tr.dataset.soft === soft && tr.dataset.ver === ver));
+      let enr = null;
+      try { enr = await VR.ext('enrich', { cves: d.cves.map(c => c.cve), skipNvd: true, mp: Object.fromEntries(d.cves.map(c => [c.cve, { score: c.score, trend: c.trend, exploit: c.exploit }])) }); } catch (_) {}
+      const kevN = enr ? d.cves.filter(c => enr.results[c.cve]?.kev).length : 0;
+      const cveRows = d.cves.slice(0, 80).map(c => { const r = enr?.results[c.cve]; return `<tr><td>${plink(c.vulnId, c.cve)}</td><td class="n">${c.score}</td><td class="n">${fmt(c.n)}</td><td>${r?.kev ? kevBadge(c.cve) : ''}${c.trend ? '<span class="badge tag trend">trend</span>' : ''}${c.exploit ? '<span class="badge tag hot">expl</span>' : ''}${r?.epss?.epss != null ? '<span class="muted">EPSS ' + (r.epss.epss * 100).toFixed(0) + '%</span>' : ''}</td></tr>`; }).join('');
+      const hostRows = d.hosts.slice(0, 80).map(h => `<tr><td class="ell" title="${esc(h.host)}">${alink(h.id, h.host)}</td><td class="n">${fmt(h.n)}</td><td class="n">${h.maxScore}</td></tr>`).join('');
+      box.innerHTML = `<h3>${esc(soft)} ${esc(ver)}</h3>
+        <div class="muted">${fmt(d.rows)} экземпляров${d.truncated ? ' (выборка усечена до 20000)' : ''}, ${fmt(d.cves.length)} CVE, ${fmt(d.hosts.length)} узлов${kevN ? `, <b style="color:#d23c3c">${kevN} CVE в CISA KEV</b>` : ''}.</div>
+        <div class="row"><button class="btn" id="d-csv">CSV узлов</button><button class="btn" id="d-copy">Скопировать список узлов</button><button class="btn" id="d-pdql">Скопировать PDQL</button><button class="btn" id="d-proj" title="Поставить метку proj:название на все экземпляры группы">В проект</button><span class="muted" id="d-proj-st"></span></div>
+        <div class="box"><h3>Задача в Jira</h3>
+          <div class="muted">Одна задача на решение: обновить ${esc(soft)} ${esc(ver)}. В описании таблица CVE с EPSS и KEV, список узлов, срок по приоритету.</div>
+          <div class="row"><button class="btn acc" id="d-jira">Создать задачу в Jira</button><button class="btn" id="d-jira-find">Найти существующие</button><span class="muted" id="d-jira-st"></span></div>
+          <div id="d-jira-out"></div>
+        </div>
+        <div class="box"><h3>Смена статуса экземпляров (${fmt(d.ids.length)})</h3>
+          <div class="row">
+            <select id="d-cmd"><option value="SwitchToInProgressStateCommand">В работе</option><option value="SwitchToAwaitingFixStateCommand">Исправляется до даты</option><option value="SwitchToExcludeStateCommand">Исключить</option><option value="SwitchToNewStateCommand">Вернуть в Новая</option></select>
+            <input type="date" id="d-date" value="${plusDays(7)}">
+            <select id="d-reason"><option value="acceptedAsLowRisk">низкий риск</option><option value="cannotFix">нельзя исправить</option><option value="compensatingControl">компенсирующая мера</option><option value="falsePositive">ложное срабатывание</option></select>
+          </div>
+          <input type="text" id="d-note" placeholder="комментарий к статусу (необязательно)" style="width:100%">
+          <div class="row"><button class="btn acc" id="d-apply">Применить в MaxPatrol VM</button><span class="muted" id="d-st"></span></div>
+          <div class="note">Операция изменит статусы всех экземпляров группы. Нужны права на массовые операции у владельца токена.</div>
+        </div>
+        <div class="scroll">${tfilter('фильтр по CVE')}<table><tr><th>CVE (паспорт)</th><th>CVSS</th><th>экземпляров</th><th>сигналы</th></tr>${cveRows}</table></div>
+        <div class="scroll">${tfilter('фильтр по узлу')}<table><tr><th>узел (карточка)</th><th>уязвимостей</th><th>max CVSS</th></tr>${hostRows}</table></div>`;
+      bindFilters(box);
+      $('d-proj').addEventListener('click', async () => {
+        const name = prompt(`Название проекта (метка proj:название) для ${d.ids.length} экземпляров ${soft} ${ver}:`, String(soft).toLowerCase().replace(/[^a-zа-я0-9]+/gi, '-').slice(0, 30)); if (!name) return;
+        $('d-proj-st').innerHTML = '<span class="spin"></span>';
+        try { await VR.tagInstances(d.ids, 'proj:' + name.trim()); $('d-proj-st').textContent = `метка proj:${name.trim()} поставлена, прогресс во вкладке «Проекты»`; } catch (e) { $('d-proj-st').textContent = 'ошибка: ' + e.message; }
+      });
+      $('d-csv').addEventListener('click', () => download(`hosts_${soft}_${ver}_${today()}.csv`.replace(/[^\w.\-а-яА-Я]+/g, '_'), csv(d.hosts, [['Узел', 'host'], ['ID', 'id'], ['Уязвимостей', 'n'], ['Max CVSS', 'maxScore']]), 'text/csv;charset=utf-8'));
+      $('d-copy').addEventListener('click', () => navigator.clipboard.writeText(d.hosts.map(h => h.host).join('\n')).catch(() => {}));
+      $('d-pdql').addEventListener('click', () => navigator.clipboard.writeText(d.pdql).catch(() => {}));
+      const jiraLabelForGroup = 'mpvm-' + String(soft).toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40);
+      $('d-jira').addEventListener('click', async () => {
+        const st = $('d-jira-st'); $('d-jira').disabled = true; st.innerHTML = '<span class="spin"></span>создаем задачу';
+        try {
+          const s = await VR.ext('settings-get');
+          if (!s.jiraUrl || !s.jiraToken || !s.jiraProject) throw new Error('Заполните Jira в настройках: адрес, токен, проект');
+          st.innerHTML = '<span class="spin"></span>паспорта и контекст активов';
+          // Целевая версия из паспортов топ-3 CVE (по CVSS) и контекст узлов (значимость, ОС, группы)
+          const passports = {};
+          for (const c of d.cves.slice().sort((a, b) => b.score - a.score).slice(0, 3)) { if (c.vulnId) { try { passports[c.cve] = await VR.passport(c.vulnId); } catch (_) {} } }
+          let assetsInfo = {}; try { assetsInfo = await VR.assetsInfo(d.hosts.map(h => h.id)); } catch (_) {}
+          const issue = VR.buildJiraIssue({ detail: d, group: state.queue.groups.find(g => g.soft === soft && g.ver === ver), enrich: enr, sla: s, host: VR.config().host || location.hostname, passports, assetsInfo });
+          if (!confirm(`Создать задачу в Jira (${s.jiraProject}):\n${issue.summary}\nСрок: ${issue.dueDate}${issue.targetVersion ? '' : '\nЦелевая версия в паспортах не найдена: в задаче будет «до актуальной версии вендора»'}`)) { $('d-jira').disabled = false; st.textContent = ''; return; }
+          const r = await VR.ext('jira-create', issue);
+          let tagNote = '';
+          try { await VR.ext('jira-attach', { key: r.key, filename: `mpvm_${soft}_${ver}.csv`.replace(/[^\w.\-]+/g, '_'), content: VR.groupCsv(d, enr) }); tagNote += ', CSV приложен'; } catch (e) { tagNote += `, вложение не удалось: ${e.message}`; }
+          if (s.jiraTagInstances !== false) { try { await VR.tagInstances(d.ids, 'jira:' + r.key); tagNote = `, метка jira:${r.key} поставлена на ${fmt(d.ids.length)} экз.`; } catch (e) { tagNote = `, метку поставить не удалось: ${e.message}`; } }
+          st.innerHTML = `создана <a href="${esc(r.url)}" target="_blank" rel="noopener" style="color:#2f80ed">${esc(r.key)}</a>${esc(tagNote)}`;
+        } catch (e) { st.textContent = 'ошибка: ' + e.message; }
+        $('d-jira').disabled = false;
+      });
+      $('d-jira-find').addEventListener('click', async () => {
+        const st = $('d-jira-st'); st.innerHTML = '<span class="spin"></span>поиск';
+        try {
+          const list = await VR.ext('jira-search', { label: jiraLabelForGroup, max: 10 });
+          $('d-jira-out').innerHTML = list.length ? `<table><tr><th>задача</th><th>статус</th><th>исполнитель</th><th>срок</th></tr>${list.map(i => `<tr><td><a href="${esc(i.url)}" target="_blank" rel="noopener" style="color:#2f80ed">${esc(i.key)}</a> ${esc(i.summary)}</td><td>${esc(i.status)}</td><td>${esc(i.assignee || '')}</td><td>${esc(i.due || '')}</td></tr>`).join('')}</table>` : '<div class="muted">задач с меткой ' + esc(jiraLabelForGroup) + ' нет</div>';
+          st.textContent = '';
+        } catch (e) { st.textContent = 'ошибка: ' + e.message; }
+      });
+      $('d-apply').addEventListener('click', async () => {
+        const cmd = $('d-cmd').value;
+        if (!confirm(`Изменить статус ${d.ids.length} экземпляров уязвимостей (${soft} ${ver}) в MaxPatrol VM?`)) return;
+        $('d-apply').disabled = true; $('d-st').innerHTML = '<span class="spin"></span>выполняется';
+        try {
+          const r = await VR.changeStatus({ ids: d.ids, command: cmd, tillDate: $('d-date').value ? $('d-date').value + 'T00:00:00Z' : null, reason: $('d-reason').value, note: $('d-note').value });
+          $('d-st').textContent = r.total != null ? `готово: успешно ${fmt(r.succeed || 0)} из ${fmt(r.total)}${r.failed ? ', ошибок ' + fmt(r.failed) : ''}` : `отправлено ${r.count} экз., операция ${r.operationId || 'без id'}`;
+        } catch (e) { $('d-st').textContent = 'ошибка: ' + e.message; }
+        $('d-apply').disabled = false;
+      });
+    } catch (e) { box.innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+  }
+
+  function bind() {
+    $('close').addEventListener('click', close);
+    sh.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
+      sh.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('active', x === b));
+      sh.querySelectorAll('.pane').forEach(p => p.classList.toggle('active', p.dataset.t === b.dataset.t));
+      $('crumb').textContent = b.textContent; updateReportButtons();
+      if (b.dataset.t === 'cve' && !$('c-cves').value) { const c = scanPageCves(); if (c.length) { $('c-cves').value = c.join(', '); $('c-scan-info').textContent = `найдено на странице: ${c.length}`; } }
+    }));
+
+    // Обзор
+    $('m-run').addEventListener('click', runMetrics);
+    $('m-report').addEventListener('click', () => { if (state.metrics) openHtml(reportHtml(state.metrics, VR.config().host || location.hostname), `vm_report_${today()}.html`); });
+    $('m-json').addEventListener('click', () => { if (state.metrics) download(`vm_metrics_${today()}.json`, JSON.stringify(state.metrics, null, 2), 'application/json'); });
+    $('m-dl').addEventListener('click', () => { if (state.metrics) download(`vm_report_${today()}.html`, reportHtml(state.metrics, VR.config().host || location.hostname), 'text/html;charset=utf-8'); });
+    $('m-print').addEventListener('click', () => { if (state.metrics) printHtml(reportHtml(state.metrics, VR.config().host || location.hostname), `vm_report_${today()}.html`); });
+    $('m-out').addEventListener('click', async e => {
+      const k = e.target.closest('[data-drill]'); if (k) { e.preventDefault(); drillFromMetrics(k.dataset.drill); return; }
+      const pp = e.target.closest('[data-passport]');
+      if (pp) { e.preventDefault(); pp.textContent = pp.dataset.passport + ' …'; try { const g = await VR.guidByCve(pp.dataset.passport); if (g) location.assign(VR.passportUrl(g)); else pp.textContent = pp.dataset.passport + ' (паспорт не найден)'; } catch (err) { pp.textContent = pp.dataset.passport + ' (' + err.message + ')'; } }
+    });
+
+    // Очередь
+    $('q-byprod').addEventListener('change', renderQueue);
+    sh.querySelectorAll('.q-filter').forEach(el => el.addEventListener('change', renderQueue));
+    $('q-run').addEventListener('click', async () => {
+      $('q-err').textContent = ''; $('q-run').disabled = true; $('q-info').innerHTML = '<span class="spin"></span>PDQL выполняется, 10-60 секунд';
+      try {
+        state.detail = null; $('q-detail').innerHTML = '<div class="muted">Выберите группу слева.</div>';
+        state.queue = await VR.queue({ scope: $('q-scope').value, minScore: $('q-min').value, limit: parseInt($('q-limit').value) || 300 });
+        $('q-info').textContent = `готово: ${state.queue.totalGroups} групп`; $('q-csv').disabled = false; $('q-pdql').disabled = false;
+        snapSave('queue', { queue: state.queue, scope: $('q-scope').value, minScore: $('q-min').value, limit: $('q-limit').value });
+        renderQueue(); updateReportButtons();
+      } catch (e) { $('q-err').textContent = e.message; $('q-info').textContent = ''; }
+      $('q-run').disabled = false;
+    });
+    const QUEUE_COLS = [['ПО', 'soft'], ['Версия', 'ver'], ['Уязвимостей', 'n'], ['Узлов', 'hosts'], ['Max CVSS', 'maxScore'], ['Critical', 'crit'], ['High', 'high'], ['Трендовых', 'trend'], ['С эксплойтом', 'expl'], ['С патчем', 'patch'], ['Риск', 'risk']];
+    $('q-csv').addEventListener('click', () => { if (state.queue) download(`remediation_queue_${today()}.csv`, csv(state.queue.groups, QUEUE_COLS), 'text/csv;charset=utf-8'); });
+    $('q-pdql').addEventListener('click', () => { if (state.queue) navigator.clipboard.writeText(state.queue.pdql).catch(() => {}); $('q-info').textContent = 'PDQL скопирован'; });
+
+    // Риск активов
+    const renderAssets = () => {
+      const d = state.assetRisk; if (!d) return;
+      const imp = $('a-imp').value, top = parseInt($('a-top').value) || 50;
+      const list = d.assets.filter(a => !imp || a.imp === imp).slice(0, top);
+      const maxRisk = Math.max(1, ...list.map(a => a.risk));
+      const impName = { H: 'высокая', M: 'средняя', L: 'низкая', ND: 'не задана' };
+      const colors = { 'трендовые': 'var(--kbq-background-error, #d23c3c)', 'critical': 'var(--kbq-background-warning, #f0883e)', 'эксплойт': '#b86e00', 'важные': '#6f42c1', 'high': '#c7a200', 'прочие': 'var(--kbq-background-contrast-fade, #9aa1b1)' };
+      const zoneRuS = { critical: 'критическая', high: 'высокая', medium: 'средняя', low: 'низкая' };
+      const compBar = a => `<div class="comp" title="${esc(a.components.map(([k, v, m]) => `${k} ${v} из ${m}`).join(', ') + `; сумма ${a.raw} x контекст ${a.ctx.toFixed(2)}`)}">${a.components.map(([k, v, m], i) => `<i class="${'evtf'[i]}" style="height:${Math.max(2, Math.round(v / m * 18))}px"></i>`).join('')}</div>`;
+      const rows = list.map(a => `<tr><td class="ell" title="${esc(a.host)}">${alink(a.id, a.host)}</td><td>${esc(a.os)}</td><td>${esc(impName[a.imp] || a.imp)}</td><td class="n" data-v="${a.risk}"><b>${a.risk}</b></td><td data-v="${zoneRuS[a.zone]}"><span class="zone ${a.zone}">${zoneRuS[a.zone]}</span></td><td data-v="${a.fstecLevel}"><span class="zone ${a.fstecLevel}" title="уровень худшей уязвимости по методике ФСТЭК, оценка ${a.fstecMax.toFixed(1)}">${a.fstecLevel}</span></td><td data-v="${a.raw}">${compBar(a)}</td><td class="n">${fmt(a.n)}</td><td class="n">${fmt(a.crit)}</td><td class="n">${fmt(a.high)}</td><td class="n" data-v="${a.trend}">${a.trend ? cnt(a.trend, 'red') : ''}</td><td class="n" data-v="${a.expl}">${a.expl ? cnt(a.expl, 'yellow') : ''}</td><td class="n" data-v="${a.kev}">${a.kev ? cnt(a.kev, 'red') : ''}</td><td class="ell muted" title="${esc(a.why)}" style="max-width:160px">${esc(a.why)}</td><td><a class="lnk" href="#" data-asset="${esc(a.id)}" data-host="${esc(a.host)}">уязвимости</a></td></tr>`).join('');
+      const zoneRu = { critical: 'критическая (700+)', high: 'высокая (500-699)', medium: 'средняя (300-499)', low: 'низкая (до 300)' };
+      const aggTable = (title, rowsArr, keyName, keyFn) => `<div class="box"><h3>${title}</h3><table><tr><th>${keyName}</th><th>активов</th><th>средний риск</th><th>max риск</th><th>трендовых</th></tr>${rowsArr.slice(0, 12).map(b => `<tr><td>${keyFn ? keyFn(b.key) : esc(b.key)}</td><td class="n">${fmt(b.n)}</td><td class="n"><b>${b.avg}</b></td><td class="n">${b.max}</td><td class="n">${fmt(b.trend)}</td></tr>`).join('')}</table></div>`;
+      const zoneCards = ['critical', 'high', 'medium', 'low'].map(z => { const b = d.byZone.find(x => x.key === z) || { n: 0 }; return `<div class="kpi ${z === 'critical' ? 'bad' : z === 'high' ? 'warn' : z === 'low' ? 'ok' : ''}"><div class="v">${fmt(b.n)}</div><div class="l">${zoneRu[z]}</div></div>`; }).join('');
+      $('a-out').innerHTML = `<div class="box"><h3>Зоны риска</h3><div class="kpis">${zoneCards}</div>${d.truncated ? '<div class="note">Показаны первые 1000 узлов по PDQL.</div>' : ''}</div>
+        <div class="two">${aggTable('По значимости', d.byImp, 'значимость', k => esc(impName[k] || k))}${aggTable('По типу актива', d.byType, 'тип')}</div>
+        <div class="two">${aggTable('По операционной системе', d.byOs, 'ОС')}<div class="box"><h3>Как читать</h3><div class="muted">Средний риск по группе показывает, где процесс отстает: старые ОС, серверы без патч-менеджмента, рабочие станции без значимости. Зона «критическая» требует немедленной реакции: там трендовые и эксплуатируемые уязвимости на важных узлах. Колонка «ФСТЭК» показывает уровень худшей уязвимости узла по методике оценки критичности с учетом значимости актива.</div></div></div>
+        <div class="box"><h3>Топ активов по риску</h3><div class="muted">Компоненты: <span style="color:#4d94ff">■</span> экспозиция (E, до ${d.weights.E}), <span style="color:#ffb433">■</span> опасность CVSS (V, до ${d.weights.V}), <span style="color:#fc4d36">■</span> угроза (T, до ${d.weights.T}), <span style="color:#a06fff">■</span> ФСТЭК (F, до ${d.weights.F}). Риск = (E + V + T + F) x контекст; точные значения в подсказке к столбикам, полностью в CSV.${d.kevChecked ? ` KEV проверен по ${fmt(d.kevChecked)} CVE.` : ' Колонка KEV заполняется кнопкой «Уточнить по KEV».'}</div>${tfilter('фильтр: узел, ОС, значимость, зона')}<div class="scroll" style="max-height:640px"><table><tr><th>узел (карточка)</th><th>ОС</th><th>значимость</th><th class="n">риск</th><th>зона</th><th>ФСТЭК</th><th>компоненты</th><th class="n">открыто</th><th class="n">critical</th><th class="n">high</th><th class="n">трендовых</th><th class="n">эксплойт</th><th class="n">KEV</th><th>почему</th><th></th></tr>${rows}</table></div></div>
+        <div id="a-drill"></div>`;
+      bindFilters($('a-out'));
+      sh.querySelectorAll('#a-out [data-asset]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); showDrill($('a-drill'), `Открытые уязвимости: ${a.dataset.host}`, VR.drillPdql('asset', a.dataset.asset)); }));
+    };
+    $('a-run').addEventListener('click', async () => {
+      $('a-err').textContent = ''; $('a-run').disabled = true; $('a-info').innerHTML = '<span class="spin"></span>PDQL по всем узлам, 10-30 секунд';
+      try { const s = await VR.ext('settings-get').catch(() => ({})); state.assetRisk = await VR.assetRisk({ limit: 1000, weights: s.riskWeights || null }); $('a-info').textContent = `узлов: ${state.assetRisk.assets.length}`; ['a-csv', 'a-kev', 'a-tags'].forEach(i => { $(i).disabled = false; }); snapSave('assetRisk', state.assetRisk); renderAssets(); updateReportButtons(); }
+      catch (e) { $('a-err').textContent = e.message; $('a-info').textContent = ''; }
+      $('a-run').disabled = false;
+    });
+    $('a-imp').addEventListener('change', renderAssets); $('a-top').addEventListener('change', renderAssets);
+    $('a-kev').addEventListener('click', async () => { if (!state.assetRisk) return; $('a-kev').disabled = true; $('a-info').innerHTML = '<span class="spin"></span>CVE с эксплойтом по каталогу KEV'; try { await VR.assetRiskKev(state.assetRisk, { limit: 300 }); $('a-info').textContent = `KEV проверен по ${fmt(state.assetRisk.kevChecked || 0)} CVE`; snapSave('assetRisk', state.assetRisk); renderAssets(); } catch (e) { $('a-err').textContent = e.message; } $('a-kev').disabled = false; });
+    $('a-tags').addEventListener('click', async () => { if (!state.assetRisk) return; const z = state.assetRisk.byZone; if (!confirm(`Поставить теги auto:risk-critical / high / medium / low на ${fmt(state.assetRisk.assets.length)} активов по зонам риска? Старые теги зон снимаются.`)) return; $('a-tags').disabled = true; $('a-info').innerHTML = '<span class="spin"></span>теги зон'; try { const r = await VR.applyRiskTags(state.assetRisk, { onProgress: n => { $('a-info').innerHTML = `<span class="spin"></span>теги: ${n}`; } }); $('a-info').textContent = 'теги зон: ' + r.map(x => `${x.zone} ${fmt(x.count)}`).join(', '); } catch (e) { $('a-err').textContent = e.message; } $('a-tags').disabled = false; });
+    const RISK_COLS = [['Узел', 'host'], ['ID', 'id'], ['ОС', 'os'], ['Значимость', 'imp'], ['Риск', 'risk'], ['Зона', 'zone'], ['Экспозиция E', 'cE'], ['Опасность V', 'cV'], ['Угроза T', 'cT'], ['ФСТЭК F', 'cF'], ['Контекст', a => a.ctx.toFixed(2)], ['Уровень ФСТЭК', 'fstecLevel'], ['Оценка ФСТЭК (сумма)', a => a.fstec.toFixed(1)], ['KEV', 'kev'], ['Почему', 'why'], ['Тип', 'type'], ['Открытых', 'n'], ['Critical', 'crit'], ['High', 'high'], ['Трендовых', 'trend'], ['Эксплойт', 'expl'], ['RCE', 'rce'], ['Важных', 'danger'], ['Max CVSS', 'maxScore']];
+    $('a-csv').addEventListener('click', () => { if (state.assetRisk) download(`asset_risk_${today()}.csv`, csv(state.assetRisk.assets, RISK_COLS), 'text/csv;charset=utf-8'); });
+
+    // Исключения
+    const REASON = { acceptedAsLowRisk: 'принят низкий риск', cannotFix: 'нельзя исправить', compensatingControl: 'компенсирующая мера', falsePositive: 'ложное срабатывание', unknown: 'не указана' };
+    const renderExcl = () => {
+        const d = state.excl; if (!d) return;
+        $('x-csv').disabled = false;
+        const reasonRows = d.byReason.map(r => `<tr><td>${esc(REASON[r.reason] || r.reason)}</td><td class="n">${fmt(r.n)}</td><td class="n">${fmt(r.trend)}</td><td class="n">${fmt(r.expl)}</td><td class="n">${fmt(r.highImp)}</td><td class="n">${fmt(r.noNote)}</td></tr>`).join('');
+        const riskyRows = d.groups.filter(g => g.trend || g.expl || g.score >= 9).slice(0, 60).map(g => `<tr class="click" data-key="${esc(g.key)}"><td class="ell" title="${esc(g.name)}">${plink(VR.vulnGuid(g.ids?.[0]), g.cve || g.name)}</td><td class="n">${g.score}</td><td class="n">${fmt(g.n)}</td><td class="n">${fmt(g.hosts)}</td><td>${g.trend ? '<span class="badge tag trend">trend</span>' : ''}${g.expl ? '<span class="badge tag hot">expl</span>' : ''}</td><td><button class="btn x-return" data-key="${esc(g.key)}">Вернуть в работу</button></td></tr>`).join('');
+        $('x-out').innerHTML = `<div class="box"><h3>По причинам</h3><table><tr><th>причина</th><th>исключено</th><th>трендовых</th><th>с эксплойтом</th><th>на важных активах</th><th>без комментария</th></tr>${reasonRows}</table></div>
+          <div class="box"><h3>Сомнительные исключения (пересмотреть)</h3><div class="muted">Трендовые, с публичным эксплойтом или CVSS 9+. Кнопка возвращает все экземпляры в статус «Новая» (команда SwitchToNewStateCommand).</div>${tfilter('фильтр по CVE или названию')}<div class="scroll"><table><tr><th>CVE / уязвимость (паспорт)</th><th>CVSS</th><th>экземпляров</th><th>узлов</th><th>сигналы</th><th></th></tr>${riskyRows || '<tr><td colspan=6 class="muted">нет</td></tr>'}</table></div></div>`;
+        bindFilters($('x-out'));
+        sh.querySelectorAll('#x-out .x-return').forEach(b => b.addEventListener('click', async e => {
+          e.stopPropagation(); const g = d.groups.find(x => x.key === b.dataset.key); if (!g) return;
+          if (!confirm(`Вернуть ${g.ids.length} экземпляров «${g.cve || g.name}» из исключений в статус «Новая»?`)) return;
+          b.disabled = true; b.textContent = 'выполняется';
+          try { const r = await VR.changeStatus({ ids: g.ids, command: 'SwitchToNewStateCommand' }); b.textContent = `готово: ${fmt(r.succeed || 0)}/${fmt(r.total || g.ids.length)}`; }
+          catch (err) { b.textContent = 'ошибка'; $('x-err').textContent = err.message; b.disabled = false; }
+        }));
+    };
+    $('x-run').addEventListener('click', async () => {
+      $('x-err').textContent = ''; $('x-run').disabled = true; $('x-info').innerHTML = '<span class="spin"></span>загрузка исключений';
+      try {
+        const d = state.excl = await VR.exclusions({ limit: 5000 });
+        $('x-info').textContent = `исключено: ${fmt(d.total)}${d.truncated ? ' (первые 5000)' : ''}, сомнительных: ${fmt(d.risky.length)}`;
+        snapSave('excl', d); renderExcl(); updateReportButtons();
+      } catch (e) { $('x-err').textContent = e.message; $('x-info').textContent = ''; }
+      $('x-run').disabled = false;
+    });
+    const EXCL_COLS = [['Узел', 'host'], ['Значимость', 'imp'], ['Уязвимость', 'name'], ['CVE', 'cve'], ['CVSS', 'score'], ['Причина', r => REASON[r.reason] || r.reason], ['Комментарий', 'note'], ['Трендовая', r => r.trend ? 'да' : ''], ['Эксплойт', r => r.expl ? 'да' : ''], ['Обнаружена', 'found']];
+    $('x-csv').addEventListener('click', () => { if (state.excl) download(`exclusions_${today()}.csv`, csv(state.excl.risky, EXCL_COLS), 'text/csv;charset=utf-8'); });
+
+    // Проекты
+    const renderProjects = () => {
+        const d = state.projects; if (!d) return;
+        const rows = d.projects.map(p => `<tr class="click" data-tag="${esc(p.tag)}"><td><b>${esc(p.tag)}</b>${p.kind === 'jira' ? ' <span class="badge tag">Jira</span>' : ''}</td><td style="min-width:200px"><div class="prog"><div class="pbar"><i style="width:${p.progress}%"></i></div><span>${p.progress}%</span></div></td><td class="n">${fmt(p.total)}</td><td class="n">${fmt(p.fixed)}</td><td class="n">${fmt(p.excluded)}</td><td class="n">${fmt(p.open)}</td><td class="n">${fmt(p.hosts)}</td><td class="muted">${esc(Object.entries(p.byStatus).map(([k, v]) => (ST_RU[k] || k) + ' ' + fmt(v)).join(', '))}</td><td><button class="btn p-close" data-tag="${esc(p.tag)}" title="Снять метку со всех экземпляров: проект исчезнет из списка">Закрыть</button></td></tr>`).join('');
+        $('p-out').innerHTML = `<div class="box">${tfilter('фильтр по названию проекта')}<table><tr><th>проект (метка)</th><th>прогресс</th><th>всего</th><th>устранено</th><th>исключено</th><th>открыто</th><th>узлов</th><th>статусы</th><th></th></tr>${rows || '<tr><td colspan=8 class="muted">Меток на уязвимостях нет. Создайте задачу Jira из очереди (метка jira:KEY ставится автоматически) или поставьте метку proj:название в MaxPatrol.</td></tr>'}</table></div>`;
+        bindFilters($('p-out'));
+        sh.querySelectorAll('#p-out tr.click').forEach(tr => tr.addEventListener('click', () => showDrill($('p-drill'), `Проект ${tr.dataset.tag}: уязвимости и узлы`, VR.drillPdql('tag', tr.dataset.tag), { limit: 1000 })));
+        sh.querySelectorAll('#p-out .p-close').forEach(b => b.addEventListener('click', async e => {
+          e.stopPropagation(); const tag = b.dataset.tag;
+          if (!confirm(`Закрыть проект ${tag}: снять метку со всех экземпляров? Статусы уязвимостей не меняются.`)) return;
+          b.disabled = true; b.textContent = 'снимаем';
+          try { const sel = await VR.drill({ pdql: VR.drillPdql('tag', tag), limit: 20000 }); const ids = sel.items.map(i => i.Id).filter(Boolean); await VR.tagInstances(ids, tag, true); b.textContent = `снято с ${fmt(ids.length)}`; }
+          catch (err) { b.textContent = 'ошибка'; b.disabled = false; $('p-err').textContent = err.message; }
+        }));
+    };
+    $('p-run').addEventListener('click', async () => {
+      $('p-err').textContent = ''; $('p-run').disabled = true; $('p-info').innerHTML = '<span class="spin"></span>';
+      try {
+        const d = state.projects = await VR.projects({ prefix: $('p-prefix').value.trim() });
+        $('p-info').textContent = `проектов: ${d.projects.length}`;
+        snapSave('projects', d); renderProjects(); updateReportButtons();
+      } catch (e) { $('p-err').textContent = e.message; $('p-info').textContent = ''; }
+      $('p-run').disabled = false;
+    });
+    const PROJ_COLS = [['Проект', 'tag'], ['Прогресс %', 'progress'], ['Всего', 'total'], ['Устранено', 'fixed'], ['Исключено', 'excluded'], ['Открыто', 'open'], ['Узлов', 'hosts']];
+
+    // Контейнеры и веб
+    const wRun = async (btn, fn) => { $('w-err').textContent = ''; btn.disabled = true; $('w-info').innerHTML = '<span class="spin"></span>PDQL'; try { await fn(); } catch (e) { $('w-err').textContent = e.message; $('w-info').textContent = ''; } btn.disabled = false; };
+    const IMG_COLS = [['Набор образов', 'image'], ['ID', 'id'], ['Уязвимостей', 'n'], ['Critical', 'crit'], ['High', 'high'], ['Max CVSS', 'maxScore']];
+    const IMGQ_COLS = [['Образ', 'image'], ['Пакет', 'pkg'], ['Версия', 'ver'], ['Уязвимостей', 'n'], ['Critical', 'crit'], ['High', 'high'], ['Max CVSS', 'maxScore']];
+    const WEB_COLS = [['Сайт', 'site'], ['Уязвимость', 'name'], ['CVE', 'cve'], ['CVSS', 'score'], ['Уровень', 'sev'], ['Статус', 'st'], ['Обнаружена', 'found']];
+    const W_SPEC = {
+      images: { title: 'Наборы образов', cols: IMG_COLS, rows: d => d, csvName: 'images' },
+      imgQueue: { title: 'Очередь по пакетам образов', cols: IMGQ_COLS, rows: d => d.groups, csvName: 'image_packages' },
+      web: { title: 'Уязвимости веб-сайтов', cols: WEB_COLS, rows: d => d.items, csvName: 'web_vulns' },
+    };
+    const renderImages = list => {
+      $('w-csv').disabled = false; state.wCsv = () => download(`images_${today()}.csv`, csv(list, IMG_COLS), 'text/csv;charset=utf-8');
+      $('w-out').innerHTML = `<div class="box"><h3>Наборы образов</h3>${tfilter('фильтр по образу')}<table><tr><th>набор образов</th><th>открытых уязвимостей</th><th>critical</th><th>high</th><th>max CVSS</th></tr>${list.map(i => `<tr><td class="ell" title="${esc(i.image)}">${alink(i.id, i.image)}</td><td class="n">${fmt(i.n)}</td><td class="n">${fmt(i.crit)}</td><td class="n">${fmt(i.high)}</td><td class="n">${i.maxScore}</td></tr>`).join('') || '<tr><td colspan=5 class="muted">образов с открытыми уязвимостями нет</td></tr>'}</table></div>`;
+      bindFilters($('w-out'));
+    };
+    $('w-images').addEventListener('click', () => wRun($('w-images'), async () => {
+      const list = await VR.imageSummary(); $('w-info').textContent = `образов с открытыми уязвимостями: ${list.length}`;
+      state.cw = { kind: 'images', data: list }; snapSave('cw', state.cw); renderImages(list); updateReportButtons();
+    }));
+    const renderImgQueue = q => {
+      $('w-csv').disabled = false; state.wCsv = () => download(`image_packages_${today()}.csv`, csv(q.groups, IMGQ_COLS), 'text/csv;charset=utf-8');
+      $('w-out').innerHTML = `<div class="box"><h3>Очередь по пакетам образов</h3><div class="muted">Пакет и версия внутри образа: обновление базового образа или пакета в Dockerfile закрывает всю группу. Клик по строке показывает CVE.</div>${tfilter('фильтр: образ, пакет')}<div class="scroll" style="max-height:520px"><table><tr><th>образ</th><th>пакет</th><th>версия</th><th>уязвимостей</th><th>critical</th><th>high</th><th>max CVSS</th></tr>${q.groups.map((g, i) => `<tr class="click" data-i="${i}"><td class="ell" title="${esc(g.image || '')}">${esc(g.image || '')}</td><td class="ell">${esc(g.pkg || '')}</td><td class="ver">${esc(g.ver)}</td><td class="n">${fmt(g.n)}</td><td class="n">${fmt(g.crit)}</td><td class="n">${fmt(g.high)}</td><td class="n">${g.maxScore}</td></tr>`).join('') || '<tr><td colspan=7 class="muted">пусто</td></tr>'}</table></div></div><div id="w-drill"></div>`;
+      bindFilters($('w-out'));
+      sh.querySelectorAll('#w-out tr.click').forEach(tr => tr.addEventListener('click', async () => {
+        const g = q.groups[parseInt(tr.dataset.i)]; const box = $('w-drill'); box.innerHTML = '<div class="box"><span class="spin"></span>детали</div>';
+        try { const d = await VR.queueDetail({ scope: 'images', soft: g.pkg, ver: g.ver, pkg: g.pkg }); box.innerHTML = `<div class="box drill"><h3>${esc(g.pkg)} ${esc(g.ver)}<button class="x">×</button></h3><div class="muted">${fmt(d.rows)} экземпляров, ${d.cves.length} CVE, ${d.hosts.length} наборов образов</div><div class="two"><div class="scroll"><table><tr><th>CVE (паспорт)</th><th>CVSS</th><th>экземпляров</th></tr>${d.cves.slice(0, 100).map(c => `<tr><td>${plink(c.vulnId, c.cve)}</td><td class="n">${c.score}</td><td class="n">${fmt(c.n)}</td></tr>`).join('')}</table></div><div class="scroll"><table><tr><th>набор образов</th><th>уязвимостей</th></tr>${d.hosts.slice(0, 100).map(h => `<tr><td class="ell">${alink(h.id, h.host)}</td><td class="n">${fmt(h.n)}</td></tr>`).join('')}</table></div></div></div>`; box.querySelector('.x').addEventListener('click', () => { box.innerHTML = ''; }); }
+        catch (e) { box.innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+      }));
+    };
+    $('w-imgq').addEventListener('click', () => wRun($('w-imgq'), async () => {
+      const q = await VR.queue({ scope: 'images', minScore: $('w-min').value, limit: 500 }); $('w-info').textContent = `групп (образ + пакет + версия): ${q.totalGroups}`;
+      state.cw = { kind: 'imgQueue', data: q }; snapSave('cw', state.cw); renderImgQueue(q); updateReportButtons();
+    }));
+    const renderWeb = w => {
+      $('w-csv').disabled = false; state.wCsv = () => download(`web_vulns_${today()}.csv`, csv(w.items, WEB_COLS), 'text/csv;charset=utf-8');
+      $('w-out').innerHTML = `<div class="box"><h3>Веб-сайты</h3>${w.sites.length ? '' : '<div class="muted">Активов типа WebSite с открытыми уязвимостями нет: веб-сканирование (PT BlackBox или профиль веб-аудита) на этом стенде не выполнялось.</div>'}<table><tr><th>сайт</th><th>открытых</th><th>critical</th><th>high</th><th>max CVSS</th></tr>${w.sites.map(s => `<tr><td>${esc(s.site)}</td><td class="n">${fmt(s.n)}</td><td class="n">${fmt(s.crit)}</td><td class="n">${fmt(s.high)}</td><td class="n">${s.maxScore}</td></tr>`).join('')}</table></div>
+        ${w.items.length ? `<div class="box"><h3>Уязвимости веб-сайтов</h3>${tfilter('фильтр: сайт, уязвимость, CVE')}<div class="scroll" style="max-height:520px"><table><tr><th>сайт</th><th>уязвимость (паспорт)</th><th>CVE</th><th>CVSS</th><th>уровень</th><th>статус</th><th>обнаружена</th></tr>${w.items.slice(0, 1000).map(i => `<tr><td class="ell">${esc(i.site)}</td><td class="ell" title="${esc(i.name)}">${plink(i.vulnId, i.name)}</td><td>${esc(i.cve || '')}</td><td class="n">${i.score}</td><td>${esc(SEV_RU[i.sev] || i.sev)}</td><td>${esc(ST_RU[i.st] || i.st)}</td><td class="n">${esc(String(i.found || '').slice(0, 10))}</td></tr>`).join('')}</table></div></div>` : ''}`;
+      bindFilters($('w-out'));
+    };
+    $('w-web').addEventListener('click', () => wRun($('w-web'), async () => {
+      const w = await VR.webVulns({}); $('w-info').textContent = `веб-сайтов с открытыми уязвимостями: ${w.sites.length}, экземпляров ${fmt(w.items.length)}`;
+      state.cw = { kind: 'web', data: w }; snapSave('cw', state.cw); renderWeb(w); updateReportButtons();
+    }));
+    const renderCw = () => { const c = state.cw; if (!c) return; ({ images: renderImages, imgQueue: renderImgQueue, web: renderWeb })[c.kind]?.(c.data); };
+    $('w-csv').addEventListener('click', () => { if (state.wCsv) state.wCsv(); });
+
+    // Инвентаризация: авто-теги
+    const renderRules = () => { const all = VR.autoTagRules(); const groups = [...new Set(all.map(r => r.group || 'Прочее'))]; $('i-rules').innerHTML = groups.map(g => `<h4>${esc(g)}</h4><div class="grp">${all.map((r, i) => r.group === g ? `<label><input type="checkbox" class="i-rule" data-i="${i}" ${['Платформа', 'Роль', 'Гигиена'].includes(g) ? 'checked' : ''}><span><b>${esc(r.name)}</b> ${esc(r.title)}<code>${esc(r.pdql)}</code></span></label>` : '').join('')}</div>`).join('') + '<div class="muted">Правила по угрозе и срокам зависят от текущего состояния уязвимостей: применяйте их повторно после сканирования (старые теги остаются на активах, которые уже не подходят под правило: снимите их кнопкой «Удалить все auto:*» и примените заново). Теги зон риска ставятся во вкладке «Риск активов».</div>'; };
+    renderRules();
+    const iRun = async (btn, fn) => { $('i-err').textContent = ''; btn.disabled = true; try { await fn(); } catch (e) { $('i-err').textContent = e.message; $('i-info').textContent = ''; } btn.disabled = false; };
+    const INV_RES_COLS = [['Тег / правило', r => r.rule || r.tag], ['Результат', r => r.ok ? 'выполнено' : 'ошибка'], ['Активов', 'count'], ['Ошибок', 'failed'], ['Сообщение', 'error']];
+    const showResults = (title, res, fromSnap) => { if (!fromSnap) { state.inv = { kind: 'results', title, data: res }; snapSave('inv', state.inv); updateReportButtons(); } $('i-out').innerHTML = `<div class="box"><h3>${esc(title)}</h3><table><tr><th>тег / правило</th><th>результат</th></tr>${res.map(r => `<tr><td>${esc(r.rule || r.tag)}</td><td>${r.ok ? '<span class="badge tag" style="background:#d9f2e2;color:#1b8f4a">выполнено</span>' + (r.count != null ? ` <span class="muted">${fmt(r.count)} активов${r.failed ? ', ошибок ' + fmt(r.failed) : ''}</span>` : '') + (r.hasMatches === false ? ' <span class="muted">(выборка пустая)</span>' : '') : '<span class="badge tag hot">ошибка</span> ' + esc(r.error || '')}</td></tr>`).join('')}</table><div class="muted">Теги назначены точечно каждому активу выборки: сразу видны в списке активов и в PDQL (<b>Host.@Tags.Item = "имя"</b>).</div></div>`; };
+    $('i-apply').addEventListener('click', () => iRun($('i-apply'), async () => {
+      const all = VR.autoTagRules(); const rules = [...sh.querySelectorAll('.i-rule:checked')].map(c => all[parseInt(c.dataset.i)]);
+      if (!rules.length) throw new Error('Отметьте хотя бы одно правило');
+      if (!confirm(`Создать ${rules.length} тегов и назначить их активам по PDQL-выборкам?`)) return;
+      $('i-info').innerHTML = '<span class="spin"></span>0 из ' + rules.length;
+      const res = await VR.applyAutoTags({ rules, onProgress: n => { $('i-info').innerHTML = `<span class="spin"></span>правило ${n} из ${rules.length}`; } });
+      $('i-info').textContent = `готово: ${res.filter(r => r.ok).length} из ${res.length}`; showResults('Применение правил', res);
+    }));
+    $('i-add').addEventListener('click', () => iRun($('i-add'), async () => {
+      const name = $('i-name').value.trim(), pdql = $('i-pdql').value.trim();
+      if (!name || !pdql) throw new Error('Укажите имя тега и PDQL с select(@Host)');
+      $('i-info').innerHTML = '<span class="spin"></span>';
+      const res = await VR.applyAutoTags({ rules: [{ name, color: 'grey', title: 'свое правило', pdql }] });
+      $('i-info').textContent = res[0].ok ? 'готово' : 'ошибка'; showResults('Свое правило', res);
+    }));
+    $('i-remove').addEventListener('click', () => iRun($('i-remove'), async () => {
+      const tags = (await VR.assetTags() || []).filter(t => String(t.name).startsWith('auto:'));
+      if (!tags.length) { $('i-info').textContent = 'тегов auto:* нет'; return; }
+      if (!confirm(`Снять с активов и удалить ${tags.length} тегов: ${tags.map(t => t.name).join(', ')}?`)) return;
+      $('i-info').innerHTML = '<span class="spin"></span>удаление';
+      const res = await VR.removeAutoTags({ prefix: 'auto:' }); $('i-info').textContent = `удалено ${res.filter(r => r.ok).length} из ${res.length}`; showResults('Удаление auto:*', res);
+    }));
+    $('i-cover').addEventListener('click', () => iRun($('i-cover'), async () => {
+      $('i-info').innerHTML = '<span class="spin"></span>'; const cov = await VR.tagCoverage(); $('i-info').textContent = `тегов в использовании: ${cov.length}`;
+      state.inv = { kind: 'coverage', title: 'Покрытие активов тегами', data: cov }; snapSave('inv', state.inv); renderCoverage(cov); updateReportButtons();
+    }));
+    const COV_COLS = [['Тег', 'tag'], ['Активов', 'n']];
+    const renderCoverage = cov => {
+      $('i-out').innerHTML = `<div class="box"><h3>Покрытие активов тегами</h3>${tfilter('фильтр по тегу')}<table><tr><th>тег</th><th>активов</th><th></th></tr>${cov.map(c => `<tr><td>${esc(c.tag)}</td><td class="n">${fmt(c.n)}</td><td><a class="lnk" href="${esc(mpListUrl(`filter(Host.@Tags.Item = "${c.tag.replace(/"/g, '\\"')}") | select(@Host, Host.OsName, Host.@Importance)`))}">открыть в MaxPatrol</a></td></tr>`).join('') || '<tr><td colspan=3 class="muted">тегов на активах нет</td></tr>'}</table></div>`;
+      bindFilters($('i-out'));
+    };
+    $('i-tags').addEventListener('click', () => iRun($('i-tags'), async () => {
+      const tags = await VR.assetTags() || []; $('i-info').textContent = `тегов в системе: ${tags.length}`;
+      state.inv = { kind: 'tags', title: 'Теги активов', data: tags }; snapSave('inv', state.inv); renderTags(tags); updateReportButtons();
+    }));
+    const TAGS_COLS = [['Тег', 'name'], ['Цвет', 'color'], ['Описание', 'description'], ['ID', 'id']];
+    const renderTags = tags => {
+      $('i-out').innerHTML = `<div class="box"><h3>Теги активов</h3>${tfilter('фильтр по тегу')}<table><tr><th>тег</th><th>цвет</th><th>описание</th><th></th></tr>${tags.map(t => `<tr><td>${esc(t.name)}</td><td>${esc(t.color || '')}</td><td>${esc(t.description || '')}</td><td>${String(t.name).startsWith('auto:') ? `<button class="btn i-del" data-id="${esc(t.id)}" data-name="${esc(t.name)}">Удалить</button>` : ''}</td></tr>`).join('')}</table></div>`;
+      bindFilters($('i-out'));
+      sh.querySelectorAll('#i-out .i-del').forEach(b => b.addEventListener('click', async () => { if (!confirm(`Снять с активов и удалить тег ${b.dataset.name}?`)) return; b.disabled = true; try { await VR.assignAssetTags({ pdql: `filter(Host.@Tags.Item = "${b.dataset.name.replace(/"/g, '\\"')}") | select(@Host)`, removeIds: [b.dataset.id] }); await VR.deleteAssetTag(b.dataset.id); b.closest('tr').remove(); } catch (e) { $('i-err').textContent = e.message; b.disabled = false; } }));
+    };
+    const renderInv = () => { const c = state.inv; if (!c) return; if (c.kind === 'results') showResults(c.title, c.data, true); else if (c.kind === 'coverage') renderCoverage(c.data); else if (c.kind === 'tags') renderTags(c.data); };
+
+    // CVE
+    $('c-scan').addEventListener('click', () => { const c = scanPageCves(); $('c-cves').value = c.join(', '); $('c-scan-info').textContent = c.length ? `найдено: ${c.length}` : 'CVE на странице не найдены'; });
+    $('c-run').addEventListener('click', async () => {
+      const cves = [...new Set(($('c-cves').value.match(CVE_RE) || []).map(x => x.toUpperCase()))];
+      $('c-err').textContent = '';
+      if (!cves.length) { $('c-err').textContent = 'Укажите хотя бы один CVE'; return; }
+      $('c-run').disabled = true; $('c-info').innerHTML = `<span class="spin"></span>запрос по ${cves.length} CVE`;
+      try {
+        const r = await VR.ext('enrich', { cves, skipNvd: $('c-skipnvd').checked });
+        state.enrich = r; snapSave('cve', { enrich: r, text: $('c-cves').value });
+        renderCves(); updateReportButtons();
+        const meta = r.meta || {};
+        $('c-info').textContent = `готово: ${r.cves.length} CVE; KEV от ${meta.kevDate ? meta.kevDate.slice(0, 10) : 'нет'}${meta.nvdSkipped ? '; NVD пропущено ' + meta.nvdSkipped + ' (лимит без ключа)' : ''}${meta.bdu ? '; БДУ ' + fmt(meta.bdu.rows) + ' CVE' : '; БДУ не импортирована'}`;
+      } catch (e) { $('c-err').textContent = e.message; }
+      $('c-run').disabled = false;
+      if ($('c-err').textContent) $('c-info').textContent = '';
+    });
+    const CVE_COLS = [['CVE', 'cve'], ['Приоритет', r => r.verdict?.level], ['Вердикт', r => r.verdict?.title], ['Срок, дн', r => r.verdict?.slaDays], ['CVSS MP', r => r.mp?.score], ['CVSS 3.1', r => r.nvd?.cvss31?.score], ['CVSS 4.0', r => r.nvd?.cvss40?.score], ['EPSS %', r => r.epss?.epss != null ? +(r.epss.epss * 100).toFixed(1) : ''], ['KEV с', r => r.kev?.dateAdded || ''], ['KEV срок', r => r.kev?.dueDate || ''], ['Трендовая', r => r.mp?.trend ? 'да' : ''], ['Эксплойт', r => r.mp?.exploit ? 'да' : ''], ['SSVC', r => r.nvd?.ssvc ? `${r.nvd.ssvc.exploitation || ''}/${r.nvd.ssvc.automatable || ''}/${r.nvd.ssvc.impact || ''}` : ''], ['БДУ', r => (r.bdu || []).map(b => b.id || b).join(' ')]];
+    const cveRows = () => { const r = state.enrich; if (!r) return []; return r.cves.slice().sort((a, b) => (r.results[a].verdict.level > r.results[b].verdict.level ? 1 : -1)).map(c => ({ cve: c, ...r.results[c] })); };
+    const renderCves = () => {
+        const r = state.enrich; if (!r) return;
+        const order = r.cves.slice().sort((a, b) => (r.results[a].verdict.level > r.results[b].verdict.level ? 1 : -1));
+        $('c-out').innerHTML = order.map(c => renderCve(c, r.results[c])).join('');
+        sh.querySelectorAll('#c-out .gh').forEach(a => a.addEventListener('click', async e => {
+          e.preventDefault(); a.textContent = 'ищем...';
+          try { const g = await VR.ext('github', { cve: a.dataset.cve }); state.enrich.results[a.dataset.cve].gh = g; a.closest('.cve').outerHTML = renderCve(a.dataset.cve, state.enrich.results[a.dataset.cve]); }
+          catch (err) { a.textContent = 'GitHub: ' + err.message; }
+        }));
+    };
+
+    // ── Восстановление снимков всех вкладок (сутки) ──
+    restoreSnapshots = async function () {
+      const [q, a, x, pj, cw, inv, cv] = await Promise.all(['queue', 'assetRisk', 'excl', 'projects', 'cw', 'inv', 'cve'].map(snapLoad));
+      if (q && q.value.queue) { state.queue = q.value.queue; if (q.value.scope) $('q-scope').value = q.value.scope; if (q.value.minScore != null) $('q-min').value = q.value.minScore; if (q.value.limit) $('q-limit').value = q.value.limit; $('q-csv').disabled = false; $('q-pdql').disabled = false; $('q-info').textContent = snapNote(q.ts); renderQueue(); }
+      if (a) { state.assetRisk = a.value; ['a-csv', 'a-kev', 'a-tags'].forEach(i => { $(i).disabled = false; }); $('a-info').textContent = snapNote(a.ts); renderAssets(); }
+      if (x) { state.excl = x.value; $('x-info').textContent = snapNote(x.ts); renderExcl(); }
+      if (pj) { state.projects = pj.value; $('p-info').textContent = snapNote(pj.ts); renderProjects(); }
+      if (cw) { state.cw = cw.value; $('w-info').textContent = snapNote(cw.ts); renderCw(); }
+      if (inv) { state.inv = inv.value; $('i-info').textContent = snapNote(inv.ts); renderInv(); }
+      if (cv && cv.value.enrich) { state.enrich = cv.value.enrich; if (cv.value.text && !$('c-cves').value) $('c-cves').value = cv.value.text; $('c-info').textContent = snapNote(cv.ts); renderCves(); }
+      updateReportButtons();
+    };
+
+    // ── Отчеты по вкладкам: HTML (файл), PDF (печать), CSV ──
+    const impRu = { H: 'высокая', M: 'средняя', L: 'низкая', ND: 'не задана' };
+    const REPORTS = {
+      overview: { ready: () => !!state.metrics, name: 'vm_report', html: () => reportHtml(state.metrics, VR.config().host || location.hostname),
+        csv: () => { const c = VR.computeMetrics(state.metrics); const rows = ['critical', 'high', 'medium', 'low'].map(s => { const b = c.bySev[s] || {}; return { sev: SEV_RU[s], open: b.open || 0, ok: b.ok || 0, soon: b.soon || 0, over: b.over || 0 }; }); return csv([{ sev: 'ВСЕГО', open: c.open, ok: c.open - c.overdue - c.soon, soon: c.soon, over: c.overdue }, ...rows], [['Уровень', 'sev'], ['Открыто', 'open'], ['В срок', 'ok'], ['Истекает', 'soon'], ['Просрочено', 'over']]); } },
+      queue: { ready: () => !!state.queue, name: 'remediation_queue',
+        html: () => { const q = state.queue, d = state.detail; const totalN = q.groups.reduce((s, g) => s + g.n, 0); return buildReport({ title: 'Очередь устранения по решениям', subtitle: reportSubtitle(), note: `Источник: ${{ softs: 'ПО на узлах', packages: 'пакеты Unix', os: 'операционные системы', images: 'образы' }[q.scope] || q.scope}. Одно обновление закрывает всю группу; сортировка по устраняемому риску.`, kpis: [[fmt(q.totalGroups), 'решений'], [fmt(totalN), 'уязвимостей закроют'], [fmt(q.groups.reduce((s, g) => s + g.trend, 0)), 'трендовых', 'bad'], [pct(q.groups.slice(0, 5).reduce((s, g) => s + g.n, 0), totalN) + '%', 'закрывают топ-5']], sections: [{ title: 'Группы (ПО + версия)', cols: QUEUE_COLS, rows: q.groups, limit: 300 }, ...(d ? [{ title: `Выбранная группа: ${d.soft} ${d.ver}: CVE`, cols: [['CVE', 'cve'], ['CVSS', 'score'], ['Экземпляров', 'n'], ['Трендовая', c => c.trend ? 'да' : ''], ['Эксплойт', c => c.exploit ? 'да' : '']], rows: d.cves, limit: 200 }, { title: `Выбранная группа: ${d.soft} ${d.ver}: узлы`, cols: [['Узел', 'host'], ['Уязвимостей', 'n'], ['Max CVSS', 'maxScore']], rows: d.hosts, limit: 500 }] : [])] }); },
+        csv: () => csv(state.queue.groups, QUEUE_COLS) },
+      assets: { ready: () => !!state.assetRisk, name: 'asset_risk',
+        html: () => { const d = state.assetRisk; const z = k => (d.byZone.find(x => x.key === k) || { n: 0 }).n; const agg = (title, arr, kn, kf) => ({ title, cols: [[kn, r => kf ? kf(r.key) : r.key], ['Активов', 'n'], ['Средний риск', 'avg'], ['Max риск', 'max'], ['Трендовых', 'trend']], rows: arr, limit: 30 }); return buildReport({ title: 'Риск активов', subtitle: reportSubtitle(), note: `Гибридная оценка 0-1000: экспозиция (до ${d.weights.E}) + опасность CVSS (до ${d.weights.V}) + угроза (до ${d.weights.T}) + критичность по методике ФСТЭК (до ${d.weights.F}), умноженные на контекст значимости актива и актуальности скана.`, kpis: [[fmt(z('critical')), 'критическая зона (700+)', 'bad'], [fmt(z('high')), 'высокая (500-699)', 'warn'], [fmt(z('medium')), 'средняя (300-499)'], [fmt(z('low')), 'низкая (до 300)', 'ok']], sections: [agg('По значимости', d.byImp, 'Значимость', k => impRu[k] || k), agg('По типу актива', d.byType, 'Тип'), agg('По операционной системе', d.byOs, 'ОС'), { title: 'Активы по риску', cols: [['Узел', 'host'], ['ОС', 'os'], ['Значимость', a => impRu[a.imp] || a.imp], ['Риск', 'risk'], ['Зона', 'zone'], ['E', 'cE'], ['V', 'cV'], ['T', 'cT'], ['F', 'cF'], ['Открыто', 'n'], ['Critical', 'crit'], ['High', 'high'], ['Трендовых', 'trend'], ['Эксплойт', 'expl'], ['KEV', 'kev'], ['Почему', 'why']], rows: d.assets, limit: 300 }] }); },
+        csv: () => csv(state.assetRisk.assets, RISK_COLS) },
+      excl: { ready: () => !!state.excl, name: 'exclusions',
+        html: () => { const d = state.excl; return buildReport({ title: 'Исключения и принятые риски', subtitle: reportSubtitle(), kpis: [[fmt(d.total), 'исключено всего'], [fmt(d.risky.length), 'сомнительных', d.risky.length ? 'bad' : 'ok'], [fmt(d.groups.length), 'уязвимостей (групп)']], sections: [{ title: 'По причинам', cols: [['Причина', r => REASON[r.reason] || r.reason], ['Исключено', 'n'], ['Трендовых', 'trend'], ['С эксплойтом', 'expl'], ['На важных активах', 'highImp'], ['Без комментария', 'noNote']], rows: d.byReason }, { title: 'Сомнительные исключения', note: 'Трендовые, с публичным эксплойтом или CVSS 9+: пересмотреть.', cols: [['CVE / уязвимость', g => g.cve || g.name], ['CVSS', 'score'], ['Экземпляров', 'n'], ['Узлов', 'hosts'], ['Трендовая', g => g.trend ? 'да' : ''], ['Эксплойт', g => g.expl ? 'да' : '']], rows: d.groups.filter(g => g.trend || g.expl || g.score >= 9), limit: 200 }, { title: 'Сомнительные исключения по узлам', cols: EXCL_COLS, rows: d.risky, limit: 500 }] }); },
+        csv: () => csv(state.excl.risky, EXCL_COLS) },
+      proj: { ready: () => !!state.projects, name: 'projects',
+        html: () => buildReport({ title: 'Проекты устранения', subtitle: reportSubtitle(), note: 'Прогресс по факту сканирования: устранено + исключено / всего экземпляров с меткой проекта.', sections: [{ title: 'Проекты', cols: [...PROJ_COLS, ['Статусы', p => Object.entries(p.byStatus).map(([k, v]) => (ST_RU[k] || k) + ' ' + fmt(v)).join(', ')]], rows: state.projects.projects }] }),
+        csv: () => csv(state.projects.projects, PROJ_COLS) },
+      cw: { ready: () => !!state.cw, name: () => W_SPEC[state.cw.kind].csvName,
+        html: () => { const s = W_SPEC[state.cw.kind]; return buildReport({ title: s.title, subtitle: reportSubtitle(), sections: [{ title: s.title, cols: s.cols, rows: s.rows(state.cw.data), limit: 1000 }] }); },
+        csv: () => { const s = W_SPEC[state.cw.kind]; return csv(s.rows(state.cw.data), s.cols); } },
+      inv: { ready: () => !!state.inv, name: () => 'inventory_' + state.inv.kind,
+        html: () => { const c = state.inv; const cols = { results: INV_RES_COLS, coverage: COV_COLS, tags: TAGS_COLS }[c.kind]; return buildReport({ title: 'Инвентаризация: ' + c.title, subtitle: reportSubtitle(), sections: [{ title: c.title, cols, rows: c.data, limit: 1000 }] }); },
+        csv: () => { const c = state.inv; return csv(c.data, { results: INV_RES_COLS, coverage: COV_COLS, tags: TAGS_COLS }[c.kind]); } },
+      cve: { ready: () => !!state.enrich, name: 'cve_context',
+        html: () => { const rows = cveRows(); const by = l => rows.filter(r => r.verdict?.level === l).length; return buildReport({ title: 'Внешний контекст по CVE', subtitle: reportSubtitle(), note: 'Вердикт P0-P3 и срок по приказу ФСТЭК 117 с учетом CISA KEV, трендовости PT, EPSS, эксплойтов и CVSS.', kpis: [[fmt(rows.length), 'CVE'], [fmt(by('P0')), 'P0: немедленно', by('P0') ? 'bad' : 'ok'], [fmt(by('P1')), 'P1', 'warn'], [fmt(rows.filter(r => r.kev).length), 'в CISA KEV', 'bad']], sections: [{ title: 'CVE', cols: CVE_COLS, rows, limit: 500 }] }); },
+        csv: () => csv(cveRows(), CVE_COLS) },
+    };
+    function currentTab() { return sh.querySelector('.tabs button.active')?.dataset.t; }
+    updateReportButtons = function () { const r = REPORTS[currentTab()]; const ok = !!(r && r.ready()); ['r-html', 'r-pdf', 'r-csv'].forEach(id => { $(id).disabled = !ok; }); };
+    const repName = r => (typeof r.name === 'function' ? r.name() : r.name) + '_' + today();
+    $('r-html').addEventListener('click', () => { const r = REPORTS[currentTab()]; if (r && r.ready()) download(repName(r) + '.html', r.html(), 'text/html;charset=utf-8'); });
+    $('r-pdf').addEventListener('click', () => { const r = REPORTS[currentTab()]; if (r && r.ready()) printHtml(r.html(), repName(r) + '.html'); });
+    $('r-csv').addEventListener('click', () => { const r = REPORTS[currentTab()]; if (r && r.ready()) download(repName(r) + '.csv', r.csv(), 'text/csv;charset=utf-8'); });
+
+    // Настройки
+    const S = { epssEnabled: 's-epss', kevEnabled: 's-kev', nvdEnabled: 's-nvd', ghEnabled: 's-gh', sameTabLinks: 's-sametab', nvdApiKey: 's-nvdkey', ghToken: 's-ghtoken', slaCritDays: 's-crit', slaHighDays: 's-high', slaMedDays: 's-med', slaLowDays: 's-low' };
+    const fill = s => Object.entries(S).forEach(([k, id]) => { const el = $(id); if (!el) return; if (el.type === 'checkbox') el.checked = k === 'sameTabLinks' ? s[k] !== false : !!s[k]; else el.value = s[k] ?? ''; });
+    const read = () => { const o = {}; Object.entries(S).forEach(([k, id]) => { const el = $(id); if (!el) return; o[k] = el.type === 'checkbox' ? el.checked : (el.type === 'number' ? parseInt(el.value) || 0 : el.value.trim()); }); return o; };
+    const RW = Object.keys(VR.riskDefaults());
+    const fillRw = w => RW.forEach(k => { const el = $('s-rw-' + k); if (el) el.value = w[k]; });
+    const readRw = () => { const o = {}; RW.forEach(k => { const el = $('s-rw-' + k); const v = parseFloat(el?.value); if (!isNaN(v)) o[k] = v; }); return o; };
+    VR.ext('settings-get').then(s => { fill(s); fillRw({ ...VR.riskDefaults(), ...(s.riskWeights || {}) }); }).catch(() => {});
+    $('s-rw-reset').addEventListener('click', () => fillRw(VR.riskDefaults()));
+    VR.ext('bdu-info').then(m => { if (m) $('s-bduinfo').textContent = `импортировано ${fmt(m.rows)} CVE (${new Date(m.ts).toLocaleDateString('ru-RU')})`; }).catch(() => {});
+    $('s-save').addEventListener('click', async () => { try { await VR.ext('settings-set', { settings: { ...read(), riskWeights: readRw() } }); $('s-info').textContent = 'сохранено'; } catch (e) { $('s-info').textContent = e.message; } });
+    const J = { jiraUrl: 's-jurl', jiraAuth: 's-jauth', jiraUser: 's-juser', jiraToken: 's-jtoken', jiraProject: 's-jproject', jiraIssueType: 's-jtype', jiraLabels: 's-jlabels', jiraTagInstances: 's-jtag' };
+    const fillJ = s => Object.entries(J).forEach(([k, id]) => { const el = $(id); if (!el) return; if (el.type === 'checkbox') el.checked = s[k] !== false; else el.value = s[k] ?? ''; });
+    const readJ = () => { const o = {}; Object.entries(J).forEach(([k, id]) => { const el = $(id); if (!el) return; o[k] = el.type === 'checkbox' ? el.checked : el.value.trim(); }); return o; };
+    VR.ext('settings-get').then(fillJ).catch(() => {});
+    $('s-jsave').addEventListener('click', async () => { try { await VR.ext('settings-set', { settings: readJ() }); $('s-jinfo').textContent = 'сохранено'; } catch (e) { $('s-jinfo').textContent = e.message; } });
+    $('s-jtest').addEventListener('click', async () => {
+      $('s-jinfo').innerHTML = '<span class="spin"></span>проверка';
+      try { await VR.ext('settings-set', { settings: readJ() }); const r = await VR.ext('jira-test'); $('s-jinfo').textContent = `подключено: ${r.user}, Jira ${r.version} (${r.deploymentType})`; }
+      catch (e) { $('s-jinfo').textContent = e.message; }
+    });
+    $('s-jprojects').addEventListener('click', async () => {
+      $('s-jinfo').innerHTML = '<span class="spin"></span>запрос';
+      try { await VR.ext('settings-set', { settings: readJ() }); const list = await VR.ext('jira-projects'); $('s-jinfo').textContent = list.length ? 'проекты: ' + list.slice(0, 25).map(p => `${p.key} (${p.name})`).join(', ') : 'проектов не найдено'; }
+      catch (e) { $('s-jinfo').textContent = e.message; }
+    });
+    $('s-kevref').addEventListener('click', async () => { $('s-kevinfo').textContent = 'загрузка...'; try { const r = await VR.ext('kev-refresh'); $('s-kevinfo').textContent = r.error ? 'ошибка: ' + r.error : `${fmt(r.count)} записей, выпуск ${(r.dateReleased || '').slice(0, 10)}`; } catch (e) { $('s-kevinfo').textContent = e.message; } });
+    $('s-bdubtn').addEventListener('click', () => $('s-bdufile').click());
+    $('s-bdufile').addEventListener('change', () => {
+      const f = $('s-bdufile').files[0]; if (!f) return;
+      if (/\.xlsx?$/i.test(f.name)) { $('s-bduinfo').textContent = 'XLSX не поддерживается: сохраните как CSV'; return; }
+      $('s-bduinfo').textContent = 'разбор файла...';
+      const rd = new FileReader();
+      rd.onload = async () => { try { const r = await VR.ext('bdu-import', { map: VR.parseBdu(String(rd.result || '')), source: f.name }); $('s-bduinfo').textContent = `импортировано ${fmt(r.rows)} CVE из ${f.name}`; } catch (e) { $('s-bduinfo').textContent = 'ошибка: ' + e.message; } };
+      rd.readAsText(f);
+    });
+  }
+
+  // ── Запуск ────────────────────────────────────────────────────────────────
+  VR.loadConfig().then(() => {
+    console.info('[vr] настройки прочитаны, хост', VR.config().host || '(пусто)', 'страница', location.hostname);
+    if (!VR.isConfiguredHost()) { console.info('[vr] хост страницы не совпадает с настройками расширения, модуль не активен'); return; }
+    let tries = 0;
+    const tick = () => { if (ensureMenuItem()) { console.info('[vr] пункт меню "Устранение" добавлен'); return; } if (++tries < 240) setTimeout(tick, 500); else console.warn('[vr] левое меню не найдено за 120 с'); };
+    tick();
+    // Angular может перерисовать меню: следим и восстанавливаем пункт
+    let moQueued = false;
+    new MutationObserver(() => {
+      if (moQueued) return; moQueued = true;
+      requestAnimationFrame(() => {
+        moQueued = false;
+        const mi = document.getElementById('vr-menu-item');
+        if (!mi) ensureMenuItem();
+        else { const f = findAnchorItem(); if (f && f.where === 'afterend' && mi.previousElementSibling !== f.el) f.el.insertAdjacentElement('afterend', mi); }
+        if (opened) positionRoot();
+      });
+    }).observe(document.body, { childList: true, subtree: true });
+  });
+  chrome.storage.onChanged.addListener((ch, area) => { if (area === 'sync' && (ch.host || ch.token || ch.port)) VR.loadConfig(); });
+})(window.VR);

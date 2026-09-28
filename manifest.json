@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "MaxPatrol VM: устранение уязвимостей",
+  "description": "Слой мобилизации устранения поверх MaxPatrol VM: внешние сигналы по CVE, очередь устранения по решениям, метрики процесса и отчет по приказу ФСТЭК 117",
+  "version": "0.5.2",
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://*/*",
+    "http://*/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "MaxPatrol VM: устранение уязвимостей"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*/*",
+        "http://*/*"
+      ],
+      "js": [
+        "content/api.js",
+        "content/logic.js",
+        "content/app.js",
+        "content/cards.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "content/inject.js"
+      ],
+      "matches": [
+        "https://*/*",
+        "http://*/*"
+      ]
+    }
+  ]
+}

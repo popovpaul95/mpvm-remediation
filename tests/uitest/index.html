@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru" class="theme-dark"><head><meta charset="utf-8"><title>Имитация MaxPatrol VM для проверки расширения</title>
+<link rel="stylesheet" href="kbq-tokens.css">
+<style>
+  
+  body { margin: 0; background: var(--kbq-background-bg); color: var(--kbq-foreground-contrast); font: 14px/1.4 -apple-system, "Segoe UI", sans-serif; display: flex; height: 100vh; }
+  .kbq-navbar { width: 250px; background: #111522; display: flex; flex-direction: column; padding-top: 16px; border-right: 1px solid var(--kbq-line-contrast-less); }
+  .kbq-navbar-brand { padding: 10px 20px 24px; font-weight: 700; color: #fff; }
+  .kbq-navbar-item { display: block; color: #c9cdd8; text-decoration: none; padding: 0 12px; }
+  .kbq-navbar-item__container { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; }
+  .kbq-navbar-item:hover .kbq-navbar-item__container { background: #232a3c; }
+  .kbq-navbar-item.kbq-selected .kbq-navbar-item__container { background: #2a3350; color: #fff; }
+  .kbq-icon-item { width: 16px; height: 16px; display: inline-block; background: currentColor; border-radius: 3px; opacity: .8; }
+  .kbq-navbar-title { font-size: 14px; }
+  main { flex: 1; padding: 24px 32px; overflow: auto; }
+  code { background: #2a3042; padding: 1px 5px; border-radius: 3px; }
+</style></head>
+<body>
+<nav class="kbq-navbar kbq-navbar-vertical">
+  <div class="kbq-navbar-brand">MaxPatrol 10</div>
+  <a class="kbq-navbar-item" href="/dashboards"><div class="kbq-navbar-item__container"><i class="kbq kbq-icon kbq-icon-item kbq-dashboard_16"></i><span class="kbq-navbar-title">Дашборды</span></div></a>
+  <a class="kbq-navbar-item kbq-selected" href="/assets"><div class="kbq-navbar-item__container"><i class="kbq kbq-icon kbq-icon-item kbq-server_16"></i><span class="kbq-navbar-title">Активы</span></div></a>
+  <a class="kbq-navbar-item" href="/standards"><div class="kbq-navbar-item__container"><i class="kbq kbq-icon kbq-icon-item kbq-shield_16"></i><span class="kbq-navbar-title">Стандарты</span></div></a>
+  <a class="kbq-navbar-item" href="/requirements"><div class="kbq-navbar-item__container"><i class="kbq kbq-icon kbq-icon-item kbq-book_16"></i><span class="kbq-navbar-title">Библиотека требований</span></div></a>
+</nav>
+<main>
+  <h1>Активы (имитация страницы MaxPatrol)</h1>
+  <p>Карточка уязвимости: <code>CVE-2021-44228</code>, <code>CVE-2020-1472</code>, <code>CVE-2022-3602</code>. Пункт «Устранение» должен появиться в меню слева после «Активы».</p>
+</main>
+<script>
+(async () => {
+  const fx = await fetch('fixtures.json').then(r => r.json());
+  const settings = { jiraUrl: 'https://jira.example', jiraToken: 'x', jiraProject: 'VM', jiraAuth: 'bearer', jiraIssueType: 'Task', jiraLabels: 'maxpatrol-vm', jiraTagInstances: true, epssEnabled: true, kevEnabled: true, nvdEnabled: true, nvdApiKey: '', ghEnabled: false, ghToken: '', slaCritDays: 1, slaHighDays: 7, slaMedDays: 30, slaLowDays: 90, queueLimit: 300 };
+  const delay = ms => new Promise(r => setTimeout(r, ms));
+  window.chrome = {
+    storage: { sync: { get: (k, cb) => setTimeout(() => cb({ host: location.hostname, port: '', token: 'mock' }), 0) }, onChanged: { addListener() {} } },
+    runtime: {
+      lastError: null, onMessage: { addListener() {} },
+      sendMessage: (msg, cb) => { (async () => {
+        await delay(200);
+        const p = msg.params || {};
+        const ops = {
+          'cache-get': () => { try { return JSON.parse(localStorage.getItem('vr_cache_' + p.key) || 'null'); } catch (_) { return null; } },
+          'cache-set': () => { try { localStorage.setItem('vr_cache_' + p.key, JSON.stringify({ ts: Date.now(), value: p.value })); } catch (e) { console.warn('cache-set', e.message); } return { ok: true }; },
+          'settings-get': () => settings, 'settings-set': () => Object.assign(settings, p.settings), 'bdu-info': () => null,
+          'kev-refresh': () => ({ count: 1728, dateReleased: '2026-09-27T21:30:35Z' }), 'bdu-import': () => ({ rows: Object.keys(p.map || {}).length }),
+          'enrich': () => { const r = JSON.parse(JSON.stringify(fx.enrich)); const results = {}; (p.cves || []).forEach(c => { results[c] = r.results[c] || { epss: null, kev: null, nvd: null, bdu: null, mp: (p.mp || {})[c] || null, verdict: { level: 'P3', title: 'Плановое устранение', reasons: [], slaDays: 90 } }; }); return { cves: p.cves || [], results, meta: r.meta }; },
+          'github': () => ({ count: 514, items: [{ name: 'fullhunt/log4j-scan', url: 'https://github.com/fullhunt/log4j-scan', stars: 3424 }] }),
+          'jira-test': () => ({ user: 'Test User', version: '9.12.0', deploymentType: 'Server' }),
+          'jira-projects': () => [{ key: 'VM', name: 'Vulnerability Management' }, { key: 'IT', name: 'IT Ops' }],
+          'jira-create': () => ({ key: 'VM-101', id: '10001', url: 'https://jira.example/browse/VM-101' }),
+          'jira-attach': () => ({ ok: true, filename: p.filename }),
+          'jira-search': () => [{ key: 'VM-99', url: 'https://jira.example/browse/VM-99', summary: 'Обновить OpenSSL 3.0.2', status: 'In Progress', assignee: 'Иванов', due: '2026-10-05' }],
+        };
+        if (!ops[msg.op]) return cb({ ok: false, error: 'нет мока ' + msg.op });
+        cb({ ok: true, result: ops[msg.op]() });
+      })(); },
+    },
+  };
+  for (const f of ['content/api.js', 'content/logic.js']) await new Promise((res, rej) => { const s = document.createElement('script'); s.src = f + '?' + Date.now(); s.onload = res; s.onerror = rej; document.body.appendChild(s); });
+  // Данные MaxPatrol подменяем фикстурами реального стенда
+  window.VR.systemInfo = async () => ({ productVersion: '28.0.42578 (мок)' });
+  window.VR.queue = async ({ scope }) => { await delay(400); return { packages: fx.queuePkg, os: fx.queueOs, images: fx.queueImages }[scope] || fx.queue; };
+  window.VR.queueDetail = async ({ scope }) => { await delay(300); return { packages: fx.detailPkg, os: fx.detailOs, images: fx.detailImages }[scope] || fx.detail; };
+  window.VR.drill = async ({ pdql, limit }) => { await delay(400); return { ...fx.drillOpen, pdql, truncated: true }; };
+  window.VR.guidByCve = async () => { await delay(200); return '1e1e0792-7bc1-4001-0000-000000051ee9'; };
+  window.VR.passport = async () => { await delay(100); return fx.passport; };
+  window.VR.assetsInfo = async ids => { await delay(200); const o = {}; ids.forEach(i => { o[i] = { imp: 'H', os: 'Windows 2016', groups: ['Серверы', 'Периметр'] }; }); return o; };
+  window.VR.imageSummary = async () => { await delay(300); return fx.images; };
+  window.VR.webVulns = async () => { await delay(300); return fx.web; };
+  let mockTags = [{ id: 't1', name: '1', color: 'grey' }, { id: 't2', name: 'auto:os-windows', color: 'blue' }];
+  window.VR.assetTags = async () => { await delay(100); return mockTags; };
+  window.VR.createAssetTag = async (name, color) => { const t = { id: 't' + Date.now(), name, color }; mockTags.push(t); return t; };
+  window.VR.deleteAssetTag = async id => { mockTags = mockTags.filter(t => t.id !== id); };
+  window.VR.assignAssetTags = async () => { await delay(300); return { count: 29, failed: 0 }; };
+  window.VR.tagCoverage = async () => { await delay(200); return fx.tagCoverage.length ? fx.tagCoverage : [{ tag: 'auto:os-windows', n: 210 }, { tag: '1', n: 1 }]; };
+  window.VR.metrics = async () => { await delay(500); return fx.metrics; };
+  window.VR.changeStatus = async ({ ids, command }) => { await delay(300); return { count: ids.length, command, operationId: 'mock', succeed: ids.length, failed: 0, total: ids.length }; };
+  window.VR.tagInstances = async () => { await delay(200); return 'mock-op'; };
+  window.VR.assetRisk = async () => { await delay(400); return fx.assetRisk; };
+  window.VR.exclusions = async () => { await delay(400); return fx.exclusions; };
+  window.VR.projects = async () => { await delay(300); return fx.projects && fx.projects.projects.length ? fx.projects : { projects: [{ tag: 'jira:VM-101', total: 20000, fixed: 6400, excluded: 100, open: 13500, byStatus: { new: 9000, inProgress: 4500, fixed: 6400, excluded: 100 }, hosts: 162 }, { tag: 'proj:openssl-q4', total: 3000, fixed: 2900, excluded: 0, open: 100, byStatus: { fixed: 2900, new: 100 }, hosts: 40 }].map(p => ({ ...p, progress: Math.round((p.fixed + p.excluded) / p.total * 100), kind: p.tag.startsWith('jira:') ? 'jira' : 'proj' })), pdql: 'mock' }; };
+  await new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'content/app.js?' + Date.now(); s.onload = res; s.onerror = rej; document.body.appendChild(s); });
+})();
+</script>
+</body></html>
