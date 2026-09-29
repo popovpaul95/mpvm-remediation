@@ -153,17 +153,22 @@
         try {
           const s = await VR.ext('settings-get');
           if (!s.jiraUrl || !s.jiraToken || !s.jiraProject) throw new Error('Заполните Jira в настройках расширения (пункт «Устранение», вкладка «Настройки»)');
-          const ctx = await VR.instanceContext({ cve: id.cve, instanceId: instId });
-          if (!ctx.selected) throw new Error(`Экземпляр ${id.cve} по идентификатору из адреса страницы не найден`);
-          let enr = null; try { enr = await VR.ext('enrich', { cves: [id.cve], skipNvd: true, mp: { [id.cve]: { score: ctx.selected.item.score, trend: ctx.selected.item.trend, exploit: ctx.selected.item.expl } } }); } catch (_) {}
-          const issue = VR.buildInstanceJiraIssue({ ctx: { ...ctx.selected, cve: id.cve }, enrich: enr, sla: s, host: VR.config().host });
+          // Идентификатор экземпляра и CVE читаются в момент клика: при переходе внутри интерфейса блок не пересоздается
+          const instNow = new URLSearchParams(location.search).get('vulnerabilityInstanceId') || '';
+          if (!instNow) throw new Error('В адресе страницы нет идентификатора экземпляра: откройте карточку экземпляра заново');
+          const idNow = cardIdentity(container); const cveNow = idNow.cve || id.cve;
+          const ctx = await VR.instanceContext({ cve: cveNow, instanceId: instNow });
+          if (!ctx.selected) throw new Error(`Экземпляр ${cveNow} по идентификатору из адреса страницы не найден`);
+          let enr = null; try { enr = await VR.ext('enrich', { cves: [cveNow], skipNvd: true, mp: { [cveNow]: { score: ctx.selected.item.score, trend: ctx.selected.item.trend, exploit: ctx.selected.item.expl } } }); } catch (_) {}
+          const issue = VR.buildInstanceJiraIssue({ ctx: { ...ctx.selected, cve: cveNow }, enrich: enr, sla: s, host: VR.config().host });
           if (!confirm(`Создать задачу в Jira (${s.jiraProject}):\n${issue.summary}\nСрок: ${issue.dueDate}`)) { jb.disabled = false; st.textContent = ''; return; }
           const r = await VR.ext('jira-create', issue);
           let note = '';
           if (s.jiraTagInstances !== false) { try { await VR.tagInstances(issue.ids, 'jira:' + r.key); note = `, метка jira:${r.key} на экземпляре`; } catch (e) { note = ', метку поставить не удалось'; } }
           st.innerHTML = `создана <a href="${esc(r.url)}" target="_blank" rel="noopener" style="color:#2f80ed">${esc(r.key)}</a>${esc(note)}`;
+          jb.textContent = 'Задача создана'; jb.dataset.done = '1';
         } catch (e) { st.innerHTML = `<span class="vr-err">${esc(e.message)}</span>`; }
-        jb.disabled = false;
+        if (!jb.dataset.done) jb.disabled = false;
       });
       const btn = box.querySelector('[data-act=enrich]');
       if (btn) btn.addEventListener('click', async () => {

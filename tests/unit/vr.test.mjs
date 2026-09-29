@@ -31,3 +31,14 @@ test('разбор БДУ: CVE из идентификаторов, не из о
   assert.equal(mc['CVE-2024-4444'].length, 1, 'дубли CVE в строке не размножают записи');
   assert.equal(mc['CVE-2024-4444'][0].date, '2024-03-06');
 });
+
+test('CSV: формулы с ведущим пробелом или переводом строки нейтрализуются', () => {
+  const { VR } = loadVR();
+  assert.equal(VR.csvCell(' =1+1'), "' =1+1"); assert.equal(VR.csvCell('\n=1').startsWith('"\'') || VR.csvCell('\n=1').startsWith("'"), true); assert.equal(VR.csvCell(' 5'), ' 5');
+});
+test('метки Jira для длинных названий пакетов различаются (D21)', () => {
+  const { VR } = loadVR();
+  const a = VR.jiraLabel('Обновление пакета libcurl4 до версии 7.68.0-1ubuntu2.25+esm9'), b = VR.jiraLabel('Обновление пакета libcurl4 до версии 7.68.0-1ubuntu2.26');
+  assert.notEqual(a, b); assert.ok(a.length <= 45 && b.length <= 45); assert.match(a, /^mpvm-obnovlenie-paketa-libcurl4[a-z0-9-]*-[0-9a-f]{6}$/);
+  assert.equal(VR.jiraLabel('OpenSSL 3.x'), 'mpvm-openssl-3-x');
+});

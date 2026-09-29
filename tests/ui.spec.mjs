@@ -208,9 +208,10 @@ test('Внешний контекст штатной карточки: CVE из 
 test('Опасные действия: отмена ничего не отправляет, подтверждение отправляет один раз', async ({ page }) => {
   await openWorkspace(page);
   await page.evaluate(() => {
-    window.__calls = { status: [], tags: [] };
+    window.__calls = { status: [], tags: [], jira: [] };
     const s = window.VR.changeStatus; window.VR.changeStatus = async a => { window.__calls.status.push({ command: a.command, n: a.ids.length }); await new Promise(r => setTimeout(r, 400)); return s(a); };
     const t = window.VR.tagInstances; window.VR.tagInstances = async (ids, tag) => { window.__calls.tags.push({ n: ids.length, tag }); return t(ids, tag); };
+    const x = window.VR.ext; window.VR.ext = async (op, p) => { if (op === 'jira-create') window.__calls.jira.push(p); return x(op, p); };
   });
   await page.locator('#tab-queue').click();
   await run(page, 'q-run');
@@ -244,7 +245,7 @@ test('Опасные действия: отмена ничего не отпра
 
 test('CVE-контекст: экземпляры из MaxPatrol, выбор актива, задача Jira на экземпляр', async ({ page }) => {
   await openWorkspace(page);
-  await page.evaluate(() => { window.__jira = []; const t = window.VR.tagInstances; window.VR.tagInstances = async (ids, tag) => { window.__jira.push({ ids, tag }); return t(ids, tag); }; });
+  await page.evaluate(() => { window.__jira = []; window.__created = []; window.__status = []; const t = window.VR.tagInstances; window.VR.tagInstances = async (ids, tag) => { window.__jira.push({ ids, tag }); return t(ids, tag); }; const x = window.VR.ext; window.VR.ext = async (op, p) => { if (op === 'jira-create') window.__created.push(p); return x(op, p); }; const s = window.VR.changeStatus; window.VR.changeStatus = async a => { window.__status.push(a); return window.__statusReply || s(a); }; });
   await page.locator('#tab-cve').click();
   await page.locator('#c-cves').fill('CVE-2025-49723');
   await run(page, 'c-run');
@@ -270,6 +271,33 @@ test('CVE-контекст: экземпляры из MaxPatrol, выбор ак
   const calls = await page.evaluate(() => window.__jira);
   expect(calls).toHaveLength(1);
   expect(calls[0].ids).toEqual(['1e5566a8e0c000010000000000000012_1e5566a8e0c000010000000000000012_1e1e0794348140010000000000052b21']);
+  // содержимое задачи, а не только факт вызова
+  const created = await page.evaluate(() => window.__created);
+  expect(created).toHaveLength(1);
+  expect(created[0].summary).toContain('Устранить CVE-2025-49723 на kuopzhfvwq.rf.plat.form: установить Накопительное обновление KB5122882');
+  expect(created[0].summary).toContain('не ниже 10.0.20348.3932, рекомендуется 10.0.20348.5622');
+  expect(created[0].labels).toEqual(['mpvm-remediation', 'mpvm-instance', 'mpvm-microsoft-windows']);
+  expect(created[0].ids).toEqual(calls[0].ids);
+  expect(created[0].dueDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  // повторный клик не создает дубликат (D22)
+  await expect(mp.locator('.mp-jira')).toBeDisabled();
+  await expect(mp.locator('.mp-jira')).toHaveText('Задача создана');
+  // «В работу»: отмена ничего не шлет; отказ сервера не меняет статус (D19)
+  page.once('dialog', d => d.dismiss());
+  await mp.locator('.mp-work').click();
+  await page.waitForTimeout(200);
+  expect(await page.evaluate(() => window.__status.length)).toBe(0);
+  await page.evaluate(() => { window.__statusReply = { done: true, total: 1, succeed: 0, failed: 1, count: 1 }; });
+  page.once('dialog', d => d.accept());
+  await mp.locator('.mp-work').click();
+  await expect(mp.locator('[data-role=mp-jira-st]')).toContainText('статус не изменен');
+  await expect(mp.locator('.mp-work')).toBeEnabled();
+  expect(await page.evaluate(() => window.__status.length)).toBe(1);
+  await page.evaluate(() => { window.__statusReply = { done: true, total: 1, succeed: 1, failed: 0, count: 1 }; });
+  page.once('dialog', d => d.accept());
+  await mp.locator('.mp-work').click();
+  await expect(mp.locator('[data-role=mp-jira-st]')).toContainText('статус изменен');
+  await expect(mp.locator('.mp-work')).toBeDisabled();
   // «PoC на GitHub?» не теряет блок MaxPatrol, приоритет и обработчики
   await page.locator('#c-out .cve[data-cve="CVE-2025-49723"] .gh').click();
   await expect(page.locator('#c-out .cve[data-cve="CVE-2025-49723"]')).toContainText('GitHub:');
@@ -291,17 +319,17 @@ test('CVE-контекст: экземпляры из MaxPatrol, выбор ак
 
 test('Патчи: список со ссылками, детали с узлами и CVE, задача Jira и смена статуса с подтверждением', async ({ page }) => {
   await openWorkspace(page);
-  await page.evaluate(() => { window.__calls = { status: [], tags: [], jira: [] }; const s = window.VR.changeStatus; window.VR.changeStatus = async a => { window.__calls.status.push({ command: a.command, n: a.ids.length }); return s(a); }; const t = window.VR.tagInstances; window.VR.tagInstances = async (ids, tag) => { window.__calls.tags.push({ n: ids.length, tag }); return t(ids, tag); }; });
+  await page.evaluate(() => { window.__calls = { status: [], tags: [], jira: [] }; const s = window.VR.changeStatus; window.VR.changeStatus = async a => { window.__calls.status.push({ command: a.command, n: a.ids.length }); return s(a); }; const t = window.VR.tagInstances; window.VR.tagInstances = async (ids, tag) => { window.__calls.tags.push({ n: ids.length, tag }); return t(ids, tag); }; const x = window.VR.ext; window.VR.ext = async (op, p) => { if (op === 'jira-create') window.__calls.jira.push(p); return x(op, p); }; });
   await page.locator('#tab-patches').click();
   await expect(page.locator('#pt-sum .empty-state')).toBeVisible();
   await run(page, 'pt-run');
   await expect(page.locator('#pt-sum .kpi')).toHaveCount(4);
-  await expect(page.locator('#pt-sum')).toContainText('776 255');
+  await expect(page.locator('#pt-sum')).toContainText('300 000');
   const rows = page.locator('#pt-out tr.click');
   await expect(rows).toHaveCount(3);
   await expect(rows.first()).toContainText('KB5122876');
   await expect(rows.first().locator('a.lnk')).toHaveAttribute('href', /KB5122876/);
-  await expect(page.locator('#pt-out table tr').last()).toContainText('ссылка не указана');
+  await expect(page.locator('#pt-out table tr').last()).toContainText('ссылка не указаны');
   await rows.first().locator('.row-action').click();
   await expect(page.locator('#pt-detail .detail-facts')).toContainText('Экземпляров: 3');
   await expect(page.locator('#pt-detail table')).toHaveCount(2);
@@ -315,6 +343,13 @@ test('Патчи: список со ссылками, детали с узлам
   await page.locator('#pt-d-jira').click();
   await expect(page.locator('#pt-d-jira-st')).toContainText('VM-101');
   expect(await page.evaluate(() => window.__calls.tags)).toEqual([{ n: 3, tag: 'jira:VM-101' }]);
+  const created = await page.evaluate(() => window.__calls.jira);
+  expect(created).toHaveLength(1);
+  expect(created[0].summary).toBe('Установить Накопительное обновление KB5122876 на 3 узлах: закрывает 3 уязвимостей (2 CVE) [KEV]');
+  expect(created[0].labels).toEqual(['mpvm-remediation', 'mpvm-patch', 'mpvm-kb5122876']);
+  expect(created[0].ids).toHaveLength(3);
+  expect(created[0].csv).toContain('KB5122876');
+  await expect(page.locator('#pt-d-jira')).toBeDisabled();
   page.once('dialog', d => d.accept());
   await page.locator('#pt-d-apply').click();
   await expect(page.locator('#pt-d-st')).toContainText('готово');
@@ -336,9 +371,9 @@ test('Патчи: сортировка без ссылки, поиск, клав
   const header = table.locator('th').nth(3);
   await header.focus(); await page.keyboard.press('Enter');
   await expect(table.locator('tr.hasf').first()).toContainText('libcurl4');
-  await expect(table.locator('tr.hasf').last()).toContainText('ссылка не указана');
+  await expect(table.locator('tr.hasf').last()).toContainText('ссылка не указаны');
   await page.keyboard.press('Enter');
-  await expect(table.locator('tr.hasf').first()).toContainText('ссылка не указана');
+  await expect(table.locator('tr.hasf').first()).toContainText('ссылка не указаны');
   await page.locator('#pt-out .tfilter input').fill('5122882');
   await expect(table.locator('tr.hasf:not(.hide)')).toHaveCount(1);
   const patch = table.locator('tr:not(.hide) .row-action');
@@ -441,4 +476,35 @@ test('Патчи: закрытие панели во время операции
   await expect(page.locator('#pt-d-st')).toBeEmpty();
   await expect(page.locator('#pt-d-apply')).toBeEnabled();
   expect(errors).toEqual([]);
+});
+
+test('Штатная карточка экземпляра: кнопка Jira читает экземпляр из адреса в момент клика (D20)', async ({ page }) => {
+  const A = '1e5566a8e0c000010000000000000012_1e5566a8e0c000010000000000000012_1e1e0794348140010000000000052b21';
+  const B = A.replace(/12_/g, '13_');
+  await page.goto('/tests/uitest/?theme=light&vulnerabilityId=1e1e0794-3481-4001-0000-000000052b21&vulnerabilityInstanceId=' + A);
+  await page.locator('#vr-menu-item').waitFor();
+  await page.evaluate(() => {
+    document.querySelector('main').innerHTML = '<div class="vulner__primary-info"><h1 class="vulner__title">CVE-2025-49723</h1><section class="vulner-info-section"><h2 class="vulner-info-section__title">Описание</h2><p>Карточка экземпляра</p></section><section class="vulner-info-section"><h2 class="vulner-info-section__title">Ссылки</h2><p>Источники</p></section></div>';
+    chrome.runtime.getURL = path => '/' + path;
+    window.__created = []; window.__tags = [];
+    const x = window.VR.ext; window.VR.ext = async (op, p) => { if (op === 'jira-create') window.__created.push(p); return x(op, p); };
+    const t = window.VR.tagInstances; window.VR.tagInstances = async (ids, tag) => { window.__tags.push({ ids, tag }); return t(ids, tag); };
+  });
+  await page.addScriptTag({ url: '/content/cards.js' });
+  const btn = page.locator('.vr-cb [data-act=jira-inst]');
+  await expect(btn).toHaveCount(1);
+  page.once('dialog', d => d.dismiss());
+  await btn.click();
+  await expect(btn).toBeEnabled();
+  expect(await page.evaluate(() => window.__created.length)).toBe(0);
+  // переход внутри интерфейса к другому экземпляру: блок не пересоздается, идентификатор берется из адреса при клике
+  await page.evaluate(b => history.pushState({}, '', '?theme=light&vulnerabilityId=1e1e0794-3481-4001-0000-000000052b21&vulnerabilityInstanceId=' + b), B);
+  page.once('dialog', d => d.accept());
+  await btn.click();
+  await expect(page.locator('.vr-cb [data-role=st]')).toContainText('VM-101');
+  const created = await page.evaluate(() => window.__created);
+  expect(created).toHaveLength(1);
+  expect(created[0].ids).toEqual([B]);
+  expect(await page.evaluate(() => window.__tags)).toEqual([{ ids: [B], tag: 'jira:VM-101' }]);
+  await expect(btn).toBeDisabled();
 });

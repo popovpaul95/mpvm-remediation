@@ -92,3 +92,40 @@ test('задача Jira на экземпляр: заголовок с акти�
   const bare = VR.buildInstanceJiraIssue({ ctx: { ...ctx, det: null, fix: { options: [], min: null, recommended: null }, patch: null, passport: null, bdu: [], links: [], metrics: null }, sla });
   assert.equal(bare.summary, 'Устранить CVE-2025-49723 на kuopzhfvwq.rf.plat.form: установить обновление');
 });
+
+test('без текущей версии целевой версии нет (D15), KB в обоих форматах (D16)', () => {
+  const { VR } = loadVR();
+  const none = VR.fixOptions(HOW, null);
+  assert.equal(none.min, null); assert.equal(none.recommended, null); assert.equal(none.options.length, 0);
+  const f = VR.fixOptions('Обновите до 10.0.20348.3932 (KB5062556), 10.0.20348.5622 (KB5122882)', '10.0.20348.3207');
+  deq(f.options.map(o => o.version + '/' + o.kb), ['10.0.20348.3932/KB5062556', '10.0.20348.5622/KB5122882']);
+  assert.equal(f.recommended.kb, 'KB5122882'); assert.equal(f.min.kb, 'KB5062556');
+  const g = VR.fixOptions('v21H2 - KB5062556 - 10.0.20348.3932\nv21H2 - KB5122882 - 10.0.20348.5622', '10.0.20348.3207');
+  deq(g.options.map(o => o.kb), ['KB5062556', 'KB5122882']);
+});
+test('целевая версия не ниже границы обнаружения (D17)', async () => {
+  const { VR } = loadVR();
+  const mk = (strict) => ({ ...details, detectionInfo: { detectionDetails: { conditions: { productName: 'OpenSSL', productConditions: [{ propertyName: 'Версия', propertyValue: '3.0.2', rightValue: '3.0.15', rightValueStrict: strict, type: 'IntervalConditionDetails' }] } } } });
+  const item = { id: ID, vulnId: '1e1e0794-3481-4001-0000-000000052b21', patchName: '', patchUrl: '' };
+  for (const [strict, expectMin] of [[true, '3.0.15'], [false, null]]) {
+    VR.get = async p => /location/.test(p) ? { timelineToken: 't', objectId: 'o', vulnerabilityLegacyId: 'v' } : /objects/.test(p) ? mk(strict) : /statusLog/.test(p) ? [] : /statistics/.test(p) ? {} : { title: 't', howToFix: 'Обновите OpenSSL до 3.0.13', identifiers: [], links: [] };
+    const s = await VR.instanceDetailContext(item);
+    assert.equal(s.fix.min?.version ?? null, expectMin, 'strict=' + strict);
+    assert.equal(s.fix.required, '3.0.15');
+    assert.ok(!s.fix.options.some(o => VR.cmpVersion(o.version, '3.0.15') < 0), 'версии ниже границы отброшены');
+  }
+  VR.get = async p => /location/.test(p) ? { timelineToken: 't', objectId: 'o', vulnerabilityLegacyId: 'v' } : /objects/.test(p) ? mk(true) : /statusLog/.test(p) ? [] : /statistics/.test(p) ? {} : { title: 't', howToFix: 'Обновите OpenSSL до 3.0.13 или 3.0.16', identifiers: [], links: [] };
+  const ok = await VR.instanceDetailContext(item);
+  assert.equal(ok.fix.min.version, '3.0.16');
+});
+test('сводка экземпляров всегда по всем узлам, выбранный ищется среди них (D18)', async () => {
+  const { VR, calls } = loadVR();
+  VR.pdql = async (q, limit) => { calls.pdql.push({ q, limit }); return { records: [row('h1', ID), { ...row('h2', ID.replace(/12_/g, '13_'), { Score: '5' }), '@Host': { name: 'h2', id: '1e5566a8-e0c0-0001-0000-000000000013' } }] }; };
+  VR.get = async p => /location/.test(p) ? { timelineToken: 't', objectId: 'o', vulnerabilityLegacyId: 'v' } : /objects/.test(p) ? details : /statusLog/.test(p) ? [] : /statistics/.test(p) ? {} : { title: 't', howToFix: HOW, identifiers: [], links: [] };
+  const ctx = await VR.instanceContext({ cve: 'CVE-2025-49723', instanceId: ID });
+  assert.equal(ctx.instances.summary.hosts, 2, 'сводка по всем узлам'); assert.equal(ctx.instances.summary.maxScore, 7.7);
+  assert.equal(ctx.selected.item.id, ID); assert.equal(ctx.pickedBy, 'instance');
+  assert.ok(calls.pdql.every(c => !/Host\.@Id = /.test(c.q)), 'список не сужен до одного актива');
+  const byAsset = await VR.instanceContext({ cve: 'CVE-2025-49723', assetId: '1e5566a8-e0c0-0001-0000-000000000012' });
+  assert.equal(byAsset.selected.item.hostId, '1e5566a8-e0c0-0001-0000-000000000012'); assert.equal(byAsset.instances.summary.hosts, 2);
+});

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none" color="#fff">
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="#0066ff"/>
+  <g id="remediation-symbol" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M92 43V35a7 7 0 0 0-7-7H35a7 7 0 0 0-7 7v58a7 7 0 0 0 7 7h21"/>
+    <path d="m52 66 17 17 34-35"/>
+  </g>
+</svg>

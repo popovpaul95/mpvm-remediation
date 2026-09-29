@@ -69,15 +69,9 @@
         sections.push(...dataSections(`${cve} / MaxPatrol`, ctx, cve));
         const item = ctx.selected?.item;
         if (item) {
-          const defaults = { critical: 1, high: 7, medium: 30, low: 90 };
-          const settings = { critical: 'slaCritDays', high: 'slaHighDays', medium: 'slaMedDays', low: 'slaLowDays' };
-          const severity = String(item.sev || '').toLowerCase();
-          const days = sla[settings[severity]] ?? defaults[severity] ?? 30;
-          const found = Date.parse(item.found);
-          if (days != null && Number.isFinite(found)) {
-            const due = found + days * 86400000;
-            sections.push(...dataSections(`${cve} / ${label('selectedSla')}`, { days, due: new Date(due).toISOString(), overdue: due < Date.now() && !['fixed', 'excluded'].includes(item.st) }, cve));
-          }
+          // Одно правило срока по SLA с блоком экземпляра и задачей Jira: VR.slaDue
+          const sd = (window.VR && VR.slaDue) ? VR.slaDue({ found: item.found, sev: item.sev, st: item.st, sla }) : null;
+          if (sd && sd.due) sections.push(...dataSections(`${cve} / ${label('selectedSla')}`, { days: sd.days, due: sd.due.toISOString(), overdue: sd.overdue }, cve));
         }
       } else sections.push(...dataSections(`${cve} / MaxPatrol`, 'Контекст экземпляров не загружен', cve));
     }

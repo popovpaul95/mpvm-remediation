@@ -163,6 +163,13 @@
     }
     return vers.sort(VR.cmpVersion).pop();
   };
+  // Срок по SLA от даты обнаружения (одно правило для блока экземпляра, отчета и задачи Jira)
+  VR.slaDue = ({ found, sev, st, sla }) => {
+    const days = { critical: sla?.slaCritDays ?? 1, high: sla?.slaHighDays ?? 7, medium: sla?.slaMedDays ?? 30, low: sla?.slaLowDays ?? 90 }[String(sev || '').toLowerCase()] ?? 30;
+    const f = Date.parse(found); if (!Number.isFinite(f)) return { days, due: null, dueDate: null, overdue: false };
+    const due = new Date(f + days * 864e5);
+    return { days, due, dueDate: VR.localDate(due), overdue: Date.now() > due.getTime() && !/^(fixed|excluded)$/.test(String(st || '')) };
+  };
   // Локальная дата YYYY-MM-DD (не UTC): срок «завтра» ночью по Москве не должен превращаться в «сегодня»
   VR.localDate = d => { const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
   VR.plusDays = n => { const x = new Date(); x.setDate(x.getDate() + (n || 0)); return VR.localDate(x); };
@@ -170,15 +177,18 @@
   const TRANSLIT = { а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z', и: 'i', й: 'j', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'h', ц: 'c', ч: 'ch', ш: 'sh', щ: 'sch', ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya' };
   VR.jiraLabel = soft => {
     const s = String(soft || '').toLowerCase();
-    const lat = s.replace(/[а-яё]/g, ch => TRANSLIT[ch] ?? '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40).replace(/-+$/, '');
-    if (lat) return 'mpvm-' + lat;
+    const full = s.replace(/[а-яё]/g, ch => TRANSLIT[ch] ?? '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     let h = 5381; for (const ch of s) h = ((h * 33) ^ ch.charCodeAt(0)) >>> 0;
-    return 'mpvm-h' + h.toString(16);
+    if (!full) return 'mpvm-h' + h.toString(16);
+    // Длинные названия (пакеты Linux с версией): префикс плюс хеш, чтобы разные версии не давали одну метку
+    if (full.length > 40) return 'mpvm-' + full.slice(0, 28).replace(/-+$/, '') + '-' + h.toString(16).slice(0, 6);
+    return 'mpvm-' + full;
   };
   // Ячейка CSV: кавычки по RFC 4180, переводы строк сохранены, формулы нейтрализованы апострофом.
   VR.csvCell = v => {
     let s = String(v ?? '').replace(/\r\n?/g, '\n');
-    if (/^[=+@\t]/.test(s) || (/^-/.test(s) && !/^-?\d+([.,]\d+)?%?$/.test(s))) s = "'" + s;
+    const lead = s.replace(/^[\s\uFEFF]+/, '');
+    if (/^[=+@\t]/.test(lead) || (/^-/.test(lead) && !/^-?\d+([.,]\d+)?%?$/.test(lead))) s = "'" + s;
     return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   };
   VR.csv = (rows, cols) => '﻿' + [cols.map(c => VR.csvCell(c[0])).join(';'), ...rows.map(r => cols.map(c => VR.csvCell(typeof c[1] === 'function' ? c[1](r) : r[c[1]])).join(';'))].join('\n');
@@ -229,8 +239,17 @@
   };
   // Варианты исправления из «Как исправить» в ветке текущей версии: [{version, kb}], min и recommended
   VR.fixOptions = (howToFix, current) => {
+    // Без текущей версии ветку выбрать нельзя: версии других веток ОС в задачу не попадают
+    if (!current) return { options: [], min: null, recommended: null };
     const text = String(howToFix || ''); const cands = VR.versionCandidates(text); const out = []; let pos = 0;
-    for (const v of cands) { const i = text.indexOf(v, pos); if (i < 0) continue; pos = i + v.length; const back = text.slice(Math.max(0, i - 40), i); const kb = (back.match(/KB\d{5,8}/gi) || []).pop() || null; out.push({ version: v, kb: kb ? kb.toUpperCase() : null }); }
+    for (const v of cands) {
+      const i = text.indexOf(v, pos); if (i < 0) continue; pos = i + v.length;
+      // KB справа в скобках («10.0.20348.5622 (KB5122882)») или слева в той же строке до разделителя («KB5122882 - 10.0.20348.5622»)
+      const after = text.slice(pos, pos + 24), kbAfter = (after.match(/^\s*[\(\[,;:\-–]*\s*(KB\d{5,8})/i) || [])[1];
+      const backSeg = text.slice(Math.max(0, i - 40), i).split(/[\n;,()]/).pop(), kbBefore = (backSeg.match(/KB\d{5,8}/gi) || []).pop();
+      const kb = kbAfter || kbBefore || null;
+      out.push({ version: v, kb: kb ? kb.toUpperCase() : null });
+    }
     let list = out;
     if (current) {
       const cur = []; for (const x of verTokens(current)) { if (/^\d+$/.test(x)) cur.push(x); else break; }
@@ -246,7 +265,13 @@
     const [details, passport, stats, log] = await Promise.all([safe(VR.instanceDetails(item.id)), item.vulnId ? safe(VR.passport(item.vulnId)) : Promise.resolve(null), item.vulnId ? safe(VR.vulnStats(item.vulnId)) : Promise.resolve(null), safe(VR.instanceStatusLog(item.id))]);
     const det = details && !details.error ? VR.parseDetection(details) : null;
     const fix = VR.fixOptions(passport?.howToFix, det?.current || null);
-    if (!fix.min && det?.required) fix.min = { version: det.required, kb: null };
+    if (det?.required) {
+      // Граница из условий обнаружения: при strict уязвимы версии ниже границы (граница безопасна), иначе граница тоже уязвима
+      const need = det.required, strict = det.requiredStrict;
+      const kept = fix.options.filter(o => strict ? VR.cmpVersion(o.version, need) >= 0 : VR.cmpVersion(o.version, need) > 0);
+      fix.options = kept; fix.min = kept[0] || (strict ? { version: need, kb: null } : null); fix.recommended = kept[kept.length - 1] || fix.min;
+      fix.required = need; fix.requiredStrict = strict;
+    }
     const pjson = passport && !passport.error ? JSON.stringify(passport) : '';
     const bdu = [...new Set((pjson.match(/BDU:\d{4}-\d{5}/g) || []))];
     const links = [...new Set((JSON.stringify(passport?.links || []).match(/https?:\/\/[^"\\\s]+/g) || []))].slice(0, 10);
@@ -261,9 +286,11 @@
   };
   // Контекст по CVE: все экземпляры плюс выбранный (по Id экземпляра из URL, по активу из URL или самый опасный)
   VR.instanceContext = async ({ cve, instanceId, assetId, limit = 50 } = {}) => {
+    // Сводка и список всегда по всем экземплярам CVE; выбранный ищется среди них, а при усечении списка отдельным запросом по активу
     const scopeAsset = instanceId ? VR.instanceAssetGuid(instanceId) : (assetId || null);
-    const inst = await VR.cveInstances({ cve, assetId: scopeAsset, limit: scopeAsset ? 20 : limit });
-    const item = instanceId ? (inst.items.find(i => i.id === instanceId) || null) : (scopeAsset ? inst.items[0] || null : null);
+    const inst = await VR.cveInstances({ cve, limit });
+    let item = instanceId ? (inst.items.find(i => i.id === instanceId) || null) : (scopeAsset ? inst.items.find(i => i.hostId === scopeAsset) || null : null);
+    if (!item && scopeAsset && inst.truncated) { const own = await VR.cveInstances({ cve, assetId: scopeAsset, limit: 20 }); item = instanceId ? (own.items.find(i => i.id === instanceId) || null) : (own.items[0] || null); }
     return { cve, instances: inst, selected: item ? await VR.instanceDetailContext(item) : null, pickedBy: item ? (instanceId ? 'instance' : 'asset') : null };
   };
   // Задача Jira на один экземпляр: актив, условия обнаружения, патч, целевая версия, внешние сигналы
@@ -283,7 +310,7 @@
     const description = [
       'h2. Что сделать',
       `На активе *${it.host}* (значимость ${impRu[it.imp] || it.imp}${it.os ? ', ' + it.os : ''}) ${what}${target ? `: ${det?.versionLabel || 'версия'} должна стать не ниже *${fix.min?.version || target}*${fix.recommended && fix.recommended.version !== fix.min?.version ? ` (рекомендуется актуальная *${fix.recommended.version}*${fix.recommended.kb ? ', ' + fix.recommended.kb : ''})` : ''}` : ''}.`,
-      `Приоритет *${level}*, срок до ${dueDate} (${days} дн). Уязвимость *${ctx.passport?.title || it.name}* (${cve}), оценка в MaxPatrol ${ctx.metrics?.overall ?? it.score}${r?.nvd?.cvss31?.score != null ? ` (базовая CVSS 3.1 по NVD ${r.nvd.cvss31.score})` : ''}${kev ? ', в каталоге CISA KEV (эксплуатируется в атаках)' : ''}${trend ? ', трендовая по экспертизе PT' : ''}${it.expl ? ', есть публичный эксплойт' : ''}.`,
+      `Приоритет *${level}*, срок задачи до ${dueDate} (${days} дн)${(() => { const sd = VR.slaDue({ found: it.found, sev: it.sev, st: it.st, sla }); return sd.dueDate ? `; срок по SLA от даты обнаружения ${sd.dueDate}${sd.overdue ? ' (просрочен)' : ''}` : ''; })()}. Уязвимость *${ctx.passport?.title || it.name}* (${cve}), оценка в MaxPatrol ${ctx.metrics?.overall ?? it.score}${r?.nvd?.cvss31?.score != null ? ` (базовая CVSS 3.1 по NVD ${r.nvd.cvss31.score})` : ''}${kev ? ', в каталоге CISA KEV (эксплуатируется в атаках)' : ''}${trend ? ', трендовая по экспертизе PT' : ''}${it.expl ? ', есть публичный эксплойт' : ''}.`,
       '',
       ...(det ? ['h2. Где найдена', `Продукт: ${det.product}${det.os ? `, ${det.os}` : ''}${det.release ? ` ${det.release}` : ''}${det.arch ? `, ${det.arch}` : ''}${det.installType ? `, ${det.installType}` : ''}.`, ...det.conditions.filter(c => c.required != null).map(c => `${c.name}: ${c.value} (требуется ${c.strict ? '>=' : '>'} ${c.required})`), ''] : []),
       ...(ctx.patch ? ['h2. Патч', `${ctx.patch.name}${ctx.patch.date ? ` от ${String(ctx.patch.date).slice(0, 10)}` : ''}${ctx.patch.url ? `: ${ctx.patch.url}` : ''}`, ''] : []),
@@ -304,14 +331,16 @@
   // ── Патчи: открытые уязвимости, сгруппированные по патчу из паспорта (Patch.DisplayName / PatchLink) ──
   // Один запрос патч x актив (список узлов на каждый патч) плюс запрос ссылок; детали патча (CVE, экземпляры)
   // грузятся отдельно по клику: фильтр по названию патча ставится после select (до select он на 28.0 очень медленный).
+  // Условие HasPatch до select отбирает узлы, а не строки, поэтому после select оно повторяется (P = true):
+  // иначе в группу «без названия» попадают уязвимости без патча.
   const NO_PATCH = '__no_patch__';
   VR.patchesPdql = () => {
     const V = 'Host.@Vulners';
     const base = `filter(${V} and ${V}.Metrics.HasPatch = true and ${V}.Status in ${OPEN})`;
     return {
-      byHost: `${base} | select(@Host, Host.OsName as OS, Host.@Importance as Imp, ${V}.Patch.DisplayName as Patch, ${V}.Patch.PatchDate as PDate, ${V}.Score as Score, ${V}.Status as St, ${V}.IsTrend as T, ${V}.Metrics.Exploitable as E) | filter(St in ${OPEN}) | calc(if T = true then 1 else 0 as fT) | calc(if E = true then 1 else 0 as fE) | calc(if Score >= 9 then 1 else 0 as fC) | group(Patch, @Host, OS, Imp, COUNT(*) as N, MAX(Score) as MaxScore, MAX(PDate) as PDate, SUM(fT) as Trend, SUM(fE) as Expl, SUM(fC) as Crit)`,
-      links: `${base} | select(${V}.Patch.DisplayName as Patch, ${V}.Patch.PatchLink as Link, ${V}.Status as St) | filter(St in ${OPEN}) | group(Patch, Link, COUNT(*) as N)`,
-      detail: patch => `${base} | select(@Host, Host.OsName as OS, Host.@Importance as Imp, ${V}.Patch.DisplayName as Patch, ${V} as Name, ${V}.CVEs.Item as CVE, ${V}.Score as Score, ${V}.Id as Id, ${V}.Status as St, ${V}.IsTrend as T, ${V}.Metrics.Exploitable as E) | filter(St in ${OPEN} and Patch = "${esc(patch)}")`,
+      byHost: `${base} | select(@Host, Host.OsName as OS, Host.@Importance as Imp, ${V}.Patch.DisplayName as Patch, ${V}.Patch.PatchDate as PDate, ${V}.Score as Score, ${V}.Status as St, ${V}.IsTrend as T, ${V}.Metrics.Exploitable as E, ${V}.Metrics.HasPatch as P) | filter(St in ${OPEN} and P = true) | calc(if T = true then 1 else 0 as fT) | calc(if E = true then 1 else 0 as fE) | calc(if Score >= 9 then 1 else 0 as fC) | group(Patch, @Host, OS, Imp, COUNT(*) as N, MAX(Score) as MaxScore, MAX(PDate) as PDate, SUM(fT) as Trend, SUM(fE) as Expl, SUM(fC) as Crit)`,
+      links: `${base} | select(${V}.Patch.DisplayName as Patch, ${V}.Patch.PatchLink as Link, ${V}.Status as St, ${V}.Metrics.HasPatch as P) | filter(St in ${OPEN} and P = true) | group(Patch, Link, COUNT(*) as N)`,
+      detail: patch => `${base} | select(@Host, Host.OsName as OS, Host.@Importance as Imp, ${V}.Patch.DisplayName as Patch, ${V} as Name, ${V}.CVEs.Item as CVE, ${V}.Score as Score, ${V}.Id as Id, ${V}.Status as St, ${V}.IsTrend as T, ${V}.Metrics.Exploitable as E, ${V}.Metrics.HasPatch as P) | filter(St in ${OPEN} and P = true and Patch = "${esc(patch)}")`,
     };
   };
   VR.patches = async ({ limit = 5000 } = {}) => {
@@ -331,7 +360,7 @@
     const patches = [...byPatch.values()].map(p => { const { hostIds, ...rest } = p; rest.hostsCount = hostIds.size; rest.hosts.sort((a, b) => b.n - a.n); rest.kb = (p.patch.match(/KB\d{5,8}/i) || [''])[0].toUpperCase() || null; return rest; }).sort((a, b) => b.n - a.n);
     const noLink = patches.find(p => p.noLink) || null;
     const list = patches.filter(p => !p.noLink);
-    return { patches: list, noLink, total: { patches: list.length, vulns: list.reduce((s, p) => s + p.n, 0), hosts: new Set(list.flatMap(p => p.hosts.map(h => h.id))).size, noLinkVulns: noLink ? noLink.n : 0, noLinkHosts: noLink ? noLink.hostsCount : 0 }, pdql: Q.byHost, truncated: rows.length >= limit };
+    return { patches: list, noLink, total: { patches: list.length, patchesWithLink: list.filter(p => p.url).length, vulns: list.reduce((s, p) => s + p.n, 0), hosts: new Set(list.flatMap(p => p.hosts.map(h => h.id))).size, noLinkVulns: noLink ? noLink.n : 0, noLinkHosts: noLink ? noLink.hostsCount : 0 }, pdql: Q.byHost, linksFailed: linkRows.length === 0 && list.length > 0, truncated: rows.length >= limit };
   };
   // Детали патча: CVE, экземпляры (ids для Jira, проекта, смены статуса), узлы с числом уязвимостей
   VR.patchDetail = async ({ patch, limit = 20000 } = {}) => {
@@ -359,7 +388,7 @@
     const level = kev.length ? 'P0' : trend.length ? 'P0' : p.maxScore >= 9 ? 'P1' : p.maxScore >= 7 ? 'P2' : 'P3';
     const days = level === 'P0' || level === 'P1' ? (sla?.slaCritDays ?? 1) : level === 'P2' ? (sla?.slaHighDays ?? 7) : (sla?.slaMedDays ?? 30);
     const dueDate = VR.plusDays(Math.max(1, days));
-    const summary = `Установить ${p.patch} на ${d.hosts.length} узлах: закрывает ${d.rows} уязвимостей (${d.cves.length} CVE)${kev.length ? ' [KEV]' : trend.length ? ' [трендовые]' : ''}`;
+    const summary = `Установить ${p.patch} на ${d.hosts.length} узлах: закрывает ${d.truncated ? 'не менее ' : ''}${d.rows} уязвимостей (${d.cves.length} CVE)${kev.length ? ' [KEV]' : trend.length ? ' [трендовые]' : ''}`;
     const impRu = { H: 'высокая', M: 'средняя', L: 'низкая', ND: 'не задана' };
     const impCount = {}; d.hosts.forEach(h => { impCount[h.imp] = (impCount[h.imp] || 0) + 1; });
     const cveRows = d.cves.slice(0, 40).map(c => { const r = enrich?.results?.[c.cve]; return `|${c.cve}|${c.score}|${r?.epss?.epss != null ? (r.epss.epss * 100).toFixed(0) + '%' : '-'}|${r?.kev ? 'да' : '-'}|${c.trend ? 'да' : '-'}|${c.exploit ? 'да' : '-'}|${c.n}|`; }).join('\n');

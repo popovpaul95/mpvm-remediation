@@ -52,6 +52,9 @@ test('фильтр по коллекции до select повторяется п
     if (/Tags\.Item like/.test(preFilter) && !/\bTag like/.test(postFilters)) bad.push(name + ': метка');
     if (/(Softs|Packages)\[/.test(preFilter) && !/\bSoft = /.test(postFilters)) bad.push(name + ': ПО');
     if (/CVEs\.Item = /.test(preFilter) && !/\bCVE = /.test(postFilters)) bad.push(name + ': CVE');
+    if (/HasPatch = true/.test(preFilter) && !/\bP = true/.test(postFilters)) bad.push(name + ': патч (D14)');
+    if (/Metrics\.Exploitable = true/.test(preFilter) && !/\bE = true/.test(postFilters)) bad.push(name + ': эксплойт');
+    if (/IsTrend = true/.test(preFilter) && !/\bT = true/.test(postFilters)) bad.push(name + ': трендовая');
   }
   deq(bad, []);
 });

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "MaxPatrol VM: устранение уязвимостей",
   "description": "Помогает устранять уязвимости в MaxPatrol VM: очередь по решениям, патчи, внешние сигналы по CVE, метрики процесса, отчет по приказу ФСТЭК 117 и задачи в Jira",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "permissions": [
     "storage",
     "unlimitedStorage",

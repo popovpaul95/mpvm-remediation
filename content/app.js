@@ -1257,7 +1257,7 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
       const d = state.patches; if (!d) return;
       $('pt-grid').hidden = false; $('pt-csv').disabled = false; $('pt-pdql').disabled = false;
       $('pt-sum').innerHTML = `<div class="kpis">
-        <div class="kpi"><span class="v">${fmt(d.total.patches)}</span><span class="l">патчей со ссылкой</span></div>
+        <div class="kpi"><span class="v">${fmt(d.total.patchesWithLink ?? d.total.patches)}</span><span class="l">патчей со ссылкой${d.total.patchesWithLink != null && d.total.patchesWithLink !== d.total.patches ? ` из ${fmt(d.total.patches)}` : ''}</span></div>
         <div class="kpi"><span class="v">${fmt(d.total.vulns)}</span><span class="l">уязвимостей закроют</span></div>
         <div class="kpi"><span class="v">${fmt(d.total.hosts)}</span><span class="l">узлов для установки</span></div>
         <div class="kpi"><span class="v">${pct(d.patches.slice(0, 5).reduce((s, p) => s + p.n, 0), d.total.vulns)}%</span><span class="l">закрывают топ-5 патчей</span></div></div>
@@ -1266,7 +1266,7 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
       const sig = p => `${p.trend ? '<span class="badge tag kev sm">Трендовые · ' + fmt(p.trend) + '</span>' : ''}${p.expl ? '<span class="badge tag hot sm">С эксплойтом · ' + fmt(p.expl) + '</span>' : ''}` || '<span class="muted">—</span>';
       const rows = d.patches.map(p => `<tr class="click" data-patch="${esc(p.patch)}"><td class="patch-name"><button type="button" class="row-action" aria-controls="pt-detail" aria-expanded="false">${esc(p.patch)}</button></td><td>${p.url ? `<a class="lnk" href="${esc(p.url)}" target="_blank" rel="noopener" title="Открыть страницу вендора: ${esc(p.url)}">${esc(p.kb || 'Вендор')} ↗</a>` : '<span class="muted">—</span>'}</td><td class="n" data-v="${esc(String(p.date || '').slice(0, 10))}">${esc(String(p.date || '').slice(0, 10)) || '—'}</td><td class="n">${fmt(p.n)}</td><td class="n">${fmt(p.hostsCount)}</td><td class="n">${p.crit ? cnt(p.crit, 'red') : '0'}</td><td class="n">${esc(p.maxScore ?? '—')}</td><td class="sig">${sig(p)}</td></tr>`).join('');
       // Ячейки совпадают с колонками: colspan ломает сортировку и фильтры.
-      const noLink = d.noLink ? `<tr class="no-link"><td class="patch-name">Исправление есть, ссылка не указана</td><td>—</td><td data-v="">—</td><td class="n">${fmt(d.noLink.n)}</td><td class="n">${fmt(d.noLink.hostsCount)}</td><td class="n">${d.noLink.crit == null ? '—' : fmt(d.noLink.crit)}</td><td class="n">${esc(d.noLink.maxScore ?? '—')}</td><td class="sig">${sig(d.noLink)}</td></tr>` : '';
+      const noLink = d.noLink ? `<tr class="no-link"><td class="patch-name">Патч есть, но название и ссылка не указаны</td><td>—</td><td data-v="">—</td><td class="n">${fmt(d.noLink.n)}</td><td class="n">${fmt(d.noLink.hostsCount)}</td><td class="n">${d.noLink.crit == null ? '—' : fmt(d.noLink.crit)}</td><td class="n">${esc(d.noLink.maxScore ?? '—')}</td><td class="sig">${sig(d.noLink)}</td></tr>` : '';
       $('pt-out').innerHTML = `<div class="section-heading"><div><h3>Обновления вендоров</h3><p class="muted">Выберите патч, чтобы посмотреть узлы и CVE и запланировать установку.</p></div></div>${tfilter('Найти патч или KB…')}<div class="scroll"><table aria-label="Патчи для установки"><tr><th>патч</th><th>ссылка</th><th class="n">выпущен</th><th class="n">уязвимостей</th><th class="n">узлов</th><th class="n">critical</th><th class="n">CVSS</th><th>сигналы</th></tr>${rows}${noLink}</table></div>`;
       bindFilters($('pt-out')); selectPatchRow(state.patchDetail?.patch);
       sh.querySelectorAll('#pt-out tr.click').forEach(tr => tr.addEventListener('click', e => {
@@ -1346,8 +1346,9 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
           try { await VR.ext('jira-attach', { key: r.key, filename: `mpvm_patch_${(p.kb || 'patch').replace(/[^\w.-]+/g, '_')}.csv`, content: issue.csv }); note += ', CSV приложен'; } catch (e) { note += ', вложение не удалось'; }
           if (s.jiraTagInstances !== false) { try { await VR.tagInstances(d.ids, 'jira:' + r.key); note += `, метка jira:${r.key} на ${fmt(d.ids.length)} экз.`; } catch (e) { note += ', метку поставить не удалось'; } }
           st.innerHTML = `создана <a href="${esc(r.url)}" target="_blank" rel="noopener" class="lnk">${esc(r.key)}</a>${esc(note)}`;
+          btn.textContent = 'Задача создана'; btn.dataset.done = '1';
         } catch (e) { st.textContent = 'ошибка: ' + e.message; }
-        btn.disabled = false;
+        if (!btn.dataset.done) btn.disabled = false;
       });
       $('pt-d-apply').addEventListener('click', async event => {
         // Сохраняем элементы текущей панели: пользователь может закрыть её во время запроса.
@@ -1570,7 +1571,6 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
         await Promise.all((skipMp ? [] : cves.slice(0, 10)).map(async cve => {
           try {
             const ctx = await VR.instanceContext({ cve, instanceId: pc.instanceId || undefined, assetId: !pc.instanceId && pc.assetId ? pc.assetId : undefined, limit: 50 });
-            if (!ctx.selected && (pc.instanceId || pc.assetId)) { ctx.instances = await VR.cveInstances({ cve, limit: 50 }); ctx.pickedBy = null; }
             mpCtx[cve] = ctx;
             const s = ctx.instances.summary; if (s.total) mp[cve] = { score: s.maxScore, trend: s.trend > 0, exploit: s.expl > 0 };
           } catch (e) { mpCtx[cve] = { error: e.message }; }
@@ -1600,11 +1600,10 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
       if (c.loading) return head + pick;
       if (!sel) return head + pick + '<p class="muted">Выберите актив, чтобы увидеть версии, срок по SLA и создать задачу на конкретный экземпляр.</p>';
       const it = sel.item, d = sel.det, f = sel.fix, st = sel.status;
-      const slaDays = { critical: state.sla?.slaCritDays ?? 1, high: state.sla?.slaHighDays ?? 7, medium: state.sla?.slaMedDays ?? 30, low: state.sla?.slaLowDays ?? 90 }[it.sev] ?? 30;
-      const found = Date.parse(it.found); const due = found ? new Date(found + slaDays * 864e5) : null; const over = due && Date.now() > due.getTime() && !/^(fixed|excluded)$/.test(it.st);
+      const sd = VR.slaDue({ found: it.found, sev: it.sev, st: it.st, sla: state.sla }); const due = sd.due, over = sd.overdue;
       const rows = [
         ['Актив', `${alink(it.hostId, it.host)}, значимость ${esc(impRuS[it.imp] || it.imp)}${it.os ? ', ' + esc(it.os) : ''}`],
-        ['Статус', `${esc(ST_RU[st?.status || it.st] || it.st)}${st?.statusReason ? ' (' + esc(st.statusReason) + ')' : ''}, обнаружена ${esc(String(it.found || '').slice(0, 10))}${due ? `, срок по SLA ${VR.localDate(due)}${over ? ' <span class="ttag">просрочен</span>' : ''}` : ''}`],
+        ['Статус', `${esc(ST_RU[st?.status || it.st] || it.st)}${st?.statusReason ? ' (' + esc(st.statusReason) + ')' : ''}, обнаружена ${esc(String(it.found || '').slice(0, 10))}${due ? `, срок по SLA от обнаружения ${VR.localDate(due)}${over ? ' <span class="ttag">просрочен</span>' : ''}` : ''}`],
         ['Оценка MP', `<b>${esc(sel.metrics?.overall ?? it.score)}</b>${state.enrich?.results?.[cve]?.nvd?.cvss31?.score != null ? ` (базовая CVSS 3.1 по NVD ${esc(state.enrich.results[cve].nvd.cvss31.score)})` : ''}${sel.metrics?.vector ? ` <span class="muted" title="${esc(sel.metrics.vector)}">вектор для актива</span>` : ''}`],
         d ? ['Где найдена', `${esc(d.product)}${d.os ? ', ' + esc(d.os) : ''}${d.release ? ' ' + esc(d.release) : ''}${d.arch ? ', ' + esc(d.arch) : ''}${d.current ? `; ${esc(d.versionLabel)} <b>${esc(d.current)}</b>${d.required ? ' &lt; требуется ' + esc(d.required) : ''}` : ''}`] : null,
         ['Целевая версия', f.min ? `не ниже <b>${esc(f.min.version)}</b>${f.min.kb ? ' (' + esc(f.min.kb) + ')' : ''}${f.recommended && f.recommended.version !== f.min.version ? `, рекомендуется <b>${esc(f.recommended.version)}</b>${f.recommended.kb ? ' (' + esc(f.recommended.kb) + ')' : ''}` : ''}` : '<span class="muted">в паспорте не указана</span>'],
@@ -1629,7 +1628,12 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
           const sel = state.mpCtx?.[b.dataset.cve]?.selected; if (!sel) return;
           if (!confirm(`Перевести экземпляр ${b.dataset.cve} на ${sel.item.host} в статус «В работе»?`)) return;
           const st = b.parentElement.querySelector('[data-role=mp-jira-st]'); b.disabled = true; st.innerHTML = '<span class="spin"></span>';
-          try { const r = await VR.changeStatus({ ids: [sel.item.id], command: 'SwitchToInProgressStateCommand' }); st.textContent = r.done === false ? 'операция еще выполняется' : `статус изменен (${fmt(r.succeed || 0)} из ${fmt(r.total || 1)})`; sel.item.st = 'inProgress'; if (sel.status) sel.status.status = 'inProgress'; cveSnap(); }
+          try {
+            const r = await VR.changeStatus({ ids: [sel.item.id], command: 'SwitchToInProgressStateCommand' });
+            const ok = r.done !== false && (r.succeed || 0) >= 1 && !(r.failed || 0);
+            if (!ok) { st.textContent = r.done === false ? `операция ${r.operationId} еще выполняется на сервере, проверьте статус позже` : `статус не изменен: успешно ${fmt(r.succeed || 0)} из ${fmt(r.total ?? 1)}${r.failed ? ', ошибок ' + fmt(r.failed) : ''}`; b.disabled = false; return; }
+            st.textContent = 'статус изменен: В работе'; sel.item.st = 'inProgress'; if (sel.status) sel.status.status = 'inProgress'; cveSnap();
+          }
           catch (e) { st.textContent = 'ошибка: ' + e.message; b.disabled = false; }
         }));
       });
@@ -1666,8 +1670,9 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
         let note = '';
         if (s.jiraTagInstances !== false) { try { await VR.tagInstances(issue.ids, 'jira:' + r.key); note = `, метка jira:${r.key} на экземпляре`; } catch (e) { note = ', метку поставить не удалось: ' + e.message; } }
         st.innerHTML = `создана <a href="${esc(r.url)}" target="_blank" rel="noopener" class="lnk">${esc(r.key)}</a>${esc(note)}`;
+        btn.textContent = 'Задача создана'; btn.dataset.done = '1'; // повторный клик создал бы дубликат
       } catch (e) { st.textContent = 'ошибка: ' + e.message; }
-      btn.disabled = false;
+      if (!btn.dataset.done) btn.disabled = false;
     }
     const CVE_COLS = [['CVE', 'cve'], ['Приоритет', r => r.verdict?.level], ['Вердикт', r => r.verdict?.title], ['Срок, дн', r => r.verdict?.slaDays], ['CVSS MP', r => r.mp?.score], ['CVSS 3.1', r => r.nvd?.cvss31?.score], ['CVSS 4.0', r => r.nvd?.cvss40?.score], ['EPSS %', r => r.epss?.epss != null ? +(r.epss.epss * 100).toFixed(1) : ''], ['KEV с', r => r.kev?.dateAdded || ''], ['KEV срок', r => r.kev?.dueDate || ''], ['Трендовая', r => r.mp?.trend ? 'да' : ''], ['Эксплойт', r => r.mp?.exploit ? 'да' : ''], ['SSVC', r => r.nvd?.ssvc ? `${r.nvd.ssvc.exploitation || ''}/${r.nvd.ssvc.automatable || ''}/${r.nvd.ssvc.impact || ''}` : ''], ['БДУ', r => (r.bdu || []).map(b => b.id || b).join(' ')]];
     const cveRows = () => { const r = state.enrich; if (!r) return []; return r.cves.slice().sort((a, b) => (r.results[a].verdict.level > r.results[b].verdict.level ? 1 : -1)).map(c => ({ cve: c, ...r.results[c] })); };
@@ -1754,7 +1759,7 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
           spec.kpis = [[groups.length, 'решений'], [total, 'уязвимостей закроют'], [groups.reduce((n, g) => n + g.trend, 0), 'трендовых'], [pct(groups.slice(0, 5).reduce((n, g) => n + g.n, 0), total) + '%', 'закрывают топ-5']];
         } else if (tab === 'patches') {
           const t = state.patches.total;
-          spec.kpis = [[t.patches, 'патчей со ссылкой'], [t.vulns, 'уязвимостей закроют'], [t.hosts, 'узлов'], [t.noLinkVulns, 'исправление без ссылки']];
+          spec.kpis = [[t.patchesWithLink ?? t.patches, 'патчей со ссылкой'], [t.vulns, 'уязвимостей закроют'], [t.hosts, 'узлов'], [t.noLinkVulns, 'исправление без ссылки']];
         } else if (tab === 'assets') {
           spec.kpis = ['critical', 'high', 'medium', 'low'].map(z => [(state.assetRisk.byZone.find(v => v.key === z) || {}).n || 0, 'Риск: ' + (SEV_RU[z] || z)]);
         } else if (tab === 'excl') {

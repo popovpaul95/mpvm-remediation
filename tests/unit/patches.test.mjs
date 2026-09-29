@@ -14,7 +14,7 @@ test('патчи: агрегация патч x актив, ссылки, стр
   assert.equal(r.patches[1].hosts.find(h => h.id === 'id-h1').n, 6, 'узел учитывается один раз, уязвимости суммируются');
   assert.equal(r.patches[1].trend, 3); assert.equal(r.patches[1].maxScore, 9.1); assert.equal(r.patches[1].date, '2026-09-08T00:00:00Z');
   assert.equal(r.noLink.n, 5); assert.equal(r.noLink.hostsCount, 1);
-  deq(r.total, { patches: 2, vulns: 17, hosts: 2, noLinkVulns: 5, noLinkHosts: 1 });
+  deq(r.total, { patches: 2, patchesWithLink: 1, vulns: 17, hosts: 2, noLinkVulns: 5, noLinkHosts: 1 });
 });
 test('детали патча: экземпляры по Id, CVE, узлы; задача Jira на патч', async () => {
   process.env.TZ = 'Europe/Moscow';
@@ -33,4 +33,19 @@ test('детали патча: экземпляры по Id, CVE, узлы; за
   assert.ok(issue.csv.includes('id-h1')); assert.ok(issue.csv.includes('Windows 2022')); assert.ok(issue.csv.includes('CVE-2'));
   const plain = VR.buildPatchJiraIssue({ patch: { patch: 'KB1', url: '', date: '', maxScore: 6, kb: 'KB1' }, detail: { ...d, cves: d.cves.map(c => ({ ...c, trend: false })) }, enrich: null, sla: {} });
   assert.equal(plain.level, 'P3'); assert.ok(!/\[/.test(plain.summary));
+});
+
+test('PDQL патчей повторяет HasPatch после select (D14), сбой ссылок и усечение видны', async () => {
+  const { VR, calls } = loadVR();
+  VR.pdql = async (q, limit) => { calls.pdql.push({ q, limit }); return /Link/.test(q) && !/@Host/.test(q) ? { records: [] } : { records: Array.from({ length: limit }, (_, i) => row('KB5122882', 'h' + i, 1)) }; };
+  const r = await VR.patches({ limit: 3 });
+  for (const c of calls.pdql) { const post = c.q.split('| select(')[1]; assert.match(post, /filter\(St in \[[^\]]*\] and P = true/, c.q.slice(0, 80)); }
+  assert.equal(r.truncated, true); assert.equal(r.linksFailed, true); assert.equal(r.total.patchesWithLink, 0); assert.equal(r.total.patches, 1);
+  const d = VR.patchesPdql().detail('KB1'); assert.match(d.split('| select(')[1], /P = true and Patch = "KB1"/);
+});
+test('задача на патч при усеченной выборке: «не менее» в заголовке (D24)', () => {
+  const { VR } = loadVR();
+  const d = { rows: 20000, truncated: true, ids: ['a'], hosts: [{ host: 'h', os: '', imp: 'H', n: 1, maxScore: 5 }], cves: [{ cve: 'CVE-1', score: 5, n: 1 }], vulns: [] };
+  const issue = VR.buildPatchJiraIssue({ patch: { patch: 'KB5122882', url: '', date: '', maxScore: 5, kb: 'KB5122882' }, detail: d, enrich: null, sla: {} });
+  assert.ok(issue.summary.includes('закрывает не менее 20000 уязвимостей'), issue.summary);
 });
