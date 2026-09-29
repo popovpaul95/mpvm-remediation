@@ -1,16 +1,22 @@
 // Прогон логики расширения (content/api.js + content/logic.js + background.js) против
 // реального стенда MaxPatrol VM без браузера. Эмулирует window, location, chrome.*.
-// Запуск: MP_HOST=host MP_TOKEN=pat_... node tests/test_logic.mjs [read|status <instanceId>]
+// Запуск: MP_HOST=host MP_TOKEN=pat_... node tests/live/test_logic.mjs [read|new|v4|risk|status <instanceId>|tags]
+// Режимы чтения безопасны. Режимы status и tags меняют данные стенда и требуют MP_ALLOW_WRITE=1:
+//   status: один экземпляр, исходный статус восстанавливается в finally (tillDate/причина исключения не восстанавливаются);
+//   tags: один узел, уникальный тег auto:test-vr-<runId>, снимается и удаляется в finally.
+// Каждая проверка через check(); при любой неудаче код выхода 1.
 import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-const EXT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const EXT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const OUT = process.env.OUT_DIR || path.join(EXT, 'tests', 'out');
 fs.mkdirSync(OUT, { recursive: true });
-const HOST = process.env.MP_HOST || 'maxpvm.aim.ptsecurity.cloud';
+const HOST = (process.env.MP_HOST || '').trim();
+if (!HOST) { console.error('Нужен MP_HOST: стенд по умолчанию не подставляется'); process.exit(1); }
+const ALLOW_WRITE = process.env.MP_ALLOW_WRITE === '1';
 const TOKEN = (process.env.MP_TOKEN || (process.env.MP_TOKEN_FILE && fs.readFileSync(process.env.MP_TOKEN_FILE, 'utf8')) || '').trim();
 if (!TOKEN) { console.error('Нужен MP_TOKEN или MP_TOKEN_FILE'); process.exit(1); }
 
@@ -52,30 +58,37 @@ const VR = win.VR;
 await VR.loadConfig();
 
 const fixtures = {};
+const failures = [];
+function check(cond, msg) { if (cond) console.log(`   ok: ${msg}`); else { failures.push(msg); console.log(`   FAIL: ${msg}`); } }
 async function run(name, fn, save) {
   const t = Date.now();
   try { const r = await fn(); console.log(`\n### ${name} -> OK ${((Date.now() - t) / 1000).toFixed(1)}s`); if (save) fixtures[save] = r; return r; }
-  catch (e) { console.log(`\n### ${name} -> ERROR ${e.message}`); return null; }
+  catch (e) { console.log(`\n### ${name} -> ERROR ${e.message}`); failures.push(`${name}: ${e.message}`); return null; }
 }
+process.on('exit', () => { if (failures.length) { console.log(`\nНЕУДАЧ: ${failures.length}`); failures.forEach(f => console.log(' - ' + f)); process.exitCode = 1; } else console.log('\nВсе проверки пройдены'); });
 
 const mode = process.argv[2] || 'read';
 if (mode === 'read') {
-  const si = await run('systemInfo', () => VR.systemInfo()); console.log('  ', si);
+  const si = await run('systemInfo', () => VR.systemInfo()); console.log('  ', si); check(si && si.productVersion, 'systemInfo.productVersion');
   const s = await run('settings-get', () => VR.ext('settings-get')); console.log('  ', JSON.stringify(s));
   const e = await run('enrich', () => VR.ext('enrich', { cves: ['CVE-2021-44228', 'CVE-2020-1472', 'CVE-2022-3602'], skipNvd: false }), 'enrich');
   if (e) e.cves.forEach(c => { const r = e.results[c]; console.log(`   ${c}: ${r.verdict.level} ${r.verdict.title} | EPSS ${r.epss?.epss} | KEV ${r.kev ? r.kev.dateAdded : '-'} | SSVC ${JSON.stringify(r.nvd?.ssvc)}`); });
   const q = await run('queue softs', () => VR.queue({ scope: 'softs', minScore: 0, limit: 300 }), 'queue');
-  if (q) { console.log(`   groups=${q.totalGroups} products=${q.products.length}`); q.groups.slice(0, 3).forEach(g => console.log('   ', JSON.stringify(g))); }
+  if (q) { console.log(`   groups=${q.totalGroups} products=${q.products.length}`); q.groups.slice(0, 3).forEach(g => console.log('   ', JSON.stringify(g))); check(q.groups.length > 0 && q.groups.every(g => g.soft && g.n > 0), 'очередь softs: непустые группы с soft и n'); check(q.groups.every((g, i) => i === 0 || q.groups[i - 1].risk >= g.risk), 'очередь отсортирована по риску'); }
   const qp = await run('queue packages', () => VR.queue({ scope: 'packages', minScore: 7, limit: 100 }), 'queuePkg');
   if (qp) console.log(`   groups=${qp.totalGroups}`, JSON.stringify(qp.groups[0]));
   const top = q?.groups?.find(x => x.soft === 'OpenSSL') || q?.groups?.[0];
   const d = top && await run('queueDetail', () => VR.queueDetail({ scope: 'softs', soft: top.soft, ver: top.ver }), 'detail');
-  if (d) console.log(`   rows=${d.rows} hosts=${d.hosts.length} cves=${d.cves.length} ids=${d.ids.length} truncated=${d.truncated}`, 'id0:', d.ids[0]);
+  if (d) { console.log(`   rows=${d.rows} hosts=${d.hosts.length} cves=${d.cves.length} ids=${d.ids.length} truncated=${d.truncated}`, 'id0:', d.ids[0]); check(d.rows === d.ids.length, 'rows = число уникальных экземпляров (D13)'); check(d.hosts.reduce((s, h) => s + h.n, 0) === d.ids.length, 'сумма n по узлам = число экземпляров'); check(d.cves.every(c => !c.vulnId || /^[0-9a-f-]{36}$/i.test(c.vulnId)), 'vulnId в формате GUID'); }
   const dp = qp?.groups?.[0] && await run('queueDetail packages', () => VR.queueDetail({ scope: 'packages', soft: qp.groups[0].soft, ver: qp.groups[0].ver }), 'detailPkg');
   if (dp) console.log(`   rows=${dp.rows} hosts=${dp.hosts.length} cves=${dp.cves.length}`);
   const m = await run('metrics', () => VR.metrics({ deep: false }), 'metrics');
-  if (m) { const c = VR.computeMetrics(m); console.log('   open', c.open, 'overdue', c.overdue, 'critOver', c.critOver, 'trend', c.trend, 'new30', c.new30, 'assets', c.assets); console.log('   trendTop0', JSON.stringify(m.trendTop[0])); }
-  const cm = await run('commands', () => VR.commands('new')); console.log('  ', JSON.stringify(cm));
+  if (m) { const c = VR.computeMetrics(m); console.log('   open', c.open, 'overdue', c.overdue, 'critOver', c.critOver, 'trend', c.trend, 'new30', c.new30, 'assets', c.assets); console.log('   trendTop0', JSON.stringify(m.trendTop[0])); check(c.open > 0 && c.open === c.total - (c.st.fixed || 0) - (c.st.excluded || 0), 'open = total - fixed - excluded'); check(Object.values(c.bySev).every(b => b.open === b.over + b.soon + b.ok), 'bySev: open = over + soon + ok'); check(c.overdue <= c.open, 'overdue <= open');
+    // число в KPI совпадает с выборкой по клику (D7): корзина возраста «0-7»
+    const dr = await run('drill age 0-7 count', () => VR.pdql(VR.drillPdql('age', '0-7').replace(/\| sort\(.*$/, '') + ' | group(COUNT(*) as N)', 5, 0));
+    const n = dr && VR.num(VR.rowVal(VR.rows(dr)[0] || {}, 'N')); if (n != null) check(Math.abs(n - c.age['0-7']) <= Math.max(5, c.age['0-7'] * 0.01), `KPI 0-7 (${c.age['0-7']}) совпадает с выборкой (${n})`); }
+  const cm = await run('commands', () => VR.commands('new')); console.log('  ', JSON.stringify(cm)); check(Array.isArray(cm) || (cm && typeof cm === 'object'), 'commands: список команд');
+  const pj = await run('projects prefix', () => VR.projects({ prefix: 'proj:' })); if (pj) check(pj.projects.every(p => /^proj:/i.test(p.tag)), 'projects(prefix): только метки с префиксом (D6)');
   fs.writeFileSync(path.join(OUT, 'fixtures.json'), JSON.stringify(fixtures));
   console.log('\nfixtures saved:', Object.keys(fixtures), '->', OUT);
 }
@@ -98,9 +111,25 @@ if (mode === 'asset') {
   if (a) { console.log(`   host=${a.host} items=${a.items.length}`, JSON.stringify(a.items[0])); const issue = VR.buildAssetJiraIssue({ asset: a, sla: { slaCritDays: 1, slaHighDays: 7, slaMedDays: 30 }, host: HOST }); console.log('   summary:', issue.summary, '| priority', issue.priority, '| due', issue.dueDate, '| ids', issue.ids.length, '| csv bytes', issue.csv.length); console.log(issue.description.split('\n').slice(0, 8).join('\n')); }
 }
 if (mode === 'status') {
-  const id = process.argv[3];
-  const r1 = await run('status InProgress', () => VR.changeStatus({ ids: [id], command: 'SwitchToInProgressStateCommand' })); console.log('  ', JSON.stringify(r1));
-  const r2 = await run('status New', () => VR.changeStatus({ ids: [id], command: 'SwitchToNewStateCommand' })); console.log('  ', JSON.stringify(r2));
+  if (!ALLOW_WRITE) { console.error('Режим status меняет данные стенда: задайте MP_ALLOW_WRITE=1'); process.exit(1); }
+  const id = process.argv[3]; if (!id) { console.error('Нужен instanceId'); process.exit(1); }
+  const statusOf = async () => { const rows = VR.rows(await VR.pdql(`filter(Host.@Vulners) | select(Host.@Vulners.Id as Id, Host.@Vulners.Status as St) | filter(Id = "${id}")`, 5, 0)); return rows.length ? VR.rowVal(rows[0], 'St') : null; };
+  const CMD = { new: 'SwitchToNewStateCommand', inProgress: 'SwitchToInProgressStateCommand', awaitingFix: 'SwitchToAwaitingFixStateCommand', excluded: 'SwitchToExcludeStateCommand' };
+  const orig = await run('исходный статус', statusOf); console.log('   статус:', orig);
+  check(orig != null, 'экземпляр найден по Id');
+  if (orig == null) process.exit(1);
+  try {
+    const target = orig === 'inProgress' ? 'SwitchToNewStateCommand' : 'SwitchToInProgressStateCommand';
+    const r1 = await run('смена статуса', () => VR.changeStatus({ ids: [id], command: target })); console.log('  ', JSON.stringify(r1));
+    check(r1 && r1.done === true && r1.succeed === 1, 'операция завершена, succeed = 1');
+    const now = await statusOf(); check(now !== orig, `статус изменился: ${orig} -> ${now}`);
+  } finally {
+    const back = CMD[orig] || 'SwitchToNewStateCommand';
+    const r2 = await run('восстановление', () => VR.changeStatus({ ids: [id], command: back, tillDate: back === 'SwitchToAwaitingFixStateCommand' ? new Date(Date.now() + 7 * 864e5).toISOString() : undefined }));
+    console.log('  ', JSON.stringify(r2));
+    const fin = await statusOf(); check(fin === orig, `исходный статус восстановлен: ${fin}`);
+    if (orig === 'awaitingFix' || orig === 'excluded') console.log('   внимание: срок/причина/комментарий исходного статуса не восстанавливаются');
+  }
 }
 if (mode === 'v4') {
   // Новое в 0.4: очередь ОС и образов, drill-down, риск v2 (ФСТЭК), паспорт и целевая версия, теги, веб
@@ -125,7 +154,7 @@ if (mode === 'v4') {
   const pass = gid && await run('passport', () => VR.passport(gid), 'passport');
   if (pass) console.log('   title', pass.title, '| howToFix:', String(pass.howToFix || '').slice(0, 200).replace(/\n/g, ' '), '| target', VR.targetVersionFromHowToFix(pass.howToFix));
   const ar = await run('assetRisk v2', () => VR.assetRisk({ limit: 1000 }), 'assetRisk');
-  if (ar) { console.log(`   assets=${ar.assets.length}`); ar.assets.slice(0, 3).forEach(a => console.log('   ', JSON.stringify({ host: a.host, id: a.id, imp: a.imp, type: a.type, risk: a.risk, zone: a.zone, fstecMax: +a.fstecMax.toFixed(1), fstecLevel: a.fstecLevel, n: a.n, groups: a.groups.slice(0, 3) }))); console.log('   byZone', JSON.stringify(ar.byZone)); console.log('   byType', JSON.stringify(ar.byType.slice(0, 4))); console.log('   byOs', JSON.stringify(ar.byOs.slice(0, 3))); }
+  if (ar) { console.log(`   assets=${ar.assets.length}`); ar.assets.slice(0, 3).forEach(a => console.log('   ', JSON.stringify({ host: a.host, id: a.id, imp: a.imp, type: a.type, risk: a.risk, zone: a.zone, fstecMax: +a.fstecMax.toFixed(1), fstecLevel: a.fstecLevel, n: a.n }))); console.log('   byZone', JSON.stringify(ar.byZone)); console.log('   byType', JSON.stringify(ar.byType.slice(0, 4))); console.log('   byOs', JSON.stringify(ar.byOs.slice(0, 3))); check(ar.assets.every(a => a.risk >= 0 && a.risk <= 1000), 'риск в [0,1000]'); }
   const ai = dos && await run('assetsInfo', () => VR.assetsInfo(dos.hosts.slice(0, 20).map(h => h.id))); if (ai) console.log('   hosts', Object.keys(ai).length, JSON.stringify(Object.values(ai)[0]));
   if (dos && pass) { const issue = VR.buildJiraIssue({ detail: dos, group: qo.groups[0], enrich: null, sla, host: HOST, passports: { [cve]: pass }, assetsInfo: ai || {} }); console.log('   jira summary:', issue.summary, '| target', issue.targetVersion); console.log(issue.description.split('\n').slice(0, 20).join('\n')); }
   const tags = await run('assetTags', () => VR.assetTags()); if (tags) console.log('   tags', tags.length, JSON.stringify(tags.slice(0, 3)));
@@ -145,10 +174,22 @@ if (mode === 'risk') {
   console.log('   target(7-Zip 24.07):', VR.targetVersionFromHowToFix('обновите до 24.09', '24.07'));
 }
 if (mode === 'tags') {
-  // Цикл авто-тегов на одном правиле: создать, назначить, проверить, снять, удалить
-  const rule = { name: 'auto:test-vr', color: 'grey', title: 'тест', pdql: 'filter(Host.OsName like "Windows 2022%") | select(@Host)' };
-  const r1 = await run('applyAutoTags', () => VR.applyAutoTags({ rules: [rule] })); console.log('  ', JSON.stringify(r1));
-  await new Promise(r => setTimeout(r, 6000));
-  const c = await run('tagCoverage', () => VR.tagCoverage()); console.log('   auto:test-vr ->', JSON.stringify(c?.find(x => x.tag === 'auto:test-vr')));
-  const r2 = await run('removeAutoTags', () => VR.removeAutoTags({ prefix: 'auto:test-vr' })); console.log('  ', JSON.stringify(r2));
+  if (!ALLOW_WRITE) { console.error('Режим tags меняет данные стенда: задайте MP_ALLOW_WRITE=1'); process.exit(1); }
+  // Цикл тегов на одном узле и уникальном теге: создать, назначить, проверить, снять, удалить (в finally)
+  const name = `auto:test-vr-${Date.now().toString(36)}`;
+  const one = VR.rows(await VR.pdql('filter(Host.@Vulners) | select(@Host)', 1, 0)); const hostId = VR.getVal(one[0] || {}, '@Host')?.id;
+  check(!!hostId, 'тестовый узел найден'); if (!hostId) process.exit(1);
+  let tag = null;
+  try {
+    tag = await run('createAssetTag', () => VR.createAssetTag(name, 'grey')); check(tag && tag.id, 'тег создан');
+    const r1 = await run('assignAssetTagsByIds', () => VR.assignAssetTagsByIds({ ids: [hostId], addIds: [tag.id] })); console.log('  ', JSON.stringify(r1));
+    check(r1 && r1.count === 1 && r1.failed === 0 && r1.requested === 1, 'назначен ровно одному узлу');
+    const c = await run('tagCoverage', () => VR.tagCoverage()); const cov = c?.find(x => x.tag === name); console.log('  ', JSON.stringify(cov)); check(cov && cov.n === 1, 'покрытие: тег на одном узле');
+  } finally {
+    if (tag?.id) {
+      const r2 = await run('removeAutoTags exact', () => VR.removeAutoTags({ prefix: name, exact: true })); console.log('  ', JSON.stringify(r2));
+      check(r2 && r2.length === 1 && r2[0].ok, 'тег снят и удален');
+      const tags = await VR.assetTags(); check(!(tags || []).some(t => t.name === name), 'тега больше нет в системе');
+    }
+  }
 }

@@ -192,3 +192,40 @@ test('Внешний контекст штатной карточки: CVE из 
   await expect(page.locator('.vr-cb .vr-err')).toHaveCount(0);
   await expect(page.locator('.vr-cb .kev')).toHaveAttribute('href', /CVE-2021-44228/);
 });
+
+test('Опасные действия: отмена ничего не отправляет, подтверждение отправляет один раз', async ({ page }) => {
+  await openWorkspace(page);
+  await page.evaluate(() => {
+    window.__calls = { status: [], tags: [] };
+    const s = window.VR.changeStatus; window.VR.changeStatus = async a => { window.__calls.status.push({ command: a.command, n: a.ids.length }); await new Promise(r => setTimeout(r, 400)); return s(a); };
+    const t = window.VR.tagInstances; window.VR.tagInstances = async (ids, tag) => { window.__calls.tags.push({ n: ids.length, tag }); return t(ids, tag); };
+  });
+  await page.locator('#tab-queue').click();
+  await run(page, 'q-run');
+  await page.locator('#q-out .row-action').first().click();
+  await expect(page.locator('#d-apply')).toBeVisible();
+  page.once('dialog', d => d.dismiss());
+  await page.locator('#d-apply').click();
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(() => window.__calls.status.length)).toBe(0);
+  await page.locator('#d-cmd').selectOption('SwitchToInProgressStateCommand');
+  page.once('dialog', d => d.accept());
+  await page.locator('#d-apply').click();
+  await expect(page.locator('#d-apply')).toBeDisabled();
+  await page.locator('#d-apply').click({ force: true, timeout: 500 }).catch(() => {});
+  await expect(page.locator('#d-st')).toContainText('готово');
+  const calls = await page.evaluate(() => window.__calls.status);
+  expect(calls).toHaveLength(1);
+  expect(calls[0].command).toBe('SwitchToInProgressStateCommand');
+  expect(calls[0].n).toBeGreaterThan(0);
+  page.once('dialog', d => d.dismiss());
+  await page.locator('#d-proj').click();
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(() => window.__calls.tags.length)).toBe(0);
+  page.once('dialog', d => d.accept('test-proj'));
+  await page.locator('#d-proj').click();
+  await expect(page.locator('#d-proj-st')).toContainText('proj:test-proj');
+  const tags = await page.evaluate(() => window.__calls.tags);
+  expect(tags).toHaveLength(1);
+  expect(tags[0].tag).toBe('proj:test-proj');
+});

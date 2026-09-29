@@ -10,8 +10,8 @@
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fmt = n => Number(n || 0).toLocaleString('ru-RU');
   const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
-  const today = () => new Date().toISOString().slice(0, 10);
-  const plusDays = d => { const x = new Date(); x.setDate(x.getDate() + d); return x.toISOString().slice(0, 10); };
+  const today = () => VR.plusDays(0);
+  const plusDays = d => VR.plusDays(d);
   const ICON = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.5 2.5 3.6v4.1c0 3.3 2.3 5.6 5.5 6.8 3.2-1.2 5.5-3.5 5.5-6.8V3.6L8 1.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="m5.6 8 1.7 1.7 3.2-3.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   // Адаптация Koobiq: Content panel, Tabs underlined, Table, Empty state.
@@ -509,10 +509,7 @@ td a.lnk { white-space: nowrap; } a.lnk { color: var(--vr-accent); }
     const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click();
     setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 1500);
   }
-  function csv(rows, cols) {
-    const q = v => { const s = String(v ?? ''); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-    return '﻿' + [cols.map(c => c[0]).join(';'), ...rows.map(r => cols.map(c => q(typeof c[1] === 'function' ? c[1](r) : r[c[1]])).join(';'))].join('\n');
-  }
+  const csv = (rows, cols) => VR.csv(rows, cols);
   function openHtml(html, name) {
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -923,7 +920,7 @@ ${past}
       case 'status': pdql = VR.drillPdql('status', arg); title = `Статус: ${ST_RU[arg] || arg}`; break;
       case 'cve': pdql = VR.drillPdql('cve', arg); title = `Экземпляры ${arg}`; break;
       case 'asset': if (!arg) return; pdql = VR.drillPdql('asset', arg); title = 'Открытые уязвимости узла'; break;
-      case 'age': { const [a, b] = arg.replace('+', '').split('-').map(x => parseInt(x)); pdql = VR.drillPdql('age', arg.includes('+') ? { from: a } : { from: a, to: b + 1 }); title = `Возраст ${arg} дн`; break; }
+      case 'age': pdql = VR.drillPdql('age', arg); title = `Возраст ${arg} дн`; break;
     }
     showDrill($('m-drill'), title, pdql);
   }
@@ -1013,7 +1010,7 @@ ${past}
       $('d-csv').addEventListener('click', () => download(`hosts_${soft}_${ver}_${today()}.csv`.replace(/[^\w.\-а-яА-Я]+/g, '_'), csv(d.hosts, [['Узел', 'host'], ['ID', 'id'], ['Уязвимостей', 'n'], ['Max CVSS', 'maxScore']]), 'text/csv;charset=utf-8'));
       $('d-copy').addEventListener('click', () => navigator.clipboard.writeText(d.hosts.map(h => h.host).join('\n')).catch(() => {}));
       $('d-pdql').addEventListener('click', () => navigator.clipboard.writeText(d.pdql).catch(() => {}));
-      const jiraLabelForGroup = 'mpvm-' + String(soft).toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40);
+      const jiraLabelForGroup = VR.jiraLabel(soft);
       $('d-jira').addEventListener('click', async () => {
         const st = $('d-jira-st'); $('d-jira').disabled = true; st.innerHTML = '<span class="spin"></span>создаем задачу';
         try {
@@ -1048,7 +1045,7 @@ ${past}
         $('d-apply').disabled = true; $('d-st').innerHTML = '<span class="spin"></span>выполняется';
         try {
           const r = await VR.changeStatus({ ids: d.ids, command: cmd, tillDate: $('d-date').value ? $('d-date').value + 'T00:00:00Z' : null, reason: $('d-reason').value, note: $('d-note').value });
-          $('d-st').textContent = r.total != null ? `готово: успешно ${fmt(r.succeed || 0)} из ${fmt(r.total)}${r.failed ? ', ошибок ' + fmt(r.failed) : ''}` : `отправлено ${r.count} экз., операция ${r.operationId || 'без id'}`;
+          $('d-st').textContent = r.done === false ? `операция ${r.operationId} еще выполняется на сервере: обработано ${fmt((r.succeed || 0) + (r.failed || 0))} из ${fmt(r.total || r.count)}, проверьте статусы позже` : r.total != null ? `готово: успешно ${fmt(r.succeed || 0)} из ${fmt(r.total)}${r.failed ? ', ошибок ' + fmt(r.failed) : ''}` : `отправлено ${r.count} экз., операция ${r.operationId || 'без id'}`;
         } catch (e) { $('d-st').textContent = 'ошибка: ' + e.message; }
         $('d-apply').disabled = false;
       });

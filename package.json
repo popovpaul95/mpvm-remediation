@@ -2,8 +2,10 @@
   "name": "mpvm-remediation-ui-checks",
   "private": true,
   "scripts": {
+    "check": "for f in background.js popup.js content/*.js; do node --check \"$f\" || exit 1; done",
+    "test:unit": "node --test \"tests/unit/*.test.mjs\" \"tests/contract/*.test.mjs\"",
     "test:ui": "playwright test",
-    "check": "node --check content/app.js && node --check content/cards.js && node --check popup.js"
+    "test": "npm run check && npm run test:unit && npm run test:ui"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
