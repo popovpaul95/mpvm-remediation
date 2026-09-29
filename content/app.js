@@ -14,168 +14,276 @@
   const plusDays = d => { const x = new Date(); x.setDate(x.getDate() + d); return x.toISOString().slice(0, 10); };
   const ICON = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.5 2.5 3.6v4.1c0 3.3 2.3 5.6 5.5 6.8 3.2-1.2 5.5-3.5 5.5-6.8V3.6L8 1.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="m5.6 8 1.7 1.7 3.2-3.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
+  // Адаптация Koobiq: Content panel, Tabs underlined, Table, Empty state.
   const CSS = `
 :host { all: initial; }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-.root { position: absolute; inset: 0; display: flex; flex-direction: column;
-  font-family: var(--kbq-typography-text-normal-font-family, Inter, -apple-system, "Segoe UI", sans-serif);
-  font-size: var(--kbq-typography-text-normal-font-size, 14px); line-height: var(--kbq-typography-text-normal-line-height, 20px);
-  color: var(--kbq-foreground-contrast, #262a35); background: var(--kbq-background-bg, #fff); overflow: hidden; }
-a { color: var(--kbq-link-text, #2f80ed); text-decoration: none; } a:hover { text-decoration: underline; }
-.hdr { display: flex; align-items: center; gap: var(--kbq-size-m, 12px); padding: var(--kbq-size-s, 8px) var(--kbq-size-xxl, 24px) 0; border-bottom: 1px solid var(--kbq-line-contrast-less, #e3e5ea); flex-shrink: 0; min-height: 56px; overflow: hidden; }
-.crumbs { display: flex; align-items: center; gap: 4px; font-family: var(--kbq-typography-subheading-font-family, 'TT-Positive', Inter, sans-serif); font-size: var(--kbq-typography-subheading-font-size, 18px); line-height: var(--kbq-typography-subheading-line-height, 26px); font-weight: var(--kbq-typography-subheading-font-weight, 600); color: var(--kbq-foreground-contrast-secondary, #8a8fa8); padding-bottom: var(--kbq-size-s, 8px); white-space: nowrap; }
-.crumbs .cur { color: var(--kbq-foreground-contrast, #c4c7d4); }
-.crumbs .sep { color: var(--kbq-foreground-contrast-tertiary, #6f7580); }
-.rep { display: flex; align-items: center; gap: 4px; padding-bottom: var(--kbq-size-s, 8px); margin-left: var(--kbq-size-s, 8px); flex-shrink: 0; }
-.rep .lbl { font-size: 12px; color: var(--kbq-foreground-contrast-tertiary, #6f7580); margin-right: 2px; white-space: nowrap; }
-.rep .btn { height: 26px; padding: 0 8px; font-size: 12px; }
-.hdr .ver { font-size: var(--kbq-typography-text-normal-font-size, 14px); line-height: 20px; color: var(--kbq-foreground-contrast-secondary, #8a8fa8); padding-bottom: var(--kbq-size-s, 8px); white-space: nowrap; }
-.hdr h1 { display: none; }
-.tabs { display: flex; gap: 2px; margin-left: auto; align-self: stretch; align-items: stretch; flex-shrink: 0; }
-.tabs button { white-space: nowrap; background: transparent; border: none; border-bottom: 2px solid transparent; padding: 0 var(--kbq-size-s, 8px); font: inherit; color: var(--kbq-foreground-contrast-secondary, #6f7580); cursor: pointer; border-radius: var(--kbq-size-border-radius, 8px) var(--kbq-size-border-radius, 8px) 0 0; }
-.tabs button:hover { background: var(--kbq-tabs-tab-item-filled-on-background-states-hover-background, rgba(120,130,160,.16)); color: var(--kbq-foreground-contrast, #262a35); }
-.tabs button.active { color: var(--kbq-foreground-contrast, #262a35); border-bottom-color: var(--kbq-line-theme, #2f80ed); font-weight: 600; }
-.close { background: none; border: none; font-size: 22px; line-height: 1; color: var(--kbq-icon-contrast-fade, #8a90a0); cursor: pointer; padding: 0 0 var(--kbq-size-s, 8px) var(--kbq-size-s, 8px); border-radius: var(--kbq-size-border-radius, 8px); }
-.close:hover { color: var(--kbq-foreground-contrast, #262a35); }
-.body { flex: 1; overflow: auto; padding: var(--kbq-size-l, 16px) var(--kbq-size-xxl, 24px) 40px; }
-.pane { display: none; flex-direction: column; gap: var(--kbq-size-l, 16px); max-width: 1440px; }
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; padding: 0; }
+.root {
+  --vr-bg: var(--kbq-background-bg, #fff);
+  --vr-surface: var(--kbq-background-card, #fff);
+  --vr-soft: var(--kbq-background-bg-secondary, #f4f5f7);
+  --vr-text: var(--kbq-foreground-contrast, #21232b);
+  --vr-muted: color-mix(in srgb, var(--kbq-foreground-contrast-secondary, #626878) 82%, var(--kbq-foreground-contrast, #21232b));
+  --vr-line: var(--kbq-line-contrast-less, #e2e4e9);
+  --vr-accent: color-mix(in srgb, var(--kbq-foreground-theme, #1769e0) 85%, var(--vr-text));
+  --vr-error: color-mix(in srgb, var(--kbq-foreground-error, #bd2819) 90%, var(--vr-text));
+  --vr-warning: color-mix(in srgb, var(--kbq-foreground-warning, #976000) 85%, var(--vr-text));
+  --vr-success: color-mix(in srgb, var(--kbq-foreground-success, #278112) 90%, var(--vr-text));
+  --vr-focus: var(--kbq-states-line-focus-theme, #3388ff);
+  --vr-radius: var(--kbq-size-border-radius, 8px);
+  position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden;
+  color: var(--vr-text); background: var(--vr-soft); container: workspace / inline-size;
+  font: 14px/20px var(--kbq-typography-text-normal-font-family, 'Inter', -apple-system, 'Segoe UI', sans-serif);
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select, textarea { font: inherit; }
+button, a, input, select, textarea, summary { -webkit-tap-highlight-color: transparent; }
+button { touch-action: manipulation; }
+button:not(:disabled), summary, select, input[type=checkbox] { cursor: pointer; }
+:where(button, a, input, select, textarea, summary, [tabindex]):focus-visible { outline: 2px solid var(--vr-focus); outline-offset: 3px; }
+svg { flex: none; vertical-align: middle; }
+a { color: var(--vr-accent); text-decoration: none; text-underline-offset: 3px; }
+a:hover { text-decoration: underline; }
+.hdr { flex: none; display: flex; align-items: center; gap: 16px; padding: 18px 28px; background: var(--vr-bg); border-bottom: 1px solid var(--vr-line); min-width: 0; }
+.app-mark { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; color: var(--vr-accent); background: var(--kbq-background-theme-less, #eaf2ff); }
+.app-mark svg { width: 22px; height: 22px; }
+.header-title { min-width: 0; flex: 1; }
+.crumbs { font: 600 16px/24px var(--kbq-typography-subheading-font-family, 'TT-Positive', 'Inter', sans-serif); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.crumbs .sep { color: var(--vr-muted); font-weight: 400; }
+.crumbs .cur { font-weight: 400; color: var(--vr-muted); }
+.hdr .ver { display: block; font-size: 12px; line-height: 16px; color: var(--vr-muted); margin-top: 2px; }
+.rep { display: flex; align-items: center; gap: 2px; flex: none; }
+.rep .lbl { color: var(--vr-muted); font-size: 12px; margin-right: 8px; }
+.rep .btn { background: transparent; min-height: 32px; padding: 0 10px; }
+.rep .btn:not(:disabled):hover { background: var(--vr-soft); }
+.close { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border: 0; border-radius: var(--vr-radius); color: var(--vr-muted); background: transparent; font-size: 24px; }
+.close:hover { background: var(--vr-soft); color: var(--vr-text); }
+.tabs { display: flex; gap: 4px; flex: none; overflow-x: auto; overscroll-behavior-x: contain; padding: 0 28px; background: var(--vr-bg); border-bottom: 1px solid var(--vr-line); scrollbar-width: thin; }
+.tabs button { display: inline-flex; gap: 8px; align-items: center; white-space: nowrap; min-height: 48px; padding: 0 12px; color: var(--vr-muted); border: 0; border-bottom: 2px solid transparent; background: transparent; flex: none; }
+.tabs button:hover { color: var(--vr-text); background: var(--kbq-states-background-transparent-hover, #f4f5f7); }
+.tabs button.active { color: var(--vr-accent); border-bottom-color: var(--kbq-line-theme, #3388ff); }
+.tabs button:focus-visible { outline-offset: -4px; }
+.tabs button[data-t=settings] { margin-left: auto; }
+.body { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 28px 28px 48px; scrollbar-gutter: stable; }
+.pane { display: none; flex-direction: column; gap: 20px; max-width: 1680px; margin: 0 auto; min-width: 0; }
 .pane.active { display: flex; }
-.box { background: var(--kbq-background-card, #fff); border: 1px solid var(--kbq-line-contrast-less, #e3e5ea); border-radius: 12px; padding: var(--kbq-size-l, 16px); display: flex; flex-direction: column; gap: var(--kbq-size-m, 12px); min-width: 0; overflow-x: auto; contain: layout paint; }
-.two > * { min-width: 0; }
-.box h3 { font-family: var(--kbq-typography-subheading-font-family, 'TT-Positive', Inter, sans-serif); font-size: var(--kbq-typography-subheading-font-size, 18px); line-height: var(--kbq-typography-subheading-line-height, 26px); font-weight: var(--kbq-typography-subheading-font-weight, 600); color: var(--kbq-foreground-contrast, #c4c7d4); }
-.muted { font-size: var(--kbq-typography-text-normal-font-size, 14px); line-height: 20px; color: var(--kbq-foreground-contrast-secondary, #8a8fa8); }
-.note { font-size: var(--kbq-typography-text-compact-font-size, 12px); color: var(--kbq-foreground-warning, #b26a00); }
-.err { font-size: var(--kbq-typography-text-compact-font-size, 12px); color: var(--kbq-foreground-error, #d23c3c); white-space: pre-wrap; }
-.row { display: flex; gap: var(--kbq-size-s, 8px); align-items: center; flex-wrap: wrap; }
-.row label { font-size: var(--kbq-typography-text-compact-font-size, 12px); color: var(--kbq-foreground-contrast-secondary, #6f7580); display: flex; align-items: center; gap: var(--kbq-size-xs, 6px); }
-input[type=text], input[type=number], input[type=date], input[type=password], select, textarea {
-  font-family: inherit; font-size: var(--kbq-typography-text-normal-font-size, 14px); font-weight: 400; color: var(--kbq-form-field-default-text, var(--kbq-foreground-contrast, #262a35)); background: var(--kbq-form-field-default-background, #fff);
-  border: var(--kbq-form-field-size-border-width, 1px) solid var(--kbq-form-field-default-border-color, #cfd3da); border-radius: var(--kbq-form-field-size-border-radius, 8px);
-  height: var(--kbq-form-field-size-height, 32px); padding: 0 var(--kbq-size-m, 12px); outline: none; }
-input::placeholder, textarea::placeholder { color: var(--kbq-form-field-default-placeholder, #8a90a0); }
-input:focus, select:focus, textarea:focus { border-color: var(--kbq-form-field-states-focused-border-color, #2f80ed); box-shadow: 0 0 0 1px var(--kbq-form-field-states-focused-focus-outline, #2f80ed); }
-input[type=number] { width: 90px; } input[type=date] { width: 150px; }
-input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--kbq-checkbox-theme-states-checked-background, #2f80ed); margin: 0; }
-textarea { width: 100%; min-height: 72px; height: auto; padding: var(--kbq-size-s, 8px) var(--kbq-size-m, 12px); resize: vertical; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
-select { padding-right: 28px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%238a90a0' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
-.btn { font: inherit; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: var(--kbq-size-xs, 6px);
-  height: var(--kbq-button-size-height, 32px); padding: 0 var(--kbq-button-size-horizontal-padding, 12px); border-radius: var(--kbq-button-size-border-radius, 8px);
-  border: var(--kbq-button-size-border-width, 1px) solid var(--kbq-button-filled-contrast-fade-off-border, transparent);
-  background: var(--kbq-button-filled-contrast-fade-off-background, #e3e5ea); color: var(--kbq-button-filled-contrast-fade-off-foreground, #262a35); cursor: pointer; white-space: nowrap; }
-.btn:hover { background: var(--kbq-button-filled-contrast-fade-off-states-hover-background, #d3d6dd); }
-.btn:active { background: var(--kbq-button-filled-contrast-fade-off-states-active-background, #b9bdc7); }
-.btn.acc { background: var(--kbq-background-theme, #2f80ed); border-color: transparent; color: var(--kbq-foreground-white, #fff); font-weight: 600; }
-.btn.acc:hover { filter: brightness(1.08); } .btn.acc:active { filter: brightness(.92); }
-.btn:disabled, .btn.acc:disabled { background: var(--kbq-button-filled-contrast-fade-off-states-disabled-background, rgba(120,130,160,.16)); color: var(--kbq-button-filled-contrast-fade-off-states-disabled-foreground, rgba(120,130,160,.6)); cursor: default; filter: none; }
-.kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: var(--kbq-size-m, 12px); }
-.kpi { border: 1px solid var(--kbq-line-contrast-less, #e3e5ea); border-radius: var(--kbq-size-border-radius, 8px); padding: var(--kbq-size-m, 12px); background: var(--kbq-background-bg-secondary, #f5f6f8); }
-.kpi .v { font-family: var(--kbq-typography-title-font-family, 'TT-Positive', Inter, sans-serif); font-size: 22px; line-height: 28px; font-weight: 700; } .kpi .l { font-size: var(--kbq-typography-text-compact-font-size, 12px); line-height: 16px; color: var(--kbq-foreground-contrast-secondary, #6f7580); margin-top: 2px; }
-.kpi.bad .v { color: var(--kbq-foreground-error, #d23c3c); } .kpi.warn .v { color: var(--kbq-foreground-warning, #b26a00); } .kpi.ok .v { color: var(--kbq-foreground-success, #1b8f4a); }
-table { width: 100%; border-collapse: collapse; font-size: var(--kbq-typography-text-normal-font-size, 14px); line-height: 20px; letter-spacing: -0.084px; }
-th { text-align: left; font-weight: 400; color: var(--kbq-foreground-contrast-secondary, #8a8fa8); padding: 6px 22px 6px 0; height: 32px; white-space: nowrap; vertical-align: middle; position: relative; user-select: none; }
-th.sortable { cursor: pointer; } th.sortable:hover { color: var(--kbq-foreground-contrast, #c4c7d4); }
-th .sort { display: inline-block; color: var(--kbq-foreground-contrast-tertiary, #6f7580); font-size: 10px; margin-left: 2px; }
-th .vf { position: absolute; right: 2px; top: 50%; margin-top: -9px; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 4px; color: var(--kbq-foreground-contrast-tertiary, #6f7580); cursor: pointer; opacity: 0; }
-th:hover .vf, th .vf.on { opacity: 1; } th .vf.on { color: var(--kbq-link-text, #4d94ff); background: var(--kbq-background-theme-less, rgba(77,148,255,.15)); } th .vf:hover { color: var(--kbq-foreground-contrast, #c4c7d4); }
-td { padding: 6px 8px 6px 0; height: 37px; vertical-align: middle; color: var(--kbq-foreground-contrast, #c4c7d4); }
-table { table-layout: auto; }
-.scroll table { min-width: 100%; }
-tr.hasf td { cursor: context-menu; }
-.vf-pop { position: fixed; z-index: 20; width: 280px; max-height: 360px; display: flex; flex-direction: column; background: var(--kbq-background-card, #fff); border: 1px solid var(--kbq-line-contrast-less, #e3e5ea); border-radius: var(--kbq-size-border-radius, 8px); box-shadow: 0 8px 24px rgba(0,0,0,.35); padding: var(--kbq-size-s, 8px); gap: 6px; font-size: 14px; }
-.vf-pop input[type=text] { width: 100%; box-sizing: border-box; }
-.vf-pop .lst { overflow: auto; display: flex; flex-direction: column; gap: 2px; max-height: 240px; }
-.vf-pop label { display: flex; align-items: center; gap: 8px; padding: 3px 4px; border-radius: 4px; cursor: pointer; } .vf-pop label:hover { background: var(--kbq-background-bg-secondary, #f2f3f5); }
-.vf-pop label span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .vf-pop label i { font-style: normal; color: var(--kbq-foreground-contrast-tertiary, #6f7580); font-size: 12px; }
-.vf-pop .ft { display: flex; gap: 6px; justify-content: space-between; align-items: center; font-size: 12px; }
-.vf-pop .ft a { color: var(--kbq-link-text, #4d94ff); cursor: pointer; }
-.vf-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; font-size: 12px; }
-.vf-chips .chip { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 4px 0 8px; border-radius: 11px; background: var(--kbq-background-theme-less, rgba(77,148,255,.15)); color: var(--kbq-link-text, #4d94ff); }
-.vf-chips .chip b { font-weight: 500; color: var(--kbq-foreground-contrast, #c4c7d4); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.vf-chips .chip button, .vf-chips .clr { background: none; border: none; cursor: pointer; color: inherit; font-size: 14px; line-height: 1; padding: 0 4px; }
-.vf-chips .clr { color: var(--kbq-foreground-contrast-secondary, #8a8fa8); font-size: 12px; }
-.cnt { display: inline-block; min-width: 40px; box-sizing: border-box; padding: 2px 6px; border-radius: 3px; text-align: left; font-variant-numeric: tabular-nums; }
-.cnt.red { background: hsla(7, 97%, 20%, 1); color: hsla(7, 97%, 60%, 1); } .cnt.yellow { background: hsl(38, 100%, 15%); color: rgb(255,180,51); } .cnt.green { background: rgb(27,63,14); color: rgb(80,188,41); } .cnt.grey { background: var(--kbq-background-bg-secondary, #f2f3f5); color: var(--kbq-foreground-contrast-secondary, #8a8fa8); }
-td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; padding-right: 8px; } th.n { text-align: right; }
-td.ell { max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-td.ver { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.page-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 0 2px; }
+.page-heading h2 { font: 700 28px/36px var(--kbq-typography-title-font-family, 'TT-Positive', 'Inter', sans-serif); letter-spacing: -.5px; text-wrap: balance; }
+.page-heading p { color: var(--vr-muted); margin-top: 6px; max-width: 860px; }
+.box { background: var(--vr-surface); border: 1px solid var(--vr-line); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px; min-width: 0; overflow-x: auto; }
+.box h3 { font: 600 18px/26px var(--kbq-typography-subheading-font-family, 'TT-Positive', 'Inter', sans-serif); color: var(--vr-text); text-wrap: balance; }
+.box h3:not(:first-child) { margin-top: 8px; padding-top: 20px; border-top: 1px solid var(--vr-line); }
+.control-panel { gap: 14px; }
+.method { font-size: 12px; color: var(--vr-muted); }
+.method summary { width: fit-content; padding: 2px 0; color: var(--vr-muted); }
+.method summary:hover { color: var(--vr-text); }
+.method > .muted { font-size: 12px; line-height: 20px; max-width: 1040px; margin-top: 10px; }
+.muted { color: var(--vr-muted); font-size: 13px; line-height: 20px; overflow-wrap: anywhere; }
+.note { color: var(--vr-warning); font-size: 12px; }
+.err { color: var(--vr-error); font-size: 13px; line-height: 20px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.err:not(:empty) { padding: 12px 16px; border-radius: 8px; background: var(--kbq-background-error-less, #fff0ed); }
+.err:empty, .vf-chips:empty { display: none; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; min-width: 0; }
+.row label { display: inline-flex; align-items: center; gap: 8px; color: var(--vr-muted); font-size: 13px; max-width: 100%; }
+.row > .muted[id$='info']:not(:empty) { flex-basis: 100%; font-size: 12px; }
+input[type=text], input[type=number], input[type=date], input[type=password], input[type=email], select, textarea {
+  min-width: 0; max-width: 100%; height: 36px; padding: 0 12px; color: var(--kbq-form-field-default-text, var(--vr-text));
+  background-color: var(--kbq-form-field-default-background, var(--vr-bg)); border: 1px solid var(--kbq-form-field-default-border-color, #a9aeb8); border-radius: var(--vr-radius);
+}
+input::placeholder, textarea::placeholder { color: var(--kbq-form-field-default-placeholder, var(--vr-muted)); }
+input:hover, select:hover, textarea:hover { border-color: var(--kbq-line-contrast-fade, #888f9e); }
+input:focus, select:focus, textarea:focus { border-color: var(--kbq-line-theme, #3388ff); }
+input[type=number] { width: 90px; } input[type=date] { width: 154px; }
+input[type=checkbox] { width: 16px; height: 16px; flex: none; accent-color: var(--kbq-background-theme, #3388ff); }
+textarea { width: 100%; min-height: 104px; height: auto; padding: 12px; resize: vertical; line-height: 20px; font-family: var(--kbq-font-family-mono, ui-monospace, monospace); }
+select { padding-right: 32px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%237a8190' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 36px; padding: 6px 12px; border-radius: var(--vr-radius); border: 1px solid transparent; background: var(--kbq-background-contrast-fade, #edf0f4); color: var(--vr-text); font-weight: 500; line-height: 20px; white-space: nowrap; text-decoration: none; }
+.btn:hover { background: var(--kbq-states-background-contrast-fade-hover, #e0e4e9); text-decoration: none; }
+.btn:active { background: var(--kbq-states-background-contrast-fade-active, #d0d5de); }
+.btn.acc { color: var(--kbq-foreground-on-contrast, #fff); background: var(--kbq-background-contrast, #242831); }
+.btn.acc:hover { background: var(--kbq-states-background-contrast-hover, #3e4655); }
+.btn.acc:active { background: var(--kbq-states-background-contrast-active, #151922); }
+.btn:disabled, .btn.acc:disabled { color: var(--kbq-states-foreground-disabled, #9299a6); background: var(--kbq-states-background-disabled, #f0f1f4); cursor: default; }
+.btn.danger { color: var(--vr-error); }
+.link-button { border: 0; background: transparent; color: var(--vr-accent); padding: 4px; font: inherit; }
+.link-button:hover { text-decoration: underline; }
+.report-options { margin-left: auto; position: relative; }
+.report-options > summary { list-style: none; }
+.report-options > summary::-webkit-details-marker { display: none; }
+.report-options[open] { flex-basis: 100%; margin-left: 0; }
+.report-options .row { margin-top: 12px; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.kpi { position: relative; text-align: left; color: var(--vr-text); font: inherit; border: 1px solid var(--vr-line); border-radius: 10px; padding: 16px; background: var(--vr-surface); min-width: 0; }
+.kpi .v { display: block; font: 600 26px/34px var(--kbq-typography-title-font-family, 'TT-Positive', 'Inter', sans-serif); letter-spacing: -.5px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.kpi .l { display: block; font-size: 12px; line-height: 18px; color: var(--vr-muted); margin-top: 6px; }
+.kpi .l small { display: block; }
+.kpi.bad .v { color: var(--vr-error); }
+.kpi.warn .v { color: var(--vr-warning); }
+.kpi.ok .v { color: var(--vr-success); }
+.kpi.click:hover { border-color: var(--kbq-line-theme, #3388ff); background: var(--kbq-background-theme-less, #edf4ff); }
+.kpi.click::after { content: '↗'; position: absolute; right: 12px; top: 12px; color: var(--vr-muted); font-size: 14px; }
+.hero .kpi { padding: 20px; min-height: 130px; }
+.hero .kpi .v { font-size: 36px; line-height: 44px; }
+.hero .kpi.bad { border-top: 3px solid var(--kbq-line-error, #dc3825); padding-top: 18px; }
+.hero .kpi.warn { border-top: 3px solid var(--kbq-line-warning, #e79b00); padding-top: 18px; }
+.secondary .kpi { background: var(--vr-soft); border-color: transparent; }
+.secondary .kpi .v { font-size: 22px; line-height: 28px; padding-right: 16px; }
+.metrics-panel { background: transparent; border: 0; padding: 0; overflow: visible; gap: 12px; }
+.metrics-panel > h3 { display: none; }
+.metrics-note { font-size: 12px; padding: 4px 0; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; line-height: 20px; font-variant-numeric: tabular-nums; }
+th { text-align: left; font-weight: 500; color: var(--vr-muted); background: var(--vr-surface); font-size: 12px; padding: 10px 26px 10px 8px; white-space: nowrap; position: relative; vertical-align: middle; border-bottom: 1px solid var(--vr-line); }
+th.sortable { cursor: pointer; }
+th.sortable:hover { color: var(--vr-text); background: var(--vr-soft); }
+th .sort { display: inline-block; font-size: 9px; margin-left: 4px; color: var(--vr-accent); }
+th .vf { position: absolute; right: 3px; top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: 0; border-radius: 4px; color: var(--vr-muted); background: transparent; opacity: .6; }
+th:hover .vf, th:focus-within .vf, th .vf.on { opacity: 1; }
+th .vf.on { color: var(--vr-accent); background: var(--kbq-background-theme-less, #edf4ff); }
+th .vf:hover { background: var(--vr-soft); color: var(--vr-text); }
+td { padding: 11px 10px; vertical-align: middle; border-bottom: 1px solid var(--vr-line); color: var(--vr-text); }
+tr:last-child td { border-bottom: 0; }
+td.n, th.n { text-align: right; } td.n { white-space: nowrap; }
+td.ell { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+td.ver { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 td.sig { white-space: nowrap; }
-tr.click { cursor: pointer; } tr.click:hover { background: var(--kbq-background-bg-secondary, #f2f3f5); } tbody tr:hover { background: var(--kbq-states-background-transparent-hover, rgba(120,130,160,.06)); }
-tr.sel { background: var(--kbq-background-theme-less, rgba(47,128,237,.12)); }
-.badge { display: inline-flex; align-items: center; gap: 4px; height: 24px; font-size: var(--kbq-typography-text-normal-font-size, 14px); line-height: 20px; padding: 2px 8px; border-radius: 3px; font-weight: 400; margin-right: var(--kbq-size-xxs, 4px); white-space: nowrap; }
-.badge.sm { height: 20px; font-size: 12px; line-height: 16px; padding: 0 6px; }
-.ttag { color: rgb(252,77,54); white-space: nowrap; margin-right: 8px; } .ttag.blue { color: rgb(77,148,255); } .ttag.yellow { color: rgb(255,180,51); } .ttag.green { color: rgb(80,188,41); }
-.P0 { background: var(--kbq-badge-filled-fade-off-error-background, #d23c3c); color: var(--kbq-badge-filled-fade-off-error-color, #fff); }
-.P1 { background: var(--kbq-badge-filled-fade-off-warning-background, #f0883e); color: var(--kbq-badge-filled-fade-off-warning-color, #fff); }
-.P2 { background: var(--kbq-badge-filled-fade-on-warning-background, #fdf1d6); color: var(--kbq-badge-filled-fade-on-warning-color, #8a5a00); }
-.P3 { background: var(--kbq-badge-filled-fade-on-contrast-background, #e3e5ea); color: var(--kbq-badge-filled-fade-on-contrast-color, #262a35); }
-.tag { background: var(--kbq-badge-filled-fade-on-contrast-background, #eef0f3); color: var(--kbq-badge-filled-fade-on-contrast-color, inherit); }
-.tag.hot { background: var(--kbq-badge-filled-fade-on-error-background, #fde2e2); color: var(--kbq-badge-filled-fade-on-error-color, #b02a37); }
-.tag.kev { background: var(--kbq-badge-filled-fade-off-error-background, #ce1b03); color: #fff; }
-.tag.trend { background: var(--kbq-badge-filled-fade-on-theme-background, #dbe7fb); color: var(--kbq-badge-filled-fade-on-theme-color, #1f5fbf); }
-.cves { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: var(--kbq-size-m, 12px); }
-.cve { border: 1px solid var(--kbq-line-contrast-less, #e3e5ea); border-radius: 12px; padding: var(--kbq-size-m, 12px) var(--kbq-size-l, 16px); display: flex; flex-direction: column; gap: var(--kbq-size-xs, 6px); background: var(--kbq-background-card, #fff); }
-.cve .hd { display: flex; justify-content: space-between; align-items: center; gap: var(--kbq-size-s, 8px); }
-.cve .id { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; font-weight: 600; color: var(--kbq-link-text, #2f80ed); }
-.cve .line { font-size: var(--kbq-typography-text-compact-font-size, 12px); line-height: 16px; } .cve .line b { font-weight: 600; }
-.cve .links a { font-size: var(--kbq-typography-text-compact-font-size, 12px); margin-right: var(--kbq-size-m, 12px); }
-.bar { height: 6px; background: var(--kbq-background-contrast-less, #eef0f3); border-radius: 3px; overflow: hidden; margin-top: 3px; } .bar i { display: block; height: 100%; background: var(--kbq-background-error, #d23c3c); }
-.slabar { display: flex; height: 8px; background: var(--kbq-background-contrast-less, #eef0f3); border-radius: 4px; overflow: hidden; } .slabar i { display: block; height: 100%; } .slabar .ok { background: var(--kbq-background-success, #1b8f4a); } .slabar .soon { background: var(--kbq-background-warning, #f0883e); } .slabar .over { background: var(--kbq-background-error, #d23c3c); }
-.drv { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--kbq-background-contrast-less, #eef0f3); min-width: 120px; } .drv i { display: block; height: 100%; }
-.prog { display: flex; align-items: center; gap: 8px; } .prog .pbar { flex: 1; height: 8px; border-radius: 4px; background: var(--kbq-background-contrast-less, #eef0f3); overflow: hidden; } .prog .pbar i { display: block; height: 100%; background: var(--kbq-background-success, #1b8f4a); }
-.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--kbq-size-l, 16px); } @media (max-width: 1100px) { .two { grid-template-columns: 1fr; } }
-.scroll { max-height: 420px; overflow: auto; }
-.spin { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--kbq-line-contrast-fade, #cfd3da); border-top-color: var(--kbq-icon-theme, #2f80ed); border-radius: 50%; animation: r .6s linear infinite; vertical-align: -2px; margin-right: var(--kbq-size-xs, 6px); }
-@keyframes r { to { transform: rotate(360deg); } }
-.chk { display: flex; align-items: center; gap: var(--kbq-size-s, 8px); }
-.field { display: flex; flex-direction: column; gap: var(--kbq-size-xxs, 4px); } .field span { font-size: var(--kbq-typography-text-compact-font-size, 12px); color: var(--kbq-foreground-contrast-secondary, #6f7580); }
-.kpi.click { cursor: pointer; } .kpi.click:hover { border-color: var(--kbq-line-theme, #2f80ed); background: var(--kbq-background-theme-less, rgba(47,128,237,.08)); }
-.kpi .l small { display: block; color: var(--kbq-foreground-contrast-tertiary, #9aa1b1); }
-.tfilter { display: flex; gap: var(--kbq-size-s, 8px); align-items: center; margin-bottom: var(--kbq-size-s, 8px); } .tfilter input { flex: 1; max-width: 360px; } .tfilter .tcnt { font-size: 12px; color: var(--kbq-foreground-contrast-secondary, #8a8fa8); white-space: nowrap; }
+tr.click { cursor: pointer; }
+tr.click:hover, tbody tr:has(td):hover { background: var(--kbq-states-background-transparent-hover, #f6f7f9); }
+tr.sel { background: var(--kbq-background-theme-less, #edf4ff); }
 tr.hide { display: none; }
-a.lnk { color: var(--kbq-link-text, #4d94ff); text-decoration: none; } a.lnk:hover { text-decoration: underline; }
-.comp { display: flex; gap: 3px; align-items: flex-end; height: 18px; } .comp i { display: block; width: 14px; border-radius: 2px 2px 0 0; background: var(--kbq-background-contrast-fade, #9aa1b1); } .comp i.e { background: #4d94ff; } .comp i.v { background: #ffb433; } .comp i.t { background: #fc4d36; } .comp i.f { background: #a06fff; }
-.rw { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; } .rw label { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--kbq-foreground-contrast-secondary, #8a8fa8); } .rw input { width: 100%; box-sizing: border-box; }
-a.badge { text-decoration: none; }
-.drill { border-color: var(--kbq-line-theme, #2f80ed); } .drill h3 { display: flex; align-items: center; gap: var(--kbq-size-s, 8px); } .drill h3 .x { margin-left: auto; background: transparent; border: none; cursor: pointer; font-size: 18px; color: var(--kbq-foreground-contrast-secondary, #6f7580); }
-.zone { display: inline-block; padding: 0 6px; border-radius: 4px; font-size: 12px; font-weight: 600; } .zone.critical { background: #d23c3c; color: #fff; } .zone.high { background: #f0883e; color: #fff; } .zone.medium { background: #fdf1d6; color: #8a5a00; } .zone.low { background: #e3e5ea; color: #262a35; }
-.rules { display: flex; flex-direction: column; gap: 10px; } .rules h4 { font-size: 14px; font-weight: 600; margin: 4px 0 0; color: var(--kbq-foreground-contrast, #c4c7d4); } .rules .grp { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: var(--kbq-size-xs, 6px); } .rules label { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; line-height: 20px; } .rules code { font-size: 11px; color: var(--kbq-foreground-contrast-tertiary, #6f7580); display: block; word-break: break-all; line-height: 14px; }
-tr.click td a.lnk { position: relative; z-index: 1; }
-td a.lnk { white-space: nowrap; }
+td a.lnk { white-space: nowrap; } a.lnk { color: var(--vr-accent); }
+.scroll { max-height: 520px; overflow: auto; overscroll-behavior: contain; }
+.scroll th { position: sticky; top: 0; z-index: 2; }
+.tfilter { display: flex; align-items: center; gap: 12px; }
+.tfilter input { flex: 1; max-width: 400px; }
+.tfilter .tcnt { font-size: 12px; color: var(--vr-muted); white-space: nowrap; }
+.vf-pop { position: fixed; z-index: 20; width: 288px; max-width: calc(100vw - 16px); max-height: min(380px, calc(100vh - 16px)); display: flex; flex-direction: column; background: var(--vr-surface); color: var(--vr-text); border: 1px solid var(--vr-line); border-radius: 12px; box-shadow: 0 8px 32px #0003; padding: 12px; gap: 10px; font-size: 13px; }
+.vf-pop input[type=text] { width: 100%; flex: none; }
+.vf-pop .lst { overflow: auto; display: flex; flex-direction: column; min-height: 0; max-height: 230px; }
+.vf-pop label { display: flex; align-items: center; gap: 8px; padding: 7px 4px; border-radius: 4px; cursor: pointer; }
+.vf-pop label:hover { background: var(--vr-soft); }
+.vf-pop label span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vf-pop label i { font-style: normal; color: var(--vr-muted); font-size: 12px; }
+.vf-pop .ft { display: flex; gap: 8px; justify-content: space-between; align-items: center; font-size: 12px; }
+.vf-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12px; }
+.vf-chips .chip { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 4px 0 10px; border-radius: 6px; background: var(--kbq-background-theme-less, #edf4ff); color: var(--vr-accent); }
+.vf-chips .chip b { font-weight: 500; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vf-chips button { border: 0; background: transparent; color: inherit; padding: 4px; }
+.vf-chips .clr { color: var(--vr-muted); font-size: 12px; }
+.cnt { display: inline-block; min-width: 36px; padding: 2px 7px; border-radius: 5px; text-align: right; font-variant-numeric: tabular-nums; }
+.cnt.red { background: var(--kbq-background-error-less, #fff0ed); color: var(--vr-error); }
+.cnt.yellow { background: var(--kbq-background-warning-less, #fff5db); color: var(--vr-warning); }
+.cnt.green { background: var(--kbq-background-success-less, #edf8e9); color: var(--vr-success); }
+.cnt.grey { background: var(--vr-soft); color: var(--vr-muted); }
+.badge, .zone { display: inline-flex; align-items: center; gap: 4px; min-height: 24px; font-size: 12px; line-height: 16px; padding: 3px 8px; border-radius: 5px; font-weight: 500; margin-right: 4px; white-space: nowrap; }
+.badge.sm { min-height: 20px; padding: 2px 6px; }
+.P0, .zone.critical, .tag.kev { background: var(--kbq-palette-red-40, #c91f06); color: var(--kbq-foreground-white, #fff); }
+.P1, .zone.high { background: var(--kbq-background-warning-less, #fff0ce); color: var(--vr-warning); }
+.P2, .zone.medium { background: var(--kbq-background-warning-less, #fff5db); color: var(--vr-warning); }
+.P3, .tag, .zone.low { background: var(--vr-soft); color: var(--vr-muted); }
+.tag.hot { background: var(--kbq-background-error-less, #fff0ed); color: var(--vr-error); }
+.tag.trend { background: var(--kbq-background-theme-less, #edf4ff); color: var(--vr-accent); }
+.ttag { color: var(--vr-error); white-space: nowrap; margin-right: 8px; font-size: 12px; }
+.ttag.blue { color: var(--vr-accent); } .ttag.yellow { color: var(--vr-warning); } .ttag.green { color: var(--vr-success); }
+.cves { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 16px; }
+.cve { border: 1px solid var(--vr-line); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px; background: var(--vr-surface); min-width: 0; }
+.cve .hd { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid var(--vr-line); }
+.cve .id { font-family: var(--kbq-font-family-mono, ui-monospace, monospace); font-size: 14px; font-weight: 600; color: var(--vr-accent); }
+.cve .line { font-size: 13px; line-height: 20px; overflow-wrap: anywhere; }
+.cve .links { display: flex; flex-wrap: wrap; gap: 8px 16px; padding-top: 12px; border-top: 1px solid var(--vr-line); margin-top: auto; font-size: 12px; }
+.bar, .slabar, .drv, .pbar { height: 6px; background: var(--kbq-background-contrast-less, #e4e7ec); border-radius: 3px; overflow: hidden; }
+.bar { margin-top: 6px; }
+.bar i, .slabar i, .drv i, .pbar i { display: block; height: 100%; }
+.bar i, .slabar .over { background: var(--kbq-background-error, #ce1b03); }
+.slabar, .drv { display: flex; min-width: 90px; }
+.slabar .ok, .pbar i { background: var(--kbq-background-success, #3a971f); }
+.slabar .soon { background: var(--kbq-background-warning, #ffba30); }
+.prog { display: flex; align-items: center; gap: 10px; } .prog .pbar { flex: 1; }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+.two > * { min-width: 0; }
+#q-grid { grid-template-columns: minmax(0, 1fr); align-items: start; }
+#q-grid:has(.detail-active) { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+#q-detail:not(.detail-active) { display: none; }
+@container workspace (max-width: 1480px) { #q-grid:has(.detail-active) { grid-template-columns: minmax(0, 1fr); } }
+#q-out { max-height: 620px; }
+[id$="-drill"]:empty { display: none; }
+.row-action { border: 0; color: var(--vr-accent); background: transparent; padding: 0; text-align: left; font: inherit; }
+.row-action:hover { text-decoration: underline; text-underline-offset: 3px; }
+#q-sum { background: transparent; border: 0; padding: 0; }
+.filter-bar { padding-top: 12px; border-top: 1px solid var(--vr-line); }
+.filter-bar label:has(input:checked) { color: var(--vr-accent); }
+.table-empty { text-align: center; color: var(--vr-muted); padding: 28px 16px; font-size: 13px; }
+.table-empty[hidden] { display: none; }
+#q-detail { border-top: 3px solid var(--kbq-line-theme, #3388ff); }
+.chk { display: flex; align-items: flex-start; gap: 10px; } .chk input { margin-top: 2px; }
+.field { display: flex; flex-direction: column; gap: 8px; }
+.field > label, .field > span { font-size: 13px; color: var(--vr-muted); }
+.rw { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 14px; }
+.rw label { display: flex; flex-direction: column; gap: 8px; color: var(--vr-muted); font-size: 12px; } .rw input { width: 100%; }
+.drill { border-color: var(--kbq-line-theme, #3388ff); }
+.drill h3 { display: flex; align-items: center; gap: 8px; }
+.drill h3 .x { margin-left: auto; background: transparent; border: 0; width: 32px; height: 32px; color: var(--vr-muted); font-size: 22px; border-radius: 6px; }
+.drill .x:hover { background: var(--vr-soft); }
+.rules { display: flex; flex-direction: column; gap: 12px; }
+.rules h4 { font-size: 14px; line-height: 22px; margin-top: 8px; }
+.rules .grp { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 8px; }
+.rules label { display: flex; gap: 10px; align-items: flex-start; padding: 12px; background: var(--vr-soft); border: 1px solid transparent; border-radius: 8px; line-height: 20px; cursor: pointer; }
+.rules label:has(input:checked) { background: var(--kbq-background-theme-less, #edf4ff); border-color: var(--kbq-line-theme-less, #caddfb); }
+.rules input { margin-top: 2px; }
+.rules code { display: block; font-size: 11px; color: var(--vr-muted); overflow-wrap: anywhere; line-height: 16px; margin-top: 4px; }
+.comp { display: flex; gap: 3px; align-items: flex-end; height: 18px; } .comp i { width: 12px; border-radius: 2px 2px 0 0; }
+.comp i.e { background: var(--kbq-background-theme, #3388ff); } .comp i.v { background: var(--kbq-background-warning, #ffba30); } .comp i.t { background: var(--kbq-background-error, #ce1b03); } .comp i.f { background: #a06fff; }
+.empty-state { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 12px; min-height: 300px; padding: 36px 24px; border: 1px dashed var(--vr-line); border-radius: 12px; background: var(--vr-surface); }
+.empty-icon { display: grid; place-items: center; color: var(--vr-muted); background: var(--vr-soft); width: 56px; height: 56px; border-radius: 16px; margin-bottom: 4px; }
+.empty-icon svg { width: 28px; height: 28px; }
+.empty-state h3 { font-size: 18px; line-height: 26px; font-weight: 600; }
+.empty-state p { color: var(--vr-muted); max-width: 440px; }
+.spin { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--vr-line); border-top-color: var(--kbq-icon-theme, #3388ff); border-radius: 50%; animation: vr-spin .8s linear infinite; vertical-align: -2px; margin-right: 6px; }
+@keyframes vr-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; border-style: dotted; } }
+@container workspace (max-width: 1150px) { .tabs { padding: 0 20px; } .tabs button { padding: 0 10px; } .tabs button svg { display: none; } .two, #q-grid { grid-template-columns: minmax(0, 1fr); } }
+@container workspace (max-width: 800px) { .body { padding: 20px 16px 32px; } .hdr { padding: 14px 16px; gap: 10px; } .crumbs .cur, .crumbs .sep { display: none; } .rep .lbl { display: none; } .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .box { padding: 16px; } .page-heading h2 { font-size: 24px; line-height: 32px; } }
+@container workspace (max-width: 480px) { .app-mark { display: none; } .hdr { flex-wrap: wrap; } .header-title { flex-basis: calc(100% - 48px); } .hdr .close { order: 0; } .rep { order: 1; } .tabs { padding: 0 8px; } .body { padding: 16px 12px 28px; } .hero .kpi { padding: 14px; min-height: 110px; } .hero .kpi .v { font-size: 28px; line-height: 36px; } .kpi { padding: 12px; } .row { gap: 8px; } .row label { flex-wrap: wrap; } .report-options { margin-left: 0; } .tfilter { flex-wrap: wrap; } }
 `;
 
   const HTML = `
 <div class="root">
-  <div class="hdr">
-    <div class="crumbs"><span>Устранение уязвимостей</span><span class="sep">/</span><span class="cur" id="crumb">Обзор</span></div>
-    <span class="ver" id="sub" title="Сервер и версия MaxPatrol VM">MaxPatrol VM</span>
-    <div class="tabs">
-      <button data-t="overview" class="active">Обзор</button>
-      <button data-t="queue">Очередь устранения</button>
-      <button data-t="assets">Риск активов</button>
-      <button data-t="excl">Исключения</button>
-      <button data-t="proj">Проекты</button>
-      <button data-t="cw">Контейнеры и веб</button>
-      <button data-t="inv">Инвентаризация</button>
-      <button data-t="cve">CVE-контекст</button>
-      <button data-t="settings">Настройки</button>
+  <header class="hdr">
+    <span class="app-mark" aria-hidden="true">${ICON}</span>
+    <div class="header-title">
+      <div class="crumbs"><h1 style="font:inherit">Устранение уязвимостей</h1><span class="sep" aria-hidden="true">/</span><span class="cur" id="crumb">Обзор</span></div>
+      <span class="ver" id="sub" title="Сервер и версия MaxPatrol VM">MaxPatrol VM</span>
     </div>
-    <div class="rep" title="Отчет по открытой вкладке из последних загруженных данных"><span class="lbl">Отчет</span><button class="btn" id="r-html" disabled>HTML</button><button class="btn" id="r-pdf" disabled>PDF</button><button class="btn" id="r-csv" disabled>CSV</button></div>
-    <button class="close" id="close" title="Закрыть">×</button>
+    <div class="rep" role="group" aria-label="Экспорт текущего раздела"><span class="lbl">Экспорт</span><button class="btn" id="r-html" title="Скачать отчёт в HTML" disabled>HTML</button><button class="btn" id="r-pdf" title="Печать или сохранение в PDF" disabled>PDF</button><button class="btn" id="r-csv" title="Скачать таблицу в CSV" disabled>CSV</button></div>
+    <button class="close" id="close" aria-label="Закрыть область устранения" title="Закрыть">×</button>
+  </header>
+  <div class="tabs" role="tablist" aria-label="Разделы устранения">
+    <button data-t="overview" class="active">Обзор</button>
+    <button data-t="queue">Очередь устранения</button>
+    <button data-t="assets">Риск активов</button>
+    <button data-t="excl">Исключения</button>
+    <button data-t="proj">Проекты</button>
+    <button data-t="cw">Контейнеры и веб</button>
+    <button data-t="inv">Инвентаризация</button>
+    <button data-t="cve">CVE-контекст</button>
+    <button data-t="settings">Настройки</button>
   </div>
-  <div class="body">
+  <main class="body" aria-label="Рабочая область устранения">
 
     <div class="pane active" data-t="overview">
       <div class="box">
         <div class="row">
           <button class="btn acc" id="m-run">Обновить показатели</button>
-          <label><input type="checkbox" id="m-deep"> с историей за 30 дней (медленно, минуты)</label>
+          <label title="Исторический срез может загружаться несколько минут"><input type="checkbox" id="m-deep"> История за 30 дней</label>
+          <details class="report-options"><summary class="btn">Отчёт для руководства ▾</summary><div class="row">
           <button class="btn" id="m-report" disabled>Отчет для руководства</button>
           <button class="btn" id="m-dl" disabled title="Сохранить отчет файлом .html">Скачать HTML</button>
           <button class="btn" id="m-print" disabled title="Открыть отчет и вызвать печать: сохраните как PDF">Печать / PDF</button>
           <button class="btn" id="m-json" disabled>JSON</button>
+          </div></details>
           <span class="muted" id="m-info"></span>
         </div>
-        <div class="muted">Срез по всем уязвимостям инфраструктуры: статусы, просрочки по срокам (приказ ФСТЭК 117: критические 1 день, высокие 7), возраст, сигналы эксплуатации, покрытие активов.</div>
+        <div class="muted">Срез по всем уязвимостям инфраструктуры: статусы, просрочки по срокам (приказ ФСТЭК 117: критические — 1 день, высокие — 7), возраст, сигналы эксплуатации, покрытие активов.</div>
         <div class="err" id="m-err"></div>
       </div>
       <div id="m-drill"></div>
@@ -231,7 +339,7 @@ td a.lnk { white-space: nowrap; }
     <div class="pane" data-t="excl">
       <div class="box">
         <h3>Исключения и принятые риски</h3>
-        <div class="muted">Аналог Vulnerability Exceptions (Rapid7) и Recast/Accept (Tenable): реестр всех исключенных уязвимостей с причиной и комментарием. Отдельно «сомнительные» исключения: трендовые, с эксплойтом, CVSS 9+ или high на важных активах. Их стоит пересмотреть и вернуть в работу.</div>
+        <div class="muted">Реестр исключённых уязвимостей с причиной и комментарием. Отдельно «сомнительные» исключения: трендовые, с эксплойтом, CVSS 9+ или high на важных активах. Их стоит пересмотреть и вернуть в работу.</div>
         <div class="row"><button class="btn acc" id="x-run">Загрузить реестр</button><button class="btn" id="x-csv" disabled>CSV</button><span class="muted" id="x-info"></span></div>
         <div class="err" id="x-err"></div>
       </div>
@@ -241,7 +349,7 @@ td a.lnk { white-space: nowrap; }
     <div class="pane" data-t="proj">
       <div class="box">
         <h3>Проекты устранения</h3>
-        <div class="muted">Аналог Remediation Projects (Rapid7): прогресс считается по факту сканирования, а не по отчету исполнителя. Проект = метка на экземплярах уязвимостей: <b>jira:KEY</b> ставится при создании задачи из очереди или карточки актива, <b>proj:название</b> можно ставить вручную в MaxPatrol. Прогресс = устранено + исключено / всего с меткой. Клик по строке показывает уязвимости и узлы проекта. Создать проект можно из деталей группы в очереди или из любой выборки (кнопка «В проект»).</div>
+        <div class="muted">Прогресс считается по факту сканирования, а не по отчету исполнителя. Проект = метка на экземплярах уязвимостей: <b>jira:KEY</b> ставится при создании задачи из очереди или карточки актива, <b>proj:название</b> можно ставить вручную в MaxPatrol. Прогресс = устранено + исключено / всего с меткой. Клик по строке показывает уязвимости и узлы проекта. Создать проект можно из деталей группы в очереди или из любой выборки (кнопка «В проект»).</div>
         <div class="row"><button class="btn acc" id="p-run">Обновить</button><label>Префикс метки <input type="text" id="p-prefix" placeholder="jira: или proj:" style="width:140px"></label><span class="muted" id="p-info"></span></div>
         <div class="err" id="p-err"></div>
       </div>
@@ -269,7 +377,7 @@ td a.lnk { white-space: nowrap; }
     <div class="pane" data-t="inv">
       <div class="box">
         <h3>Инвентаризация: автоматические теги активов</h3>
-        <div class="muted">Модель MaxPatrol: актив (Host, ImageSet, WebSite) имеет группы (динамические по PDQL и статические), значимость, теги. Теги видны в списке активов, фильтруются в PDQL (<b>Host.@Tags.Item = "..."</b>), ими удобно строить дашборды и выборки. Здесь тег назначается всем активам PDQL-выборки одной операцией (батч через selectionId). Правила ниже: отметьте нужные и нажмите «Применить». Повторное применение безопасно: тег уже стоящий у актива не дублируется. Все теги с префиксом <b>auto:</b> удаляются одной кнопкой.</div>
+        <div class="muted">Модель MaxPatrol: актив (Host, ImageSet, WebSite) имеет группы (динамические по PDQL и статические), значимость, теги. Теги видны в списке активов, фильтруются в PDQL (<b>Host.@Tags.Item = "..."</b>), ими удобно строить дашборды и выборки. Здесь тег назначается всем активам PDQL-выборки с проверкой результата для каждого актива. Правила ниже: отметьте нужные и нажмите «Применить». Повторное применение безопасно: тег уже стоящий у актива не дублируется. Все теги с префиксом <b>auto:</b> удаляются одной кнопкой.</div>
         <div class="rules" id="i-rules"></div>
         <div class="row">
           <button class="btn acc" id="i-apply">Применить отмеченные</button>
@@ -292,7 +400,7 @@ td a.lnk { white-space: nowrap; }
           <button class="btn" id="c-scan">Найти CVE на открытой странице MaxPatrol</button>
           <span class="muted" id="c-scan-info"></span>
         </div>
-        <textarea id="c-cves" placeholder="CVE-2021-44228, CVE-2020-1472 ... (можно вставить любой текст)"></textarea>
+        <textarea aria-label="Идентификаторы CVE или текст с уязвимостями" spellcheck="false" id="c-cves" placeholder="CVE-2021-44228, CVE-2020-1472 ... (можно вставить любой текст)"></textarea>
         <div class="row">
           <button class="btn acc" id="c-run">Обогатить</button>
           <label><input type="checkbox" id="c-skipnvd"> без NVD (быстрее)</label>
@@ -310,9 +418,9 @@ td a.lnk { white-space: nowrap; }
           <label class="chk"><input type="checkbox" id="s-epss"> EPSS (api.first.org)</label>
           <label class="chk"><input type="checkbox" id="s-kev"> CISA KEV (каталог кэшируется на сутки)</label>
           <label class="chk"><input type="checkbox" id="s-nvd"> NVD (CVSS 4.0, SSVC; без ключа 5 CVE за запрос)</label>
-          <div class="field"><span>NVD API key (необязательно)</span><input type="text" id="s-nvdkey" placeholder="uuid"></div>
+          <div class="field"><span>NVD API key (необязательно)</span><input type="password" autocomplete="off" id="s-nvdkey" placeholder="uuid"></div>
           <label class="chk"><input type="checkbox" id="s-gh"> GitHub PoC (кнопка в карточке CVE)</label>
-          <div class="field"><span>GitHub token (необязательно)</span><input type="text" id="s-ghtoken" placeholder="ghp_..."></div>
+          <div class="field"><span>GitHub token (необязательно)</span><input type="password" autocomplete="off" id="s-ghtoken" placeholder="ghp_..."></div>
           <div class="row"><button class="btn" id="s-kevref">Обновить KEV сейчас</button><span class="muted" id="s-kevinfo"></span></div>
           <h3>Интерфейс MaxPatrol</h3>
           <label class="chk"><input type="checkbox" id="s-sametab"> переходы с дашборда открывать в текущей вкладке (Ctrl/Cmd+клик: в новой)</label>
@@ -344,7 +452,7 @@ td a.lnk { white-space: nowrap; }
           <h3>БДУ ФСТЭК (офлайн-импорт)</h3>
           <div class="muted">Сайт bdu.fstec.ru не отдает данные скриптам. Скачайте выгрузку вручную (vulxml.zip распаковать в XML, или vullist сохранить как CSV) и загрузите файл: построится карта CVE - BDU.</div>
           <div class="row">
-            <input type="file" id="s-bdufile" style="display:none" accept=".xml,.csv,.txt,.tsv">
+            <input type="file" aria-label="Файл выгрузки БДУ" id="s-bdufile" style="display:none" accept=".xml,.csv,.txt,.tsv">
             <button class="btn" id="s-bdubtn">Загрузить файл БДУ</button>
             <span class="muted" id="s-bduinfo"></span>
           </div>
@@ -374,7 +482,7 @@ td a.lnk { white-space: nowrap; }
       </div>
     </div>
 
-  </div>
+  </main>
 </div>`;
 
   // ── Сбор CVE со страницы ──────────────────────────────────────────────────
@@ -417,7 +525,7 @@ td a.lnk { white-space: nowrap; }
   //    правый клик по ячейке = фильтр по этому значению, чипы активных фильтров, общий текстовый поиск ──
   const FILTER_ICON = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 3h12l-4.5 5.5V13l-3 1V8.5L2 3Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>';
   let vfPop = null;
-  const closePop = () => { if (vfPop) { vfPop.remove(); vfPop = null; } };
+  const closePop = (restoreFocus = false) => { if (vfPop) { const anchor = vfPop.__anchor; vfPop.remove(); vfPop = null; if (restoreFocus) anchor?.focus(); } };
   const cellText = td => (td.getAttribute('data-v') ?? td.textContent).replace(/\s+/g, ' ').trim();
   const numOf = s => { const x = parseFloat(String(s).replace(/\s/g, '').replace(',', '.')); return isNaN(x) ? null : x; };
   function tableState(table) {
@@ -429,7 +537,7 @@ td a.lnk { white-space: nowrap; }
     let shown = 0;
     rows.forEach(tr => {
       const tds = tr.children; let ok = true;
-      for (const c in st.cols) { const set = st.cols[c]; if (set && set.size && !set.has(cellText(tds[c] || tr))) { ok = false; break; } }
+      for (const c in st.cols) { const set = st.cols[c]; if (set && !set.has(cellText(tds[c] || tr))) { ok = false; break; } }
       if (ok && st.q && !tr.textContent.toLowerCase().includes(st.q)) ok = false;
       tr.classList.toggle('hide', !ok); if (ok) shown++;
     });
@@ -439,15 +547,21 @@ td a.lnk { white-space: nowrap; }
         sorted.forEach(tr => tbody.appendChild(tr));
       }
     }
-    table.querySelectorAll('th').forEach((th, i) => { const s = th.querySelector('.sort'); if (s) s.textContent = st.sort && st.sort.col === i ? (st.sort.dir === 'asc' ? '▲' : '▼') : ''; const v = th.querySelector('.vf'); if (v) v.classList.toggle('on', !!(st.cols[i] && st.cols[i].size)); });
+    table.querySelectorAll('th').forEach((th, i) => { th.setAttribute('aria-sort', st.sort?.col === i ? (st.sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'); const s = th.querySelector('.sort'); if (s) s.textContent = st.sort && st.sort.col === i ? (st.sort.dir === 'asc' ? '▲' : '▼') : ''; const v = th.querySelector('.vf'); if (v) v.classList.toggle('on', st.cols[i] instanceof Set); });
     // Чипы активных фильтров
     let chips = table.__chips; if (!chips) { chips = table.__chips = document.createElement('div'); chips.className = 'vf-chips'; table.parentElement.insertBefore(chips, table); }
     const ths = [...table.querySelectorAll('th')];
-    const active = Object.entries(st.cols).filter(([, s]) => s && s.size);
-    chips.innerHTML = active.length ? active.map(([c, s]) => `<span class="chip">${esc((ths[c]?.textContent || '').replace(/[▲▼]/g, '').trim())}: <b title="${esc([...s].join(', '))}">${esc([...s].slice(0, 2).join(', '))}${s.size > 2 ? ` +${s.size - 2}` : ''}</b><button data-c="${c}" title="Снять фильтр">×</button></span>`).join('') + `<button class="clr">сбросить все</button>` : '';
+    const active = Object.entries(st.cols).filter(([, s]) => s instanceof Set);
+    chips.innerHTML = active.length ? active.map(([c, s]) => `<span class="chip">${esc((ths[c]?.textContent || '').replace(/[▲▼]/g, '').trim())}: <b title="${esc([...s].join(', '))}">${esc(s.size ? [...s].slice(0, 2).join(', ') : 'Нет значений')}${s.size > 2 ? ` +${s.size - 2}` : ''}</b><button data-c="${c}" title="Снять фильтр" aria-label="Снять фильтр">×</button></span>`).join('') + `<button class="clr">сбросить все</button>` : '';
     chips.querySelectorAll('.chip button').forEach(b => b.addEventListener('click', () => { delete st.cols[b.dataset.c]; applyTable(table); }));
     chips.querySelector('.clr')?.addEventListener('click', () => { st.cols = {}; applyTable(table); });
     const cnt = table.__cnt; if (cnt) cnt.textContent = shown !== rows.length ? `${fmt(shown)} из ${fmt(rows.length)}` : `${fmt(rows.length)} строк`;
+    if (!table.__empty) {
+      table.__empty = document.createElement('div'); table.__empty.className = 'table-empty'; table.__empty.setAttribute('role', 'status');
+      table.insertAdjacentElement('afterend', table.__empty);
+    }
+    table.__empty.hidden = shown > 0;
+    table.__empty.textContent = st.q || Object.values(st.cols).some(v => v instanceof Set) ? 'Совпадений нет. Измените поиск или сбросьте фильтры.' : 'Нет данных для отображения.';
     return shown;
   }
   function openValuePop(table, col, anchor) {
@@ -455,32 +569,37 @@ td a.lnk { white-space: nowrap; }
     const st = tableState(table); const rows = [...table.querySelectorAll('tr')].filter(tr => tr.querySelector('td'));
     const counts = {}; rows.forEach(tr => { const v = cellText(tr.children[col] || tr); counts[v] = (counts[v] || 0) + 1; });
     const values = Object.keys(counts).sort((a, b) => { const na = numOf(a), nb = numOf(b); return na != null && nb != null ? na - nb : a.localeCompare(b, 'ru'); });
-    const sel = new Set(st.cols[col] && st.cols[col].size ? st.cols[col] : values);
-    const pop = document.createElement('div'); pop.className = 'vf-pop'; pop.__t = Date.now(); vfPop = pop;
+    const sel = new Set(st.cols[col] instanceof Set ? st.cols[col] : values);
+    const pop = document.createElement('div'); pop.className = 'vf-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'Фильтр по значениям'); pop.__anchor = anchor; pop.__t = Date.now(); vfPop = pop;
     const render = q => { const ql = q.toLowerCase(); pop.querySelector('.lst').innerHTML = values.filter(v => !ql || v.toLowerCase().includes(ql)).slice(0, 300).map(v => `<label><input type="checkbox" data-v="${esc(v)}" ${sel.has(v) ? 'checked' : ''}><span title="${esc(v)}">${esc(v || '(пусто)')}</span><i>${fmt(counts[v])}</i></label>`).join('') || '<div class="muted">нет значений</div>'; pop.querySelectorAll('input[type=checkbox]').forEach(c => c.addEventListener('change', () => { c.checked ? sel.add(c.dataset.v) : sel.delete(c.dataset.v); })); };
-    pop.innerHTML = `<input type="text" placeholder="поиск среди ${values.length} значений"><div class="ft"><span><a data-a="all">все</a> · <a data-a="none">ничего</a></span><span class="muted">${fmt(rows.length)} строк</span></div><div class="lst"></div><div class="ft"><a data-a="clear">сбросить</a><button class="btn acc" data-a="ok">Применить</button></div>`;
+    pop.innerHTML = `<input type="text" aria-label="Поиск значений колонки" placeholder="Поиск среди ${values.length} значений…"><div class="ft"><span><button type="button" class="link-button" data-a="all">все</button> · <button type="button" class="link-button" data-a="none">ничего</button></span><span class="muted">${fmt(rows.length)} строк</span></div><div class="lst"></div><div class="ft"><button type="button" class="link-button" data-a="clear">сбросить</button><button class="btn acc" data-a="ok">Применить</button></div>`;
     render('');
     pop.querySelector('input[type=text]').addEventListener('input', e => render(e.target.value));
     pop.querySelector('[data-a=all]').addEventListener('click', () => { values.forEach(v => sel.add(v)); render(pop.querySelector('input[type=text]').value); });
     pop.querySelector('[data-a=none]').addEventListener('click', () => { sel.clear(); render(pop.querySelector('input[type=text]').value); });
-    pop.querySelector('[data-a=clear]').addEventListener('click', () => { delete st.cols[col]; applyTable(table); closePop(); });
-    pop.querySelector('[data-a=ok]').addEventListener('click', () => { st.cols[col] = sel.size === values.length ? null : new Set(sel); applyTable(table); closePop(); });
+    pop.querySelector('[data-a=clear]').addEventListener('click', () => { delete st.cols[col]; applyTable(table); closePop(true); });
+    pop.querySelector('[data-a=ok]').addEventListener('click', () => { st.cols[col] = sel.size === values.length ? null : new Set(sel); applyTable(table); closePop(true); });
     pop.addEventListener('click', e => e.stopPropagation());
     sh.querySelector('.root').appendChild(pop);
-    const r = anchor.getBoundingClientRect(), hostR = host.getBoundingClientRect();
-    pop.style.left = Math.max(8, Math.min(r.left - hostR.left, hostR.width - 300)) + 'px'; pop.style.top = (r.bottom - hostR.top + 4) + 'px';
+    const r = anchor.getBoundingClientRect(), bounds = host.getBoundingClientRect();
+    pop.style.maxWidth = Math.max(180, bounds.width - 16) + 'px';
+    const pr = pop.getBoundingClientRect();
+    pop.style.left = Math.max(bounds.left + 8, Math.min(r.left, bounds.right - pr.width - 8)) + 'px';
+    pop.style.top = Math.max(8, Math.min(r.bottom + 6, innerHeight - pr.height - 8)) + 'px';
+    pop.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closePop(true); } });
     setTimeout(() => pop.querySelector('input[type=text]').focus(), 0);
   }
   function enhanceTable(table) {
     if (table.dataset.vf) return; table.dataset.vf = '1';
     const ths = [...table.querySelectorAll('th')]; if (!ths.length || table.dataset.plain != null) return;
     ths.forEach((th, i) => {
-      if (!th.textContent.trim()) return;
+      if (!th.textContent.trim() || th.hasAttribute('data-nosort')) return;
       const tn = [...th.childNodes].find(n => n.nodeType === 3 && n.textContent.trim()); if (tn) tn.textContent = tn.textContent.replace(/^(\s*)(\S)/, (m, a, b) => a + b.toUpperCase());
-      th.classList.add('sortable');
-      th.insertAdjacentHTML('beforeend', `<span class="sort"></span><span class="vf" title="Фильтр по значениям">${FILTER_ICON}</span>`);
+      th.classList.add('sortable'); th.tabIndex = 0; th.setAttribute('scope', 'col'); th.setAttribute('aria-sort', 'none');
+      th.insertAdjacentHTML('beforeend', `<span class="sort"></span><button type="button" class="vf" aria-label="Фильтр: ${esc(th.textContent.trim())}" title="Фильтр по значениям">${FILTER_ICON}</button>`);
       th.addEventListener('click', e => { if (e.target.closest('.vf')) return; const st = tableState(table); st.sort = st.sort && st.sort.col === i && st.sort.dir === 'asc' ? { col: i, dir: 'desc' } : { col: i, dir: 'asc' }; applyTable(table); });
-      th.querySelector('.vf').addEventListener('click', e => { e.stopPropagation(); openValuePop(table, i, th); });
+      th.addEventListener('keydown', e => { if (e.target === th && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); th.click(); } });
+      th.querySelector('.vf').addEventListener('click', e => { e.stopPropagation(); openValuePop(table, i, th.querySelector('.vf')); });
     });
     // Правый клик по ячейке: оставить только строки с этим значением в колонке (как «Фильтр по значению ячейки» в Excel)
     table.addEventListener('contextmenu', e => {
@@ -489,6 +608,12 @@ td a.lnk { white-space: nowrap; }
       st.cols[col] = new Set([cellText(td)]); applyTable(table);
     });
     table.querySelectorAll('tr').forEach(tr => { if (tr.querySelector('td')) tr.classList.add('hasf'); });
+    table.querySelectorAll('tr.click[data-soft], tr.click[data-tag], tr.click[data-i]').forEach(tr => {
+      const cell = tr.querySelector('td'); if (!cell || cell.querySelector('button, a')) return;
+      const button = document.createElement('button'); button.type = 'button'; button.className = 'row-action';
+      while (cell.firstChild) button.append(cell.firstChild); cell.append(button);
+      button.setAttribute('aria-label', `Открыть детали: ${cell.textContent.trim()}`);
+    });
     table.title = table.title || 'Клик по заголовку: сортировка. Значок в заголовке: фильтр по значениям. Правый клик по ячейке: только это значение.';
   }
   function bindFilters(root) {
@@ -502,7 +627,7 @@ td a.lnk { white-space: nowrap; }
     });
     root.querySelectorAll('table').forEach(tb => { enhanceTable(tb); applyTable(tb); });
   }
-  const tfilter = ph => `<div class="tfilter"><input type="text" placeholder="${esc(ph || 'фильтр по тексту')}"><span class="tcnt"></span></div>`;
+  const tfilter = ph => `<div class="tfilter"><input type="text" aria-label="${esc(ph || 'Поиск по таблице')}" placeholder="${esc(ph || 'Поиск по таблице…')}" autocomplete="off"><span class="tcnt"></span></div>`;
   const cnt = (v, cls) => `<span class="cnt ${cls || (v > 0 ? 'red' : 'green')}">${fmt(v)}</span>`;
   const plink = (guid, text) => guid ? `<a class="lnk" href="${esc(VR.passportUrl(guid))}" title="Открыть паспорт уязвимости">${esc(text)}</a>` : esc(text);
   const alink = (id, text) => id ? `<a class="lnk" href="${esc(VR.assetUrl(id))}" title="Открыть карточку актива">${esc(text)}</a>` : esc(text);
@@ -515,16 +640,16 @@ td a.lnk { white-space: nowrap; }
   // Панель выборки (drill-down): таблица уязвимостей по PDQL с фильтром, CSV, ссылками и созданием проекта
   async function showDrill(container, title, pdql, opts = {}) {
     if (!pdql) return;
-    container.innerHTML = `<div class="box drill"><h3>${esc(title)}<button class="x" title="Закрыть">×</button></h3><div class="muted"><span class="spin"></span>выборка, до 30 секунд</div></div>`;
+    container.innerHTML = `<div class="box drill"><h3>${esc(title)}<button aria-label="Закрыть выборку" class="x" title="Закрыть">×</button></h3><div class="muted"><span class="spin"></span>выборка, до 30 секунд</div></div>`;
     container.querySelector('.x').addEventListener('click', () => { container.innerHTML = ''; });
     try {
       const d = await VR.drill({ pdql, limit: opts.limit || 500 });
       const items = d.items;
       const hasHost = items.some(i => i.host);
       const rows = items.map(i => `<tr><td>${plink(i.vulnId, i.CVE || i.Name || '')}</td><td class="ell" title="${esc(i.Name || '')}">${esc(i.Name || '')}</td>${hasHost ? `<td class="ell">${alink(i.hostId, i.host)}</td>` : ''}<td class="n">${esc(i.Score ?? '')}</td><td>${esc(SEV_RU[String(i.Sev || '').toLowerCase()] || i.Sev || '')}</td><td>${esc(ST_RU[i.St] || i.St || '')}</td><td class="n">${esc(String(i.Found || '').slice(0, 10))}</td><td>${VR.bool(i.T) ? '<span class="badge tag kev sm">Трендовая</span>' : ''}${VR.bool(i.E) ? '<span class="ttag">Есть эксплойт</span>' : ''}</td></tr>`).join('');
-      container.innerHTML = `<div class="box drill"><h3>${esc(title)}<button class="x" title="Закрыть">×</button></h3>
+      container.innerHTML = `<div class="box drill"><h3>${esc(title)}<button aria-label="Закрыть выборку" class="x" title="Закрыть">×</button></h3>
         <div class="muted">${fmt(items.length)} экземпляров${d.truncated ? ' (показаны первые ' + fmt(opts.limit || 500) + ', полный список в MaxPatrol по кнопке)' : ''}.</div>
-        <div class="row"><a class="btn" href="${esc(mpListUrl(pdql))}" style="text-decoration:none">Открыть в MaxPatrol</a><button class="btn" data-a="csv">CSV</button><button class="btn" data-a="pdql">Скопировать PDQL</button><button class="btn" data-a="proj">В проект (метка proj:)</button><span class="muted" data-role="st"></span></div>
+        <div class="row"><a class="btn" href="${esc(mpListUrl(pdql))}" style="text-decoration:none">Открыть в MaxPatrol</a><button class="btn" data-a="csv">CSV</button><button class="btn" data-a="pdql">Скопировать PDQL</button><button class="btn" data-a="proj">В проект (метка proj:)</button><span class="muted" role="status" data-role="st"></span></div>
         ${tfilter('фильтр: CVE, узел, статус, уровень')}<div class="scroll" style="max-height:480px"><table><tr><th>CVE</th><th>уязвимость</th>${hasHost ? '<th>узел</th>' : ''}<th>CVSS</th><th>уровень</th><th>статус</th><th>обнаружена</th><th>сигналы</th></tr>${rows || '<tr><td colspan=8 class="muted">пусто</td></tr>'}</table></div></div>`;
       container.querySelector('.x').addEventListener('click', () => { container.innerHTML = ''; });
       bindFilters(container);
@@ -537,7 +662,7 @@ td a.lnk { white-space: nowrap; }
         try { await VR.tagInstances(ids, 'proj:' + name.trim()); st.textContent = `метка proj:${name.trim()} поставлена на ${fmt(ids.length)} экз. Прогресс во вкладке «Проекты».`; } catch (e) { st.textContent = 'ошибка: ' + e.message; }
       });
       container.scrollIntoView({ block: 'nearest' });
-    } catch (e) { container.innerHTML = `<div class="box drill"><h3>${esc(title)}<button class="x">×</button></h3><div class="err">${esc(e.message)}</div></div>`; container.querySelector('.x').addEventListener('click', () => { container.innerHTML = ''; }); }
+    } catch (e) { container.innerHTML = `<div class="box drill"><h3>${esc(title)}<button aria-label="Закрыть выборку" class="x">×</button></h3><div class="err">${esc(e.message)}</div></div>`; container.querySelector('.x').addEventListener('click', () => { container.innerHTML = ''; }); }
   }
 
   function renderCve(cve, r) {
@@ -565,8 +690,8 @@ td a.lnk { white-space: nowrap; }
   // ── Рендер: метрики ───────────────────────────────────────────────────────
   function renderMetrics(m) {
     const c = VR.computeMetrics(m);
-    const kpi = (v, l, cls, drill) => `<div class="kpi ${cls || ''}${drill ? ' click' : ''}"${drill ? ` data-drill="${esc(drill)}" title="Показать выборку"` : ''}><div class="v">${v}</div><div class="l">${l}</div></div>`;
-    const sevRows = ['critical', 'high', 'medium', 'low'].map(s => { const b = c.bySev[s] || { open: 0, over: 0, soon: 0, ok: 0 }; const w = v => b.open ? Math.round(v / b.open * 100) : 0; return `<tr><td>${SEV_RU[s]}</td><td class="n" data-v="${b.open}"><a class="lnk" href="#" data-drill="sev:${s}">${fmt(b.open)}</a></td><td class="n" data-v="${b.ok || 0}">${cnt(b.ok || 0, 'green')}</td><td class="n" data-v="${b.soon || 0}">${cnt(b.soon || 0, b.soon ? 'yellow' : 'grey')}</td><td class="n" data-v="${b.over}"><a class="lnk" href="#" data-drill="sevOverdue:${s}">${cnt(b.over, b.over ? 'red' : 'grey')}</a></td><td style="min-width:110px" title="просрочено ${pct(b.over, b.open)}%"><div class="slabar"><i class="ok" style="width:${w(b.ok || 0)}%"></i><i class="soon" style="width:${w(b.soon || 0)}%"></i><i class="over" style="width:${w(b.over)}%"></i></div></td></tr>`; }).join('');
+    const kpi = (v, l, cls, drill) => `<button type="button" class="kpi ${cls || ''}${drill ? ' click' : ''}"${drill ? ` data-drill="${esc(drill)}" title="Показать выборку"` : ''}><span class="v">${v}</span><span class="l">${l}</span></button>`;
+    const sevRows = ['critical', 'high', 'medium', 'low'].map(s => { const b = c.bySev[s] || { open: 0, over: 0, soon: 0, ok: 0 }; const w = v => b.open ? Math.round(v / b.open * 100) : 0; return `<tr><td>${SEV_RU[s]}</td><td class="n" data-v="${b.open}"><a class="lnk" href="#" data-drill="sev:${s}">${fmt(b.open)}</a></td><td class="n" data-v="${b.ok || 0}">${cnt(b.ok || 0, 'green')}</td><td class="n" data-v="${b.soon || 0}">${cnt(b.soon || 0, b.soon ? 'yellow' : 'grey')}</td><td class="n" data-v="${b.over}"><a class="lnk" href="#" data-drill="sevOverdue:${s}">${cnt(b.over, b.over ? 'red' : 'grey')}</a></td><td style="min-width:80px" title="просрочено ${pct(b.over, b.open)}%"><div class="slabar"><i class="ok" style="width:${w(b.ok || 0)}%"></i><i class="soon" style="width:${w(b.soon || 0)}%"></i><i class="over" style="width:${w(b.over)}%"></i></div></td></tr>`; }).join('');
     const ageRows = Object.entries(c.age).map(([k, v]) => `<tr><td><a class="lnk" href="#" data-drill="age:${esc(k)}">${k} дн</a></td><td class="n">${fmt(v)}</td><td class="n">${pct(v, c.open)}%</td></tr>`).join('');
     const impRu = { H: 'высокая', M: 'средняя', L: 'низкая', ND: 'не задана' };
     const hostRows = (Array.isArray(m.topHosts) ? m.topHosts : []).map(r => `<tr><td class="ell">${alink(r.HostId, r['@Host'])}</td><td>${esc(r.OS)}</td><td>${esc(impRu[r.Imp] || r.Imp || '')}</td><td class="n">${esc(r.CV)}</td><td><a class="lnk" href="#" data-drill="asset:${esc(r.HostId || '')}" title="Открытые уязвимости узла">уязвимости</a></td></tr>`).join('');
@@ -577,22 +702,23 @@ td a.lnk { white-space: nowrap; }
       past = `<div class="box"><h3>Динамика за 30 дней (открытые)</h3><table><tr><th>severity</th><th>30 дн назад</th><th>сейчас</th><th>изм.</th></tr>${['critical', 'high', 'medium', 'low'].map(s => { const a = p[s] || 0, b = (c.bySev[s] || {}).open || 0; return `<tr><td>${s}</td><td class="n">${fmt(a)}</td><td class="n">${fmt(b)}</td><td class="n">${b - a >= 0 ? '+' : ''}${fmt(b - a)}</td></tr>`; }).join('')}</table></div>`;
     } else if (m.past30?.error) past = `<div class="err">История: ${esc(m.past30.error)}</div>`;
     return `
-<div class="box"><h3>Ключевые показатели</h3><div class="kpis">
+<div class="box metrics-panel"><h3>Ключевые показатели</h3><div class="kpis hero">
   ${kpi(fmt(c.open), 'открытых уязвимостей', '', 'open')}
   ${kpi(fmt(c.overdue), 'просрочено по SLA (' + pct(c.overdue, c.open) + '%)', c.overdue ? 'bad' : 'ok', 'overdue')}
   ${kpi(fmt(c.soon), 'истекает (прошло 80% срока)', c.soon ? 'warn' : 'ok', 'soon')}
-  ${kpi(fmt(c.critOver) + ' / ' + fmt(c.critOpen), 'critical просрочено / открыто', c.critOver ? 'bad' : 'ok', 'sevOverdue:critical')}
-  ${kpi(fmt(c.highOver) + ' / ' + fmt(c.highOpen), 'high просрочено / открыто', c.highOver ? 'bad' : 'ok', 'sevOverdue:high')}
   ${kpi(fmt(c.trend), 'трендовых открыто', c.trend ? 'bad' : 'ok', 'trend')}
+</div><div class="kpis secondary">
+  ${kpi(fmt(c.critOver) + ' / ' + fmt(c.critOpen), 'Критические: просрочено / открыто', c.critOver ? 'bad' : 'ok', 'sevOverdue:critical')}
+  ${kpi(fmt(c.highOver) + ' / ' + fmt(c.highOpen), 'Высокие: просрочено / открыто', c.highOver ? 'bad' : 'ok', 'sevOverdue:high')}
   ${kpi(fmt(c.expl), 'с публичным эксплойтом', 'warn', 'exploit')}
   ${kpi(fmt(c.new30), 'новых за 30 дней (' + fmt(c.new7) + ' за 7)', '', 'new30')}
   ${kpi(fmt(c.fixed), 'устранено всего, ' + fmt(c.excluded) + ' исключено', 'ok', 'status:fixed')}
   ${kpi(fmt(c.st.new || 0), 'в статусе Новая (' + pct(c.st.new || 0, c.open) + '% открытых)', pct(c.st.new || 0, c.open) > 50 ? 'bad' : 'warn', 'status:new')}
   ${kpi(fmt(c.noImp) + ' / ' + fmt(c.assets), 'активов без значимости', c.noImp ? 'warn' : 'ok', 'noImportance')}
   ${kpi(fmt(c.stale + c.obsolete), 'активов с устаревшим сканом', c.stale + c.obsolete ? 'warn' : 'ok', 'staleScan')}
-</div><div class="muted">Сроки: critical ${m.sla.crit} дн, high ${m.sla.high}, medium ${m.sla.med}, low ${m.sla.low}. Снимок ${esc(m.generatedAt.replace('T', ' ').slice(0, 16))} UTC. Клик по показателю открывает выборку: таблица, CSV, PDQL, переход в MaxPatrol.</div></div>
+</div><div class="muted metrics-note">Сроки: critical ${m.sla.crit} дн, high ${m.sla.high}, medium ${m.sla.med}, low ${m.sla.low}. Снимок ${esc(m.generatedAt.replace('T', ' ').slice(0, 16))} UTC. Клик по показателю открывает выборку: таблица, CSV, PDQL, переход в MaxPatrol.</div></div>
 <div class="two">
-  <div class="box"><h3>Соблюдение сроков по уровню опасности</h3><table><tr><th>уровень</th><th class="n">открыто</th><th class="n">в срок</th><th class="n">истекает</th><th class="n">просрочено</th><th>шкала</th></tr>${sevRows}</table><div class="muted">Зеленый: в срок, желтый: прошло 80% срока, красный: просрочено. Числа кликабельны.</div></div>
+  <div class="box"><h3>Соблюдение сроков по уровню опасности</h3><table><tr><th>уровень</th><th class="n">открыто</th><th class="n">в срок</th><th class="n">истекает</th><th class="n">просрочено</th><th data-nosort>Шкала</th></tr>${sevRows}</table><div class="muted">В срок · Истекает (80% срока) · Просрочено. Выберите число, чтобы открыть уязвимости.</div></div>
   <div class="box"><h3>Возраст открытых</h3><table><tr><th>возраст</th><th>штук</th><th>доля</th></tr>${ageRows}</table></div>
 </div>
 ${past}
@@ -616,7 +742,7 @@ ${past}
     let past = '';
     if (m.past30 && !m.past30.error) { const p = {}; m.past30.forEach(r => { p[String(r.Sev).toLowerCase()] = VR.num(r.N) || 0; }); past = `<h2>Динамика за 30 дней</h2><table><tr><th>severity</th><th>30 дней назад</th><th>сейчас</th><th>изменение</th></tr>${['critical', 'high', 'medium', 'low'].map(s => { const a = p[s] || 0, b = (c.bySev[s] || {}).open || 0; return `<tr><td>${s}</td><td class="n">${fmt(a)}</td><td class="n">${fmt(b)}</td><td class="n">${b - a >= 0 ? '+' : ''}${fmt(b - a)}</td></tr>`; }).join('')}</table>`; }
     return `<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Отчет по процессу управления уязвимостями</title>
-<style>body{font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:960px;margin:24px auto;padding:0 16px;color:#222;line-height:1.45}h1{font-size:22px}h2{font-size:16px;margin-top:26px;border-bottom:1px solid #ddd;padding-bottom:4px}table{border-collapse:collapse;width:100%;font-size:13px;margin:8px 0}th,td{border:1px solid #ddd;padding:5px 8px;text-align:left}td.n{text-align:right;font-variant-numeric:tabular-nums}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}.kpi{border:1px solid #ddd;border-radius:6px;padding:10px}.kpi b{font-size:22px;display:block}.kpi span{font-size:11px;color:#666}.bad{color:#b02a37;font-weight:600}.ok{color:#1b7f3b;font-weight:600}.muted{color:#777;font-size:12px}.brow{display:grid;grid-template-columns:70px 1fr 1fr 130px;gap:8px;align-items:center;font-size:12px;margin:4px 0}.bar{height:12px;background:#f1f1f1;border-radius:3px;overflow:hidden}.bar i{display:block;height:100%}@media print{body{margin:0}}</style></head><body>
+<style>${REPORT_CSS}</style></head><body>
 <h1>Отчет по процессу управления уязвимостями</h1>
 <p class="muted">MaxPatrol VM, ${esc(host)}. Снимок ${esc(m.generatedAt.replace('T', ' ').slice(0, 16))} UTC. Сроки: critical ${m.sla.crit} дн, high ${m.sla.high} дн, medium ${m.sla.med} дн, low ${m.sla.low} дн.</p>
 <h2>Резюме</h2><div class="kpis">
@@ -647,7 +773,7 @@ ${past}
 
   // ── Универсальный отчет по вкладке: HTML для печати (PDF) и скачивания ────
   // spec: { title, subtitle, note, kpis: [[value, label, cls?]], sections: [{ title, note, cols: [[header, key|fn]], rows, limit? }] }
-  const REPORT_CSS = 'body{font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:1100px;margin:24px auto;padding:0 16px;color:#222;line-height:1.45}h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin-top:26px;border-bottom:1px solid #ddd;padding-bottom:4px}table{border-collapse:collapse;width:100%;font-size:12px;margin:8px 0}th,td{border:1px solid #ddd;padding:4px 7px;text-align:left;vertical-align:top}th{background:#f5f5f5}td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}.kpi{border:1px solid #ddd;border-radius:6px;padding:10px}.kpi b{font-size:22px;display:block}.kpi span{font-size:11px;color:#666}.bad b{color:#b02a37}.ok b{color:#1b7f3b}.warn b{color:#b26a00}.muted{color:#777;font-size:12px}@media print{body{margin:0;max-width:none}h2{page-break-after:avoid}tr{page-break-inside:avoid}}';
+  const REPORT_CSS = `*{box-sizing:border-box}body{font:14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:1120px;margin:40px auto;padding:0 32px;color:#252832;background:#fff}h1{font-size:28px;line-height:36px;letter-spacing:-.5px;margin:0 0 8px;font-weight:650}h2{font-size:18px;line-height:26px;margin:32px 0 12px;border-bottom:1px solid #dfe2e8;padding-bottom:10px;font-weight:600}p{margin:8px 0}table{border-collapse:collapse;width:100%;font-size:12px;margin:12px 0}th,td{border-bottom:1px solid #e4e7ec;padding:9px 10px;text-align:left;vertical-align:top}th{background:#f5f6f8;font-weight:500;color:#5e6677}td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0}.kpi{border:1px solid #e0e3e9;border-radius:10px;padding:16px;break-inside:avoid}.kpi b{font-size:28px;line-height:36px;display:block;letter-spacing:-.4px;font-variant-numeric:tabular-nums}.kpi span{font-size:12px;color:#5e6677;display:block;margin-top:6px}.bad,.bad b{color:#c62714}.ok,.ok b{color:#287914}.warn,.warn b{color:#946000}.muted{color:#646c7b;font-size:12px}.brow{display:grid;grid-template-columns:75px 1fr 1fr 130px;gap:10px;align-items:center;font-size:12px;margin:8px 0}.bar{height:8px;background:#edf0f4;border-radius:4px;overflow:hidden}.bar i{display:block;height:100%}@media(max-width:700px){body{padding:0 16px;margin:24px auto}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}table{font-size:11px}th,td{padding:6px}}@media print{body{margin:0;padding:0;max-width:none;font-size:11px}h1{font-size:22px;line-height:28px}h2{break-after:avoid;margin-top:24px}tr,.kpi{break-inside:avoid}.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}.kpi b{font-size:22px;line-height:28px}.bar,th{-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{margin:16mm}}`;
   function buildReport(spec) {
     const cell = (row, c) => { const v = typeof c[1] === 'function' ? c[1](row) : row[c[1]]; return v == null ? '' : v; };
     const isNum = v => typeof v === 'number' || (/^-?[\d\s,.]+%?$/.test(String(v)) && String(v).trim() !== '');
@@ -725,7 +851,7 @@ ${past}
   }
   function close() {
     if (!host || !opened) return;
-    host.style.display = 'none'; opened = false;
+    closePop(); host.style.display = 'none'; opened = false; document.getElementById('vr-menu-item')?.focus();
     const mi = document.getElementById('vr-menu-item'); if (mi) mi.classList.remove('kbq-selected', 'kbq-active');
     document.querySelectorAll('.kbq-navbar-item[data-vr-was-selected]').forEach(el => { el.classList.add(el.dataset.vrWasSelected === 'active' ? 'kbq-active' : 'kbq-selected'); delete el.dataset.vrWasSelected; });
   }
@@ -815,6 +941,7 @@ ${past}
 
   function renderQueue() {
     const q0 = state.queue; if (!q0) return;
+    $('q-empty')?.remove();
     const fT = $('q-f-trend').checked, fE = $('q-f-expl').checked, fC = $('q-f-crit').checked, fP = $('q-f-patch').checked;
     const pass = g => (!fT || g.trend > 0) && (!fE || g.expl > 0) && (!fC || g.crit > 0) && (!fP || g.patch > 0);
     const q = { ...q0, groups: q0.groups.filter(pass), products: q0.products.filter(pass) };
@@ -843,6 +970,7 @@ ${past}
 
   async function loadDetail(soft, ver) {
     const box = $('q-detail');
+    box.classList.add('detail-active');
     box.innerHTML = `<div class="muted"><span class="spin"></span>Детали: ${esc(soft)} ${esc(ver)}</div>`;
     try {
       const g0 = state.queue.groups.find(g => g.soft === soft && g.ver === ver);
@@ -864,17 +992,18 @@ ${past}
         </div>
         <div class="box"><h3>Смена статуса экземпляров (${fmt(d.ids.length)})</h3>
           <div class="row">
-            <select id="d-cmd"><option value="SwitchToInProgressStateCommand">В работе</option><option value="SwitchToAwaitingFixStateCommand">Исправляется до даты</option><option value="SwitchToExcludeStateCommand">Исключить</option><option value="SwitchToNewStateCommand">Вернуть в Новая</option></select>
-            <input type="date" id="d-date" value="${plusDays(7)}">
-            <select id="d-reason"><option value="acceptedAsLowRisk">низкий риск</option><option value="cannotFix">нельзя исправить</option><option value="compensatingControl">компенсирующая мера</option><option value="falsePositive">ложное срабатывание</option></select>
+            <select aria-label="Новый статус экземпляров" id="d-cmd"><option value="SwitchToInProgressStateCommand">В работе</option><option value="SwitchToAwaitingFixStateCommand">Исправляется до даты</option><option value="SwitchToExcludeStateCommand">Исключить</option><option value="SwitchToNewStateCommand">Вернуть в Новая</option></select>
+            <input type="date" aria-label="Срок исправления" id="d-date" value="${plusDays(7)}">
+            <select aria-label="Причина исключения" id="d-reason"><option value="acceptedAsLowRisk">низкий риск</option><option value="cannotFix">нельзя исправить</option><option value="compensatingControl">компенсирующая мера</option><option value="falsePositive">ложное срабатывание</option></select>
           </div>
-          <input type="text" id="d-note" placeholder="комментарий к статусу (необязательно)" style="width:100%">
+          <input type="text" aria-label="Комментарий к статусу" id="d-note" placeholder="комментарий к статусу (необязательно)" style="width:100%">
           <div class="row"><button class="btn acc" id="d-apply">Применить в MaxPatrol VM</button><span class="muted" id="d-st"></span></div>
           <div class="note">Операция изменит статусы всех экземпляров группы. Нужны права на массовые операции у владельца токена.</div>
         </div>
         <div class="scroll">${tfilter('фильтр по CVE')}<table><tr><th>CVE (паспорт)</th><th>CVSS</th><th>экземпляров</th><th>сигналы</th></tr>${cveRows}</table></div>
         <div class="scroll">${tfilter('фильтр по узлу')}<table><tr><th>узел (карточка)</th><th>уязвимостей</th><th>max CVSS</th></tr>${hostRows}</table></div>`;
       bindFilters(box);
+      box.scrollIntoView({ block: 'nearest' });
       $('d-proj').addEventListener('click', async () => {
         const name = prompt(`Название проекта (метка proj:название) для ${d.ids.length} экземпляров ${soft} ${ver}:`, String(soft).toLowerCase().replace(/[^a-zа-я0-9]+/gi, '-').slice(0, 30)); if (!name) return;
         $('d-proj-st').innerHTML = '<span class="spin"></span>';
@@ -925,12 +1054,72 @@ ${past}
     } catch (e) { box.innerHTML = `<div class="err">${esc(e.message)}</div>`; }
   }
 
+
+  const PAGES = {
+    overview: ['Состояние защищённости', 'Открытые уязвимости, сроки устранения и сигналы эксплуатации — в одном срезе.', 'Показатели ещё не загружены', 'Обновите показатели, чтобы увидеть приоритеты и состояние инфраструктуры.', 'm-out', 'm-run'],
+    queue: ['Очередь устранения', 'Устраняйте уязвимости группами: одно обновление — несколько закрытых рисков.'],
+    assets: ['Риск активов', 'Оцените риск каждого узла и начните с активов, которым нужно внимание.', 'Оцените риск инфраструктуры', 'Рассчитайте риск, чтобы сравнить активы и увидеть основные источники угроз.', 'a-out', 'a-run'],
+    excl: ['Исключения и принятые риски', 'Проверяйте обоснования и возвращайте опасные исключения в работу.', 'Реестр ещё не загружен', 'Загрузите исключения, чтобы проверить причины и найти риски для пересмотра.', 'x-out', 'x-run'],
+    proj: ['Проекты устранения', 'Контролируйте результат по данным сканирования и задачам Jira.', 'Загрузите проекты', 'Прогресс по меткам jira: и proj: покажет, какие уязвимости уже устранены.', 'p-out', 'p-run'],
+    cw: ['Контейнеры и веб-сайты', 'Уязвимости образов, пакетов и приложений с отдельным процессом устранения.', 'Выберите область проверки', 'Загрузите сводку образов, очередь по пакетам или уязвимости веб-сайтов.', 'w-out', 'w-images'],
+    inv: ['Инвентаризация активов', 'Объединяйте активы тегами по платформе, роли, угрозам и срокам.'],
+    cve: ['Внешний контекст по CVE', 'Сопоставляйте EPSS, CISA KEV, NVD и БДУ, чтобы определить приоритет.', 'Добавьте уязвимости для анализа', 'Вставьте CVE или найдите их на открытой странице MaxPatrol. Затем нажмите «Обогатить».', 'c-out'],
+    settings: ['Настройки', 'Источники данных, сроки устранения, модель риска и подключение Jira.']
+  };
+  function setupPresentation() {
+    for (const [key, page] of Object.entries(PAGES)) {
+      const pane = sh.querySelector(`.pane[data-t="${key}"]`);
+      pane.id = `pane-${key}`; pane.setAttribute('role', 'tabpanel'); pane.setAttribute('aria-labelledby', `tab-${key}`); pane.tabIndex = 0;
+      const heading = document.createElement('div'); heading.className = 'page-heading';
+      heading.innerHTML = `<div><h2>${esc(page[0])}</h2><p>${esc(page[1])}</p></div>`; pane.prepend(heading);
+      const panel = pane.querySelector(':scope > .box');
+      if (panel && key !== 'settings') {
+        panel.classList.add('control-panel'); panel.querySelector(':scope > h3')?.remove();
+        const description = panel.querySelector(':scope > .muted');
+        if (description) {
+          const details = document.createElement('details'); details.className = 'method';
+          details.innerHTML = '<summary>Как это работает</summary>'; details.append(description); panel.append(details);
+        }
+      }
+      if (page[4]) {
+        $(page[4]).innerHTML = `<div class="empty-state"><span class="empty-icon" aria-hidden="true">${ICON}</span><h3>${esc(page[2])}</h3><p>${esc(page[3])}</p>${page[5] ? `<button class="btn" data-start="${page[5]}">${esc($(page[5]).textContent)}</button>` : ''}</div>`;
+      }
+    }
+    const queueControls = $('q-run').parentElement;
+    const filterBar = document.createElement('div'); filterBar.className = 'row filter-bar';
+    ['q-byprod', 'q-f-trend', 'q-f-expl', 'q-f-crit', 'q-f-patch'].forEach(id => filterBar.append($(id).closest('label')));
+    queueControls.after(filterBar);
+    const queueEmpty = document.createElement('div'); queueEmpty.id = 'q-empty'; queueEmpty.className = 'empty-state';
+    queueEmpty.innerHTML = `<span class="empty-icon" aria-hidden="true">${ICON}</span><h3>Соберите очередь обновлений</h3><p>Выберите источник и постройте список решений с наибольшим снижением риска.</p><button class="btn" data-start="q-run">Построить очередь</button>`;
+    sh.querySelector('.pane[data-t="queue"]').append(queueEmpty);
+    sh.querySelectorAll('.tabs button').forEach(b => {
+      b.id = `tab-${b.dataset.t}`; b.setAttribute('role', 'tab'); b.setAttribute('aria-controls', `pane-${b.dataset.t}`);
+      b.setAttribute('aria-selected', String(b.classList.contains('active'))); b.tabIndex = b.classList.contains('active') ? 0 : -1;
+      b.addEventListener('keydown', e => {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+        e.preventDefault(); const tabs = [...sh.querySelectorAll('.tabs button')]; const i = tabs.indexOf(b);
+        const next = e.key === 'Home' ? tabs[0] : e.key === 'End' ? tabs.at(-1) : tabs[(i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length];
+        next.click(); next.focus(); next.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      });
+    });
+    sh.querySelectorAll('.field').forEach(field => {
+      const text = field.querySelector('span'), input = field.querySelector('input, select');
+      if (text && input?.id) { const label = document.createElement('label'); label.htmlFor = input.id; label.textContent = text.textContent; text.replaceWith(label); }
+    });
+    sh.querySelectorAll('.err').forEach(el => el.setAttribute('role', 'alert'));
+    sh.querySelectorAll('[id$="-info"], [id$="-scan-info"]').forEach(el => { el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite'); });
+    sh.addEventListener('click', e => { const trigger = e.target.closest('[data-start]'); if (trigger) $(trigger.dataset.start)?.click(); });
+    sh.addEventListener('keydown', e => { if (e.key === 'Escape' && vfPop) { e.preventDefault(); closePop(true); } });
+  }
+
   function bind() {
+    setupPresentation();
     $('close').addEventListener('click', close);
     sh.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
-      sh.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('active', x === b));
+      closePop();
+      sh.querySelectorAll('.tabs button').forEach(x => { x.classList.toggle('active', x === b); x.setAttribute('aria-selected', String(x === b)); x.tabIndex = x === b ? 0 : -1; });
       sh.querySelectorAll('.pane').forEach(p => p.classList.toggle('active', p.dataset.t === b.dataset.t));
-      $('crumb').textContent = b.textContent; updateReportButtons();
+      $('crumb').textContent = b.textContent; sh.querySelector('.body').scrollTop = 0; updateReportButtons();
       if (b.dataset.t === 'cve' && !$('c-cves').value) { const c = scanPageCves(); if (c.length) { $('c-cves').value = c.join(', '); $('c-scan-info').textContent = `найдено на странице: ${c.length}`; } }
     }));
 
@@ -952,7 +1141,7 @@ ${past}
     $('q-run').addEventListener('click', async () => {
       $('q-err').textContent = ''; $('q-run').disabled = true; $('q-info').innerHTML = '<span class="spin"></span>PDQL выполняется, 10-60 секунд';
       try {
-        state.detail = null; $('q-detail').innerHTML = '<div class="muted">Выберите группу слева.</div>';
+        state.detail = null; $('q-detail').classList.remove('detail-active'); $('q-detail').innerHTML = '<div class="muted">Выберите группу слева.</div>';
         state.queue = await VR.queue({ scope: $('q-scope').value, minScore: $('q-min').value, limit: parseInt($('q-limit').value) || 300 });
         $('q-info').textContent = `готово: ${state.queue.totalGroups} групп`; $('q-csv').disabled = false; $('q-pdql').disabled = false;
         snapSave('queue', { queue: state.queue, scope: $('q-scope').value, minScore: $('q-min').value, limit: $('q-limit').value });
@@ -1079,7 +1268,7 @@ ${past}
       bindFilters($('w-out'));
       sh.querySelectorAll('#w-out tr.click').forEach(tr => tr.addEventListener('click', async () => {
         const g = q.groups[parseInt(tr.dataset.i)]; const box = $('w-drill'); box.innerHTML = '<div class="box"><span class="spin"></span>детали</div>';
-        try { const d = await VR.queueDetail({ scope: 'images', soft: g.pkg, ver: g.ver, pkg: g.pkg }); box.innerHTML = `<div class="box drill"><h3>${esc(g.pkg)} ${esc(g.ver)}<button class="x">×</button></h3><div class="muted">${fmt(d.rows)} экземпляров, ${d.cves.length} CVE, ${d.hosts.length} наборов образов</div><div class="two"><div class="scroll"><table><tr><th>CVE (паспорт)</th><th>CVSS</th><th>экземпляров</th></tr>${d.cves.slice(0, 100).map(c => `<tr><td>${plink(c.vulnId, c.cve)}</td><td class="n">${c.score}</td><td class="n">${fmt(c.n)}</td></tr>`).join('')}</table></div><div class="scroll"><table><tr><th>набор образов</th><th>уязвимостей</th></tr>${d.hosts.slice(0, 100).map(h => `<tr><td class="ell">${alink(h.id, h.host)}</td><td class="n">${fmt(h.n)}</td></tr>`).join('')}</table></div></div></div>`; box.querySelector('.x').addEventListener('click', () => { box.innerHTML = ''; }); }
+        try { const d = await VR.queueDetail({ scope: 'images', soft: g.pkg, ver: g.ver, pkg: g.pkg }); box.innerHTML = `<div class="box drill"><h3>${esc(g.pkg)} ${esc(g.ver)}<button aria-label="Закрыть выборку" class="x">×</button></h3><div class="muted">${fmt(d.rows)} экземпляров, ${d.cves.length} CVE, ${d.hosts.length} наборов образов</div><div class="two"><div class="scroll"><table><tr><th>CVE (паспорт)</th><th>CVSS</th><th>экземпляров</th></tr>${d.cves.slice(0, 100).map(c => `<tr><td>${plink(c.vulnId, c.cve)}</td><td class="n">${c.score}</td><td class="n">${fmt(c.n)}</td></tr>`).join('')}</table></div><div class="scroll"><table><tr><th>набор образов</th><th>уязвимостей</th></tr>${d.hosts.slice(0, 100).map(h => `<tr><td class="ell">${alink(h.id, h.host)}</td><td class="n">${fmt(h.n)}</td></tr>`).join('')}</table></div></div></div>`; box.querySelector('.x').addEventListener('click', () => { box.innerHTML = ''; }); }
         catch (e) { box.innerHTML = `<div class="err">${esc(e.message)}</div>`; }
       }));
     };

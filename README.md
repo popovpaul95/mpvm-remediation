@@ -91,7 +91,19 @@ popup.html/js     сервер, порт, токен; проверка чере�
 ## Тесты
 
 - `tests/test_logic.mjs`: прогон логики против реального стенда без браузера. `MP_HOST=host MP_TOKEN=pat_... node tests/test_logic.mjs read` (все чтения, пишет `tests/out/fixtures.json`), `new` (риск, исключения, проекты), `v4` (очередь ОС и образов, выборки, паспорт, целевая версия, теги), `risk`, `tags` (создать тег `auto:test-vr`, назначить, проверить, снять, удалить), `status <instanceId>` (обратимая смена статуса одного экземпляра).
-- `tests/uitest/index.html`: имитация страницы MaxPatrol с меню Koobiq в темной теме и моком `chrome.*` на фикстурах. Скопировать `content/*.js` в `tests/uitest/content/`, фикстуры в `tests/uitest/fixtures.json`, открыть через `python3 -m http.server`.
+- `tests/uitest/index.html`: имитация MaxPatrol с моком `chrome.*` на локальных фикстурах. Читает **актуальные** `content/*.js` напрямую; копировать скрипты больше не нужно. Фикстуры находятся в `tests/uitest/fixtures.json` (генерируются тестом логики, не входят в Git). Из корня расширения запустить `python3 -m http.server 18765 --bind 127.0.0.1` и открыть `http://127.0.0.1:18765/tests/uitest/`; `?theme=light` включает светлую тему.
+- `npm ci && npm run test:ui`: пять браузерных сценариев на Playwright и axe-core. Нужны Node.js 20+, Python 3, установленный Google Chrome и локальный `tests/uitest/fixtures.json`. Сервер стенда запускается автоматически. Проверяются девять разделов в обеих темах, контрастность, доступные имена, клавиатура, фильтры, экспорт, ошибки загрузки, popup и CISA KEV в штатной карточке. Все запросы к MaxPatrol и Jira замоканы; внешняя сеть в браузерных тестах заблокирована.
+- `npm run check`: проверка синтаксиса изменяемых интерфейсных скриптов. Зависимости npm используются только для тестов; расширение по-прежнему загружается без сборки.
+
+## Визуальный стиль Koobiq
+
+Общая шапка и вкладки, панели разделов, показатели, таблицы, фильтры, формы, пустые состояния, отчёты и окно подключения приведены к единому оформлению. Подробные методики находятся в раскрываемом блоке «Как это работает». В таблицах сохранены сортировка, поиск, фильтры по значениям и переходы к выборкам; основные действия доступны с клавиатуры.
+
+Шаблоны [Tabs underlined](https://github.com/koobiq/angular-components/blob/main/packages/components-dev/tabs/template.html), [Content panel](https://github.com/koobiq/angular-components/blob/main/packages/docs-examples/components/content-panel/content-panel-overview/content-panel-overview-example.ts) и [Empty state](https://github.com/koobiq/angular-components/blob/main/packages/components-dev/empty-state/template.html) адаптированы для существующего JavaScript/Shadow DOM. Angular-компоненты не загружаются в страницу продукта.
+
+Официальные токены `@koobiq/design-tokens` 3.20.0 с лицензией MIT находятся в `vendor/koobiq/` и используются в popup и стенде без CDN. Рабочая область наследует тему MaxPatrol. Небольшие коррекции контраста на цветных поверхностях применяются только внутри расширения; исходные файлы Koobiq сохранены без изменений.
+
+После обновления файлов перезагрузите расширение на `chrome://extensions`, затем вкладку MaxPatrol VM.
 
 ## Ограничения
 

@@ -15,9 +15,9 @@
   const today = () => new Date().toISOString().slice(0, 10);
 
   const STYLE = `
-.vr-cb { margin: var(--kbq-size-l, 16px) 0; padding: var(--kbq-size-m, 12px) var(--kbq-size-l, 16px); border: 1px solid var(--kbq-line-contrast-less, #e3e5ea); border-radius: 12px; background: var(--kbq-background-bg-secondary, transparent);
+.vr-cb { margin: var(--kbq-size-l, 16px) 0; padding: var(--kbq-size-l, 16px) var(--kbq-size-xl, 20px); border: 1px solid var(--kbq-line-contrast-less, #e3e5ea); border-radius: 12px; background: var(--kbq-background-card, #fff);
   font-family: var(--kbq-typography-text-normal-font-family, Inter, -apple-system, sans-serif); font-size: var(--kbq-typography-text-normal-font-size, 14px); line-height: var(--kbq-typography-text-normal-line-height, 20px); color: var(--kbq-foreground-contrast, inherit); }
-.vr-cb .vr-title { margin: 0 0 var(--kbq-size-s, 8px); font-weight: 600; display: flex; align-items: center; gap: var(--kbq-size-s, 8px); }
+.vr-cb .vr-title { margin: 0 0 var(--kbq-size-s, 8px); font-family: var(--kbq-typography-subheading-font-family, inherit); font-size: 16px; line-height: 24px; font-weight: 600; display: flex; align-items: center; gap: var(--kbq-size-s, 8px); }
 .vr-cb .vr-title .vr-src { font-size: var(--kbq-typography-text-compact-font-size, 12px); font-weight: 400; color: var(--kbq-foreground-contrast-secondary, #6f7580); }
 .vr-cb .vr-links { display: flex; flex-wrap: wrap; gap: var(--kbq-size-xxs, 4px) var(--kbq-size-l, 16px); }
 .vr-cb .vr-links a { color: var(--kbq-link-text, #2f80ed); text-decoration: none; white-space: nowrap; }
@@ -29,20 +29,23 @@
 .vr-cb .vr-muted { color: var(--kbq-foreground-contrast-secondary, #6f7580); font-size: var(--kbq-typography-text-compact-font-size, 12px); }
 .vr-cb .vr-err { color: var(--kbq-foreground-error, #d23c3c); font-size: var(--kbq-typography-text-compact-font-size, 12px); }
 .vr-cb .vr-b { display: inline-flex; align-items: center; height: 20px; font-size: var(--kbq-typography-text-compact-font-size, 12px); padding: 0 var(--kbq-size-xs, 6px); border-radius: 4px; font-weight: 500; margin-right: var(--kbq-size-xs, 6px); }
-.vr-cb .P0 { background: var(--kbq-badge-filled-fade-off-error-background, #d23c3c); color: var(--kbq-badge-filled-fade-off-error-color, #fff); }
-.vr-cb .P1 { background: var(--kbq-badge-filled-fade-off-warning-background, #f0883e); color: var(--kbq-badge-filled-fade-off-warning-color, #fff); }
+.vr-cb .P0 { background: var(--kbq-palette-red-40, #c91f06); color: var(--kbq-badge-filled-fade-off-error-color, #fff); }
+.vr-cb .P1 { background: var(--kbq-background-warning-less, #fff0ce); color: var(--kbq-foreground-warning, #976000); }
 .vr-cb .P2 { background: var(--kbq-badge-filled-fade-on-warning-background, #fdf1d6); color: var(--kbq-badge-filled-fade-on-warning-color, #8a5a00); }
 .vr-cb .P3 { background: var(--kbq-badge-filled-fade-on-contrast-background, #e3e5ea); color: var(--kbq-badge-filled-fade-on-contrast-color, #262a35); }
-.vr-cb .kev { background: var(--kbq-badge-filled-fade-off-error-background, #d23c3c); color: var(--kbq-badge-filled-fade-off-error-color, #fff); }
+.vr-cb .kev { background: var(--kbq-palette-red-40, #c91f06); color: var(--kbq-badge-filled-fade-off-error-color, #fff); }
 .vr-cb .tag { background: var(--kbq-badge-filled-fade-on-contrast-background, #eef0f3); color: var(--kbq-badge-filled-fade-on-contrast-color, inherit); }
 .vr-cb ul { margin: var(--kbq-size-xxs, 4px) 0 0 18px; padding: 0; } .vr-cb li { margin: 2px 0; } .vr-cb li a { color: var(--kbq-link-text, #2f80ed); text-decoration: none; } .vr-cb li a:hover { text-decoration: underline; }
 .vr-btn { font-family: inherit; font-size: var(--kbq-typography-text-normal-font-size, 14px); font-weight: 500; display: inline-flex; align-items: center; gap: var(--kbq-size-xs, 6px);
-  height: var(--kbq-button-size-height, 32px); padding: 0 var(--kbq-button-size-horizontal-padding, 12px); border-radius: var(--kbq-button-size-border-radius, 8px);
+  min-height: 36px; padding: 0 var(--kbq-button-size-horizontal-padding, 12px); border-radius: var(--kbq-button-size-border-radius, 8px);
   border: 1px solid var(--kbq-button-filled-contrast-fade-off-border, transparent); background: var(--kbq-button-filled-contrast-fade-off-background, #e3e5ea); color: var(--kbq-button-filled-contrast-fade-off-foreground, #262a35); cursor: pointer; white-space: nowrap; }
 .vr-btn:hover { background: var(--kbq-button-filled-contrast-fade-off-states-hover-background, #d3d6dd); }
-.vr-btn.acc { background: var(--kbq-background-theme, #2f80ed); color: var(--kbq-foreground-white, #fff); font-weight: 600; }
-.vr-btn.acc:hover { filter: brightness(1.08); }
-.vr-btn:disabled { background: var(--kbq-button-filled-contrast-fade-off-states-disabled-background, rgba(120,130,160,.16)); color: var(--kbq-button-filled-contrast-fade-off-states-disabled-foreground, rgba(120,130,160,.6)); cursor: default; filter: none; }
+.vr-btn.acc { background: var(--kbq-background-contrast, #242831); color: var(--kbq-foreground-on-contrast, #fff); font-weight: 500; }
+.vr-btn.acc:hover { background: var(--kbq-states-background-contrast-hover, #3e4655); }
+.vr-cb :is(button,a):focus-visible, .vr-btn:focus-visible { outline: 2px solid var(--kbq-states-line-focus-theme, #3388ff); outline-offset: 3px; }
+.vr-cb .vr-title { flex-wrap: wrap; }
+.vr-cb .vr-err { overflow-wrap: anywhere; }
+.vr-btn:disabled, .vr-btn.acc:disabled { background: var(--kbq-button-filled-contrast-fade-off-states-disabled-background, rgba(120,130,160,.16)); color: var(--kbq-button-filled-contrast-fade-off-states-disabled-foreground, rgba(120,130,160,.6)); cursor: default; filter: none; }
 `;
   function ensureStyle() {
     if (document.getElementById('vr-cards-style')) return;
@@ -111,7 +114,7 @@
     const v = r.verdict || {}, n = r.nvd, out = [];
     out.push(`<div class="vr-line"><span class="vr-b ${esc(v.level || 'P3')}">${esc(v.level || '')}</span><b>${esc(v.title || '')}</b>${v.reasons?.length ? ': ' + esc(v.reasons.join('; ')) : ''}; рекомендуемый срок ${esc(v.slaDays)} дн</div>`);
     if (r.epss?.epss != null) out.push(`<div class="vr-line">EPSS <b>${(r.epss.epss * 100).toFixed(1)}%</b> (перцентиль ${(r.epss.percentile * 100).toFixed(0)}, ${esc(r.epss.date)})</div>`);
-    if (r.kev) out.push(`<div class="vr-line"><a class="vr-b kev" href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog?search_api_fulltext=${encodeURIComponent(id.cve || '')}" target="_blank" rel="noopener" style="text-decoration:none">CISA KEV</a> добавлена ${esc(r.kev.dateAdded)}, срок ${esc(r.kev.dueDate)}${r.kev.ransomware === 'Known' ? ', <b>используется в ransomware</b>' : ''}</div>`);
+    if (r.kev) out.push(`<div class="vr-line"><a class="vr-b kev" href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog?search_api_fulltext=${encodeURIComponent(cve || '')}" target="_blank" rel="noopener" style="text-decoration:none">CISA KEV</a> добавлена ${esc(r.kev.dateAdded)}, срок ${esc(r.kev.dueDate)}${r.kev.ransomware === 'Known' ? ', <b>используется в ransomware</b>' : ''}</div>`);
     if (n && !n.missing) {
       const p = [];
       if (n.cvss40) p.push(`CVSS 4.0 <b>${esc(n.cvss40.score)}</b>`); if (n.cvss31) p.push(`CVSS 3.1 <b>${esc(n.cvss31.score)}</b>`);
@@ -141,7 +144,7 @@
       box.className = (section.className.includes('vulner-info-section') ? 'vulner-info-section ' : '') + 'vr-cb'; box.dataset.kind = 'vuln';
       box.innerHTML = `<div class="${section.className.includes('vulner-info-section') ? 'vulner-info-section__title' : ''} vr-title">Внешний контекст <span class="vr-src">расширение «Устранение»</span></div>
         <div class="vr-links">${linksHtml(id)}</div>
-        ${id.cve ? `<div class="vr-row"><button class="vr-btn acc" data-act="enrich">EPSS, KEV, SSVC и ссылки на патчи</button><span class="vr-muted" data-role="st"></span></div><div data-role="out"></div>` : '<div class="vr-line vr-muted">У уязвимости нет CVE: внешние базы эксплуатации (EPSS, KEV, NVD) ее не описывают.</div>'}`;
+        ${id.cve ? `<div class="vr-row"><button class="vr-btn acc" data-act="enrich">EPSS, KEV, SSVC и ссылки на патчи</button><span class="vr-muted" role="status" data-role="st"></span></div><div data-role="out"></div>` : '<div class="vr-line vr-muted">У уязвимости нет CVE: внешние базы эксплуатации (EPSS, KEV, NVD) ее не описывают.</div>'}`;
       section.insertAdjacentElement('afterend', box);
       const btn = box.querySelector('[data-act=enrich]');
       if (btn) btn.addEventListener('click', async () => {
@@ -184,7 +187,7 @@
       const container = h.parentElement; if (!container || container.querySelector('.vr-asset-export')) continue;
       ensureStyleIn(h.getRootNode());
       const row = document.createElement('div'); row.className = 'vr-asset-export vr-cb'; row.dataset.asset = assetId;
-      row.innerHTML = `<div class="vr-row"><button class="vr-btn" data-act="csv">Выгрузить уязвимости в CSV</button><button class="vr-btn" data-act="jira">Задача в Jira</button></div><div class="vr-muted" data-role="st">Все открытые уязвимости узла с CVE, статусом, датой, признаками эксплойта и патча.</div>`;
+      row.innerHTML = `<div class="vr-row"><button class="vr-btn" data-act="csv">Выгрузить уязвимости в CSV</button><button class="vr-btn" data-act="jira">Задача в Jira</button></div><div class="vr-muted" role="status" data-role="st">Все открытые уязвимости узла с CVE, статусом, датой, признаками эксплойта и патча.</div>`;
       h.insertAdjacentElement('afterend', row);
       row.querySelector('[data-act=csv]').addEventListener('click', () => exportAssetVulns(assetId, row.querySelector('[data-act=csv]'), row.querySelector('[data-role=st]')));
       row.querySelector('[data-act=jira]').addEventListener('click', async () => {

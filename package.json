@@ -1,0 +1,6 @@
+{
+  "name": "mpvm-remediation-ui-checks",
+  "private": true,
+  "scripts": { "test:ui": "playwright test", "check": "node --check content/app.js && node --check content/cards.js && node --check popup.js" },
+  "devDependencies": { "@playwright/test": "1.63.0", "axe-core": "4.13.0" }
+}

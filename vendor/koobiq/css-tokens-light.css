@@ -1,0 +1,1167 @@
+/**
+ * Do not edit directly
+ */
+
+.kbq-light {
+  --kbq-theme-default: hsla(216, 100%, 50%, 100%); /* DEPRECATED: true */
+  --kbq-success-default: hsla(104, 64%, 50%, 100%); /* DEPRECATED: true */
+  --kbq-warning-default: hsla(38, 100%, 35%, 100%); /* DEPRECATED: true */
+  --kbq-error-default: hsla(7, 97%, 50%, 100%); /* DEPRECATED: true */
+  --kbq-contrast-default: hsla(229, 15%, 50%, 100%); /* DEPRECATED: true */
+  --kbq-white-default: hsla(0, 0%, 100%, 100%); /* DEPRECATED: true */
+  --kbq-black-default: hsla(0, 0%, 0%, 100%); /* DEPRECATED: true */
+  --kbq-purple-default: hsla(277, 72%, 50%, 100%); /* DEPRECATED: true */
+  --kbq-background-bg: hsla(0, 0%, 100%, 100%);
+  --kbq-background-bg-secondary: hsla(229, 15%, 97%, 100%);
+  --kbq-background-bg-tertiary: hsla(229, 15%, 95%, 100%);
+  --kbq-background-night: hsla(229, 15%, 25%, 100%);
+  --kbq-background-card: hsla(229, 15%, 100%, 100%);
+  --kbq-background-theme: hsla(216, 100%, 50%, 100%);
+  --kbq-background-theme-fade: hsla(216, 100%, 88%, 100%);
+  --kbq-background-theme-less: hsla(216, 100%, 94%, 100%);
+  --kbq-background-contrast: hsla(229, 15%, 25%, 100%);
+  --kbq-background-contrast-fade: hsla(229, 15%, 90%, 100%);
+  --kbq-background-contrast-less: hsla(229, 15%, 96%, 100%);
+  --kbq-background-error: hsla(7, 97%, 60%, 100%);
+  --kbq-background-error-fade: hsla(7, 97%, 89%, 100%);
+  --kbq-background-error-less: hsla(7, 97%, 94%, 100%);
+  --kbq-background-success: hsla(104, 64%, 45%, 100%);
+  --kbq-background-success-fade: hsla(104, 64%, 80%, 100%);
+  --kbq-background-success-less: hsla(104, 64%, 89%, 100%);
+  --kbq-background-warning: hsla(38, 100%, 50%, 100%);
+  --kbq-background-warning-fade: hsla(38, 100%, 85%, 100%);
+  --kbq-background-warning-less: hsla(38, 100%, 90%, 100%);
+  --kbq-background-transparent: transparent;
+  --kbq-background-highlight: hsla(38, 100%, 85%, 100%);
+  --kbq-background-overlay: hsla(229, 15%, 20%, 32%);
+  --kbq-background-overlay-inverse: hsla(229, 15%, 99%, 88%);
+  --kbq-background-overlay-error: hsla(7, 97%, 88%, 88%);
+  --kbq-background-overlay-theme: hsla(216, 100%, 86%, 88%);
+  --kbq-foreground-white: hsla(0, 0%, 100%, 100%);
+  --kbq-foreground-white-secondary: hsla(0, 0%, 100%, 72%);
+  --kbq-foreground-theme: hsla(216, 100%, 50%, 100%);
+  --kbq-foreground-theme-secondary: hsla(216, 100%, 60%, 100%);
+  --kbq-foreground-contrast: hsla(229, 15%, 15%, 100%);
+  --kbq-foreground-on-contrast: hsla(229, 15%, 100%, 100%);
+  --kbq-foreground-contrast-secondary: hsla(229, 15%, 50%, 100%);
+  --kbq-foreground-contrast-tertiary: hsla(229, 15%, 60%, 100%);
+  --kbq-foreground-error: hsla(7, 97%, 40%, 100%);
+  --kbq-foreground-error-secondary: hsla(7, 97%, 50%, 100%);
+  --kbq-foreground-error-tertiary: hsla(7, 97%, 70%, 100%);
+  --kbq-foreground-error-less: hsla(7, 97%, 70%, 100%);
+  --kbq-foreground-success: hsla(104, 64%, 30%, 100%);
+  --kbq-foreground-success-less: hsla(104, 64%, 90%, 100%);
+  --kbq-foreground-success-secondary: hsla(104, 64%, 45%, 100%);
+  --kbq-foreground-warning: hsla(38, 100%, 33%, 100%);
+  --kbq-foreground-warning-secondary: hsla(38, 100%, 45%, 100%);
+  --kbq-foreground-visited: hsla(277, 72%, 45%, 100%);
+  --kbq-icon-white: hsla(0, 0%, 100%, 100%);
+  --kbq-icon-theme: hsla(216, 100%, 50%, 100%);
+  --kbq-icon-theme-fade: hsla(216, 100%, 40%, 100%);
+  --kbq-icon-contrast: hsla(229, 15%, 15%, 100%);
+  --kbq-icon-on-contrast: hsla(229, 15%, 100%, 100%);
+  --kbq-icon-contrast-fade: hsla(229, 15%, 60%, 100%);
+  --kbq-icon-error: hsla(7, 97%, 45%, 100%);
+  --kbq-icon-success: hsla(104, 64%, 40%, 100%);
+  --kbq-icon-warning: hsla(38, 100%, 42%, 100%);
+  --kbq-icon-visited: hsla(277, 72%, 55%, 100%);
+  --kbq-line-theme: hsla(216, 100%, 50%, 100%);
+  --kbq-line-theme-fade: hsla(216, 100%, 65%, 100%);
+  --kbq-line-theme-less: hsla(216, 100%, 85%, 100%);
+  --kbq-line-contrast: hsla(229, 15%, 15%, 100%);
+  --kbq-line-contrast-fade: hsla(229, 15%, 80%, 100%);
+  --kbq-line-contrast-less: hsla(229, 15%, 6%, 12%);
+  --kbq-line-error: hsla(7, 97%, 45%, 100%);
+  --kbq-line-error-fade: hsla(7, 97%, 65%, 100%);
+  --kbq-line-success: hsla(104, 64%, 40%, 100%);
+  --kbq-line-success-fade: hsla(104, 64%, 45%, 100%);
+  --kbq-line-warning: hsla(38, 100%, 45%, 100%);
+  --kbq-line-warning-fade: hsla(38, 100%, 55%, 100%);
+  --kbq-line-visited: hsla(277, 72%, 80%, 100%);
+  --kbq-shadow-outline: hsla(229, 15%, 6%, 3%);
+  --kbq-shadow-key: hsla(229, 15%, 6%, 6%);
+  --kbq-shadow-ambient: hsla(229, 15%, 6%, 12%);
+  --kbq-opacity-disabled: 0.32;
+  --kbq-states-background-theme-hover: hsla(216, 100%, 45%, 100%);
+  --kbq-states-background-theme-active: hsla(216, 100%, 39%, 100%);
+  --kbq-states-background-theme-fade-hover: hsla(216, 100%, 85%, 100%);
+  --kbq-states-background-theme-fade-active: hsla(216, 100%, 83%, 100%);
+  --kbq-states-background-theme-less-hover: hsla(216, 100%, 92%, 100%);
+  --kbq-states-background-theme-less-active: hsla(216, 100%, 90%, 100%);
+  --kbq-states-background-contrast-hover: hsla(229, 15%, 20%, 100%);
+  --kbq-states-background-contrast-active: hsla(229, 15%, 15%, 100%);
+  --kbq-states-background-contrast-fade-hover: hsla(229, 15%, 88%, 100%);
+  --kbq-states-background-contrast-fade-active: hsla(229, 15%, 85%, 100%);
+  --kbq-states-background-contrast-less-hover: hsla(229, 15%, 93%, 100%);
+  --kbq-states-background-contrast-less-active: hsla(229, 15%, 91%, 100%);
+  --kbq-states-background-error-hover: hsla(7, 97%, 56%, 100%);
+  --kbq-states-background-error-active: hsla(7, 69%, 51%, 100%);
+  --kbq-states-background-error-fade-hover: hsla(7, 97%, 87%, 100%);
+  --kbq-states-background-error-fade-active: hsla(7, 97%, 85%, 100%);
+  --kbq-states-background-error-less-hover: hsla(7, 97%, 92%, 100%);
+  --kbq-states-background-error-less-active: hsla(7, 97%, 89%, 100%);
+  --kbq-states-background-success-hover: hsla(104, 64%, 42%, 100%);
+  --kbq-states-background-success-active: hsla(104, 64%, 38%, 100%);
+  --kbq-states-background-success-fade-hover: hsla(104, 64%, 76%, 100%);
+  --kbq-states-background-success-fade-active: hsla(104, 64%, 84%, 100%);
+  --kbq-states-background-success-less-hover: hsla(104, 64%, 84%, 100%);
+  --kbq-states-background-success-less-active: hsla(104, 64%, 81%, 100%);
+  --kbq-states-background-warning-fade-hover: hsla(38, 100%, 77%, 100%);
+  --kbq-states-background-warning-fade-active: hsla(7, 97%, 73%, 100%);
+  --kbq-states-background-warning-less-hover: hsla(38, 100%, 86%, 100%);
+  --kbq-states-background-warning-less-active: hsla(38, 100%, 82%, 100%);
+  --kbq-states-background-disabled: rgba(0, 0, 0, 0.05);
+  --kbq-states-background-transparent-hover: hsla(229, 15%, 50%, 8%);
+  --kbq-states-background-transparent-active: hsla(229, 15%, 50%, 16%);
+  --kbq-states-background-error-less: hsla(7, 97%, 99%, 100%);
+  --kbq-states-foreground-theme-hover: hsla(216, 100%, 45%, 100%);
+  --kbq-states-foreground-theme-active: hsla(216, 100%, 40%, 100%);
+  --kbq-states-foreground-disabled: hsla(229, 15%, 60%, 60%);
+  --kbq-states-foreground-visited-hover: hsla(277, 72%, 40%, 100%);
+  --kbq-states-foreground-visited-active: hsla(277, 72%, 35%, 100%);
+  --kbq-states-icon-theme-hover: hsla(216, 100%, 45%, 100%);
+  --kbq-states-icon-theme-active: hsla(216, 100%, 40%, 100%);
+  --kbq-states-icon-disabled: hsla(229, 15%, 60%, 60%);
+  --kbq-states-icon-contrast-hover: hsla(229, 15%, 50%, 100%);
+  --kbq-states-icon-contrast-active: hsla(229, 15%, 60%, 100%);
+  --kbq-states-icon-contrast-fade-hover: hsla(229, 15%, 50%, 100%);
+  --kbq-states-icon-contrast-fade-active: hsla(229, 15%, 40%, 100%);
+  --kbq-states-icon-error-hover: hsla(7, 97%, 45%, 100%);
+  --kbq-states-icon-error-active: hsla(7, 97%, 40%, 100%);
+  --kbq-states-icon-success-hover: hsla(104, 64%, 40%, 100%);
+  --kbq-states-icon-success-active: hsla(104, 64%, 30%, 100%);
+  --kbq-states-icon-warning-hover: hsla(38, 100%, 45%, 100%);
+  --kbq-states-icon-warning-active: hsla(38, 100%, 42%, 100%);
+  --kbq-states-icon-visited-hover: hsla(277, 72%, 50%, 100%);
+  --kbq-states-icon-visited-active: hsla(277, 72%, 40%, 100%);
+  --kbq-states-line-focus: hsla(216, 100%, 50%, 100%);
+  --kbq-states-line-focus-theme: hsla(216, 100%, 60%, 100%);
+  --kbq-states-line-disabled: hsla(229, 15%, 50%, 32%);
+  --kbq-states-line-focus-error: hsla(7, 97%, 45%, 100%);
+  --kbq-states-disabled-opacity: 0.32; /* DEPRECATED: use --kbq-opacity-disabled */
+  --kbq-shadow-overflow-compact-top:  0px -1px 0px 0px hsla(229, 15%, 6%, 12%);
+  --kbq-shadow-overflow-compact-right:  1px  0px 0px 0px hsla(229, 15%, 6%, 12%);
+  --kbq-shadow-overflow-compact-bottom:  0px  1px 0px 0px hsla(229, 15%, 6%, 12%);
+  --kbq-shadow-overflow-compact-left: -1px  0   0px 0px hsla(229, 15%, 6%, 12%);
+  --kbq-shadow-overflow-normal-top:  0   -9px 8px -12px hsla(229, 15%, 60%, 100%);
+  --kbq-shadow-overflow-normal-right:  9px   0  8px -12px hsla(229, 15%, 60%, 100%);
+  --kbq-shadow-overflow-normal-left: -9px   0  8px -12px hsla(229, 15%, 60%, 100%);
+  --kbq-shadow-overflow-normal-bottom:  0   9px  8px -12px hsla(229, 15%, 60%, 100%);
+  --kbq-shadow-card: 0 0px 0 1px hsla(229, 15%, 6%, 3%), 0 1px 6px 0 hsla(229, 15%, 6%, 6%), 0 1px 6px 0 hsla(229, 15%, 6%, 12%);
+  --kbq-shadow-popup: 0 0 0 1px hsla(229, 15%, 6%, 3%), 0 2px 8px hsla(229, 15%, 6%, 6%), 0 3px 8px hsla(229, 15%, 6%, 12%);
+  --kbq-shadow-overlay: 0 0 0 1px hsla(229, 15%, 6%, 3%), 0 3px 16px hsla(229, 15%, 6%, 6%), 0 4px 32px hsla(229, 15%, 6%, 12%);
+  --kbq-accordion-item-default-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-accordion-item-default-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-accordion-item-default-icon-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-accordion-item-header-scroll-shadow:  0   9px  8px -12px hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-accordion-item-states-hover-icon-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-accordion-item-states-focus-border-color: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-accordion-item-states-disabled-text-color: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-accordion-item-states-disabled-icon-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-default-contrast-container-background: hsla(229, 15%, 90%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-default-contrast-container-title: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-default-contrast-container-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-default-error-container-background: hsla(229, 15%, 90%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-default-error-container-title: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-default-error-container-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-default-warning-container-background: hsla(229, 15%, 90%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-default-warning-container-title: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-default-warning-container-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-default-success-container-background: hsla(229, 15%, 90%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-default-success-container-title: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-default-success-container-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-default-theme-container-background: hsla(229, 15%, 90%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-default-theme-container-title: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-default-theme-container-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-colored-contrast-container-background: hsla(229, 15%, 90%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-colored-contrast-container-title: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-colored-contrast-container-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-colored-error-container-background: hsla(7, 97%, 94%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-colored-error-container-title: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-colored-error-container-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-colored-warning-container-background: hsla(38, 100%, 90%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-colored-warning-container-title: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-colored-warning-container-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-colored-success-container-background: hsla(104, 64%, 89%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-colored-success-container-title: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-colored-success-container-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-colored-theme-container-background: hsla(216, 100%, 94%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-colored-theme-container-title: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-alert-colored-theme-container-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-off-theme-background: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-off-theme-color: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-off-theme-caption: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-off-theme-icon: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-off-success-background: hsla(104, 64%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-off-success-color: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-off-success-caption: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-off-success-icon: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-off-warning-background: hsla(38, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-off-warning-color: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-off-warning-caption: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-off-warning-icon: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-off-error-background: hsla(7, 97%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-off-error-color: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-off-error-caption: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-off-error-icon: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-on-theme-background: hsla(216, 100%, 88%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-on-theme-color: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-on-theme-caption: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-on-theme-icon: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-on-contrast-background: hsla(229, 15%, 90%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-on-contrast-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-on-contrast-caption: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-on-contrast-icon: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-on-success-background: hsla(104, 64%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-on-success-color: hsla(104, 64%, 30%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-on-success-caption: hsla(104, 64%, 30%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-on-success-icon: hsla(104, 64%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-on-warning-background: hsla(38, 100%, 85%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-on-warning-color: hsla(38, 100%, 33%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-on-warning-caption: hsla(38, 100%, 33%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-on-warning-icon: hsla(38, 100%, 42%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-on-error-background: hsla(7, 97%, 89%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-on-error-color: hsla(7, 97%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-on-error-caption: hsla(7, 97%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-filled-fade-on-error-icon: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-theme-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-theme-color: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-theme-border: hsla(216, 100%, 65%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-theme-caption: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-theme-icon: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-contrast-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-contrast-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-contrast-border: hsla(229, 15%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-contrast-caption: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-contrast-icon: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-success-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-success-color: hsla(104, 64%, 30%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-success-border: hsla(104, 64%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-success-caption: hsla(104, 64%, 30%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-success-icon: hsla(104, 64%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-warning-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-warning-color: hsla(38, 100%, 33%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-warning-border: hsla(38, 100%, 55%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-warning-caption: hsla(38, 100%, 33%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-warning-icon: hsla(38, 100%, 42%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-error-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-error-color: hsla(7, 97%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-error-border: hsla(7, 97%, 65%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-error-caption: hsla(7, 97%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-badge-outline-fade-on-error-icon: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-container-background: hsla(229, 15%, 90%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-default-background: hsla(229, 15%, 90%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-default-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-default-icon: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-hover-background: hsla(229, 15%, 88%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-hover-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-hover-icon: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-active-background: hsla(229, 15%, 85%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-active-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-active-icon: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-selected-background: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-selected-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-selected-icon: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-selected-hover-background: hsla(229, 15%, 50%, 8%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-selected-hover-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-selected-hover-icon: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-selected-active-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-selected-active-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-selected-active-icon: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-selected-disabled-background: rgba(0, 0, 0, 0.05); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-selected-disabled-text: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-selected-disabled-icon: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-disabled-background: none; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-disabled-text: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-disabled-icon: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-toggle-item-states-focused-outline: hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-off-background: hsla(229, 15%, 25%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-off-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-off-foreground: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-off-left-icon: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-off-right-icon: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-off-states-hover-background: hsla(229, 15%, 20%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-off-states-active-background: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-off-states-active-hover-background: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-off-states-disabled-background: rgba(0, 0, 0, 0.05); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-off-states-disabled-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-off-states-disabled-foreground: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-off-states-disabled-left-icon: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-off-states-disabled-right-icon: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-on-background: hsla(229, 15%, 90%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-on-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-on-foreground: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-on-left-icon: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-on-right-icon: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-on-states-hover-background: hsla(229, 15%, 88%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-on-states-active-background: hsla(229, 15%, 85%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-on-states-active-hover-background: hsla(229, 15%, 85%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-on-states-disabled-background: rgba(0, 0, 0, 0.05); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-on-states-disabled-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-on-states-disabled-foreground: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-on-states-disabled-left-icon: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-filled-contrast-fade-on-states-disabled-right-icon: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-border: hsla(216, 100%, 65%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-foreground: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-left-icon: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-right-icon: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-states-hover-background: hsla(229, 15%, 50%, 8%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-states-hover-border: hsla(216, 100%, 65%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-states-hover-foreground: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-states-hover-left-icon: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-states-hover-right-icon: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-states-active-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-states-active-border: hsla(216, 100%, 65%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-states-active-foreground: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-states-active-left-icon: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-states-active-right-icon: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-states-active-hover-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-states-active-hover-border: hsla(216, 100%, 65%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-states-active-hover-foreground: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-states-active-hover-left-icon: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-states-active-hover-right-icon: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-states-disabled-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-states-disabled-border: hsla(229, 15%, 50%, 32%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-states-disabled-foreground: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-states-disabled-left-icon: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-theme-fade-on-states-disabled-right-icon: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-border: hsla(229, 15%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-foreground: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-left-icon: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-right-icon: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-states-hover-background: hsla(229, 15%, 50%, 8%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-states-hover-border: hsla(229, 15%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-states-hover-foreground: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-states-hover-left-icon: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-states-hover-right-icon: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-states-active-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-states-active-border: hsla(229, 15%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-states-active-foreground: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-states-active-left-icon: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-states-active-right-icon: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-states-active-hover-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-states-active-hover-border: hsla(229, 15%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-states-active-hover-foreground: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-states-active-hover-left-icon: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-states-active-hover-right-icon: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-states-disabled-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-states-disabled-border: hsla(229, 15%, 50%, 32%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-states-disabled-foreground: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-states-disabled-left-icon: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-outline-contrast-fade-on-states-disabled-right-icon: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-foreground: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-left-icon: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-right-icon: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-states-hover-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-states-hover-foreground: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-states-hover-background: hsla(229, 15%, 50%, 8%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-states-hover-left-icon: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-states-hover-right-icon: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-states-active-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-states-active-foreground: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-states-active-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-states-active-left-icon: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-states-active-right-icon: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-states-active-hover-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-states-active-hover-foreground: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-states-active-hover-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-states-active-hover-left-icon: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-states-active-hover-right-icon: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-states-disabled-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-states-disabled-foreground: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-states-disabled-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-states-disabled-left-icon: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-theme-fade-on-states-disabled-right-icon: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-foreground: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-left-icon: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-right-icon: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-states-hover-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-states-hover-foreground: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-states-hover-background: hsla(229, 15%, 50%, 8%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-states-hover-left-icon: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-states-hover-right-icon: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-states-active-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-states-active-foreground: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-states-active-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-states-active-left-icon: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-states-active-right-icon: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-states-active-hover-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-states-active-hover-foreground: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-states-active-hover-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-states-active-hover-left-icon: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-states-active-hover-right-icon: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-states-disabled-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-states-disabled-foreground: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-states-disabled-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-states-disabled-left-icon: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-button-transparent-contrast-fade-on-states-disabled-right-icon: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-theme-default: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-theme-states-hover: hsla(216, 100%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-theme-states-active: hsla(216, 100%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-theme-states-disabled: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-contrast-default: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-contrast-states-hover: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-contrast-states-active: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-contrast-states-disabled: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-fade-contrast-default: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-fade-contrast-states-hover: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-fade-contrast-states-active: hsla(229, 15%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-fade-contrast-states-disabled: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-error-default: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-error-states-hover: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-error-states-active: hsla(7, 97%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-error-states-disabled: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-success-default: hsla(104, 64%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-success-states-hover: hsla(104, 64%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-success-states-active: hsla(104, 64%, 30%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-success-states-disabled: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-warning-default: hsla(38, 100%, 42%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-warning-states-hover: hsla(38, 100%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-warning-states-active: hsla(38, 100%, 42%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-button-warning-states-disabled: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-default-border: hsla(229, 15%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-default-color: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-default-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-default-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-default-caption: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-states-hover-border: hsla(229, 15%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-states-hover-background: hsla(229, 15%, 50%, 8%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-states-checked-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-states-checked-background: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-states-checked-hover-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-states-checked-hover-background: hsla(216, 100%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-states-focused-border: hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-states-focused-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-states-focused-outline: 1px solid hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-states-checked-focused-border: hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-states-checked-focused-background: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-states-checked-focused-outline: 1px solid hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-states-disabled-border: hsla(229, 15%, 50%, 32%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-states-disabled-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-states-disabled-text: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-states-disabled-background: rgba(0, 0, 0, 0.05); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-theme-states-disabled-caption: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-default-border: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-default-color: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-default-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-default-background: hsla(7, 97%, 94%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-default-caption: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-states-hover-border: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-states-hover-background: hsla(7, 97%, 87%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-states-checked-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-states-checked-background: hsla(7, 97%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-states-checked-hover-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-states-checked-hover-background: hsla(7, 97%, 56%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-states-focused-border: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-states-focused-background: hsla(7, 97%, 94%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-states-focused-outline: 1px solid hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-states-checked-focused-border: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-states-checked-focused-background: hsla(7, 97%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-states-checked-focused-outline: 1px solid hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-states-disabled-border: hsla(229, 15%, 50%, 32%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-states-disabled-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-states-disabled-text: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-states-disabled-background: rgba(0, 0, 0, 0.05); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-checkbox-error-states-disabled-caption: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-filled-container-background: hsla(229, 15%, 97%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-filled-container-border-color: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-filled-header-background: hsla(229, 15%, 97%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-filled-header-scroll-shadow:  0   9px  8px -12px hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-filled-actionbar-fade-gradient: linear-gradient(90deg, transparent, hsla(229, 15%, 97%, 100%)); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-filled-actionbar-background: hsla(229, 15%, 97%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-filled-collapse-expanded-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-filled-collapse-collapsed-background: linear-gradient(180deg, hsla(225, 15%, 95%, 0%) 0%, hsla(225, 15%, 95%, 100%) 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-filled-collapse-button-expand-background: hsla(229, 15%, 97%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-outline-container-background: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-outline-container-border-color: hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-outline-header-background: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-outline-header-scroll-shadow:  0px  1px 0px 0px hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-outline-actionbar-fade-gradient: linear-gradient(90deg, transparent, hsla(229, 15%, 100%, 100%)); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-outline-actionbar-background: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-outline-collapse-expanded-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-outline-collapse-collapsed-background: linear-gradient(180deg, hsla(0, 0%, 100%, 0%) 0%, hsla(0, 0%, 100%, 100%) 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-outline-collapse-button-expand-background: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-addition-background: hsla(104, 64%, 95%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-addition-color: hsla(104, 64%, 25%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-attr-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-attr-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-attribute-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-attribute-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-built_in-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-built_in-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-bullet-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-bullet-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-char-escape-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-char-escape-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-class-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-class-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-code-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-code-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-comment-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-comment-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-deletion-background: hsla(7, 97%, 95%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-deletion-color: hsla(7, 97%, 35%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-doctag-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-doctag-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-emphasis-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-emphasis-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-formula-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-formula-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-function-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-function-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-keyword-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-keyword-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-line-numbers-color: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-link-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-link-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-literal-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-literal-color: hsla(277, 72%, 30%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-meta-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-meta-color: hsla(216, 100%, 35%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-meta-keyword-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-meta-keyword-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-meta-string-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-meta-string-color: hsla(216, 100%, 35%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-meta-prompt-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-meta-prompt-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-name-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-name-color: hsla(216, 100%, 35%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-number-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-number-color: hsla(277, 72%, 30%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-operator-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-operator-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-params-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-params-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-property-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-property-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-punctuation-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-punctuation-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-quote-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-quote-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-regexp-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-regexp-color: hsla(104, 64%, 25%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-section-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-section-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-selector-attr-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-selector-attr-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-selector-class-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-selector-class-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-selector-id-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-selector-id-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-selector-pseudo-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-selector-pseudo-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-selector-tag-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-selector-tag-color: hsla(216, 100%, 35%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-string-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-string-color: hsla(104, 64%, 25%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-strong-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-strong-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-subst-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-subst-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-symbol-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-symbol-color: hsla(216, 100%, 35%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-tag-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-tag-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-template-tag-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-template-tag-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-template-variable-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-template-variable-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-title-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-title-color: hsla(216, 100%, 35%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-title-class-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-title-class-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-title-class-inherited-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-title-class-inherited-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-title-function-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-title-function-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-title-function-invoke-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-title-function-invoke-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-type-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-type-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-variable-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-variable-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-variable-constant-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-variable-constant-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-variable-language-background: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-code-block-hljs-variable-language-color: ; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-datepicker-container-background: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-datepicker-container-shadow: 0 0 0 1px hsla(229, 15%, 6%, 3%), 0 2px 8px hsla(229, 15%, 6%, 6%), 0 3px 8px hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-datepicker-header-text: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-datepicker-header-divider: hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-datepicker-grid-cell-default-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-datepicker-grid-cell-default-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-datepicker-grid-cell-today-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-datepicker-grid-cell-today-text: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-datepicker-grid-cell-states-hover-background: hsla(229, 15%, 50%, 8%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-datepicker-grid-cell-states-active-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-datepicker-grid-cell-states-selected-background: hsla(229, 15%, 25%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-datepicker-grid-cell-states-selected-text: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-datepicker-grid-cell-states-selected-hover-background: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-datepicker-grid-cell-states-disabled-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-datepicker-grid-cell-states-disabled-text: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-divider-color: hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-description-list-term-color: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-description-list-description-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-dropdown-container-background: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-dropdown-container-shadow: 0 0 0 1px hsla(229, 15%, 6%, 3%), 0 2px 8px hsla(229, 15%, 6%, 6%), 0 3px 8px hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-empty-state-default-title: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-empty-state-default-color: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-empty-state-error-title: hsla(7, 97%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-empty-state-error-color: hsla(7, 97%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-single-default-container-border: hsla(229, 15%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-single-default-container-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-single-default-upload-icon-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-single-default-left-icon-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-single-default-text-block-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-single-default-icon-button-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-single-states-on-drag-container-border: hsla(216, 100%, 65%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-single-states-on-drag-container-background: hsla(216, 100%, 88%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-single-states-on-drag-upload-icon-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-single-states-on-drag-left-icon-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-single-states-on-drag-text-block-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-single-states-error-container-border: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-single-states-error-container-background: hsla(7, 97%, 94%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-single-states-error-left-icon-color: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-single-states-error-text-block-color: hsla(7, 97%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-single-states-disabled-container-border: hsla(229, 15%, 50%, 32%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-single-states-disabled-container-background: rgba(0, 0, 0, 0.05); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-single-states-disabled-upload-icon-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-single-states-disabled-left-icon-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-single-states-disabled-text-block-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-single-states-focused-focus-outline-color: hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-default-container-border: hsla(229, 15%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-default-container-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-default-upload-icon-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-default-left-icon-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-default-text-block-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-default-icon-button-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-default-grid-divider-color: hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-states-on-drag-container-border: hsla(216, 100%, 65%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-states-on-drag-container-background: hsla(216, 100%, 88%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-states-on-drag-upload-icon-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-states-on-drag-left-icon-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-states-on-drag-icon-button-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-states-on-drag-text-block-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-states-on-drag-grid-divider-color: hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-states-error-grid-cell-background: hsla(7, 97%, 94%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-states-error-left-icon-color: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-states-error-text-block-color: hsla(7, 97%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-states-error-icon-button-color: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-states-disabled-container-border: hsla(229, 15%, 50%, 32%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-states-disabled-container-background: rgba(0, 0, 0, 0.05); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-states-disabled-upload-icon-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-states-disabled-left-icon-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-states-disabled-text-block-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-file-upload-multiple-states-disabled-grid-divider-color: hsla(229, 15%, 50%, 32%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-default-border-color: hsla(229, 15%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-default-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-default-placeholder: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-default-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-states-focused-border-color: hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-states-focused-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-states-focused-placeholder: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-states-focused-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-states-focused-focus-outline: hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-states-error-border-color: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-states-error-background: hsla(7, 97%, 94%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-states-error-placeholder: hsla(7, 97%, 70%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-states-error-text: hsla(7, 97%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-states-error-focused-focus-outline: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-states-autofill-border-color: hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-states-autofill-background: hsla(216, 100%, 88%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-states-autofill-placeholder: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-states-autofill-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-states-disabled-border-color: hsla(229, 15%, 50%, 32%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-states-disabled-background: rgba(0, 0, 0, 0.05); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-states-disabled-placeholder: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-states-disabled-text: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-form-field-hint-text: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-forms-label: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-forms-legend: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-hint-fill-text-off-fade-contrast-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-hint-fill-text-off-fade-contrast-icon: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-hint-fill-text-off-success-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-hint-fill-text-off-success-icon: hsla(104, 64%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-hint-fill-text-off-warning-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-hint-fill-text-off-warning-icon: hsla(38, 100%, 42%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-hint-fill-text-off-error-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-hint-fill-text-off-error-icon: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-hint-fill-text-on-fade-contrast-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-hint-fill-text-on-fade-contrast-icon: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-hint-fill-text-on-success-text: hsla(104, 64%, 30%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-hint-fill-text-on-success-icon: hsla(104, 64%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-hint-fill-text-on-warning-text: hsla(38, 100%, 33%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-hint-fill-text-on-warning-icon: hsla(38, 100%, 42%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-hint-fill-text-on-error-text: hsla(7, 97%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-hint-fill-text-on-error-icon: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-item-filled-fade-off-theme-color: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-item-filled-fade-off-theme-background: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-item-filled-fade-off-contrast-color: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-item-filled-fade-off-contrast-background: hsla(229, 15%, 25%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-item-filled-fade-off-error-color: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-item-filled-fade-off-error-background: hsla(7, 97%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-item-filled-fade-off-warning-color: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-item-filled-fade-off-warning-background: hsla(38, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-item-filled-fade-off-success-color: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-item-filled-fade-off-success-background: hsla(104, 64%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-item-filled-fade-on-theme-color: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-item-filled-fade-on-theme-background: hsla(216, 100%, 88%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-item-filled-fade-on-contrast-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-item-filled-fade-on-contrast-background: hsla(229, 15%, 90%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-item-filled-fade-on-error-color: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-item-filled-fade-on-error-background: hsla(7, 97%, 89%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-item-filled-fade-on-warning-color: hsla(38, 100%, 42%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-item-filled-fade-on-warning-background: hsla(38, 100%, 85%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-item-filled-fade-on-success-color: hsla(104, 64%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-item-filled-fade-on-success-background: hsla(104, 64%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-theme-color: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-contrast-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-fade-contrast-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-error-color: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-success-color: hsla(104, 64%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-icon-warning-color: hsla(38, 100%, 42%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-link-text: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-link-border-bottom: hsla(216, 100%, 85%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-link-state-visited-text: hsla(277, 72%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-link-state-visited-border-bottom: hsla(277, 72%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-link-state-visited-hover-text: hsla(277, 72%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-link-state-visited-hover-border-bottom: hsla(277, 72%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-link-state-visited-active-text: hsla(277, 72%, 35%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-link-state-visited-active-border-bottom: hsla(277, 72%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-link-state-hover-text: hsla(216, 100%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-link-state-hover-border-bottom: hsla(216, 100%, 85%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-link-state-active-text: hsla(216, 100%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-link-state-active-border-bottom: hsla(216, 100%, 85%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-link-state-focused-outline: hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-link-state-disabled-text: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-link-state-disabled-border-bottom: hsla(229, 15%, 50%, 32%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-default-container-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-default-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-default-icon-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-default-icon-button-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-default-caption-color: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-states-hover-container-background: hsla(229, 15%, 50%, 8%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-states-hover-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-states-hover-icon-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-states-hover-icon-button-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-states-selected-container-background: hsla(216, 100%, 94%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-states-selected-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-states-selected-icon-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-states-selected-icon-button-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-states-selected-hover-container-background: hsla(216, 100%, 92%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-states-selected-hover-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-states-selected-hover-icon-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-states-selected-hover-icon-button-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-states-focused-focus-outline-color: hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-states-disabled-container-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-states-disabled-text-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-states-disabled-icon-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-states-disabled-icon-button-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-list-states-disabled-caption-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-loader-overlay-transparent-overlay-background: hsla(229, 15%, 99%, 88%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-loader-overlay-transparent-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-loader-overlay-transparent-caption-color: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-loader-overlay-filled-overlay-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-loader-overlay-filled-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-loader-overlay-filled-caption-color: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-h1-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-h2-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-h3-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-h4-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-h5-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-h6-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-p-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-list-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-blockquote-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-blockquote-line: hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-blockquote-background: hsla(229, 15%, 90%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-blockquote-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-code-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-code-background: hsla(229, 15%, 90%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-code-border: hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-link-text: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-link-border-bottom: hsla(216, 100%, 85%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-link-state-visited-text: hsla(277, 72%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-link-state-visited-border-bottom: hsla(277, 72%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-link-state-hover-text: hsla(216, 100%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-link-state-hover-border-bottom: hsla(216, 100%, 85%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-link-state-active: hsla(216, 100%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-link-state-focused-outline: hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-image-caption-text: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-hr-color: hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-table-header: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-table-body: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-markdown-table-border: hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-modal-overlay-background: hsla(229, 15%, 20%, 32%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-modal-container-background: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-modal-container-shadow: 0 0 0 1px hsla(229, 15%, 6%, 3%), 0 3px 16px hsla(229, 15%, 6%, 6%), 0 4px 32px hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-modal-close-button-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-modal-header-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-modal-content-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-border: hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-item-default-content-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-item-default-content-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-item-default-content-icon-left: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-item-default-content-icon-right: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-item-states-hover-content-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-item-states-hover-content-background: hsla(229, 15%, 50%, 8%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-item-states-hover-content-icon-left: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-item-states-hover-content-icon-right: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-item-states-selected-content-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-item-states-selected-content-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-item-states-selected-content-icon-left: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-item-states-selected-content-icon-right: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-item-states-selected-hover-content-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-item-states-selected-hover-content-background: hsla(229, 15%, 50%, 8%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-item-states-selected-hover-content-icon-left: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-item-states-selected-hover-content-icon-right: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-item-states-disabled-content-text: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-item-states-disabled-content-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-item-states-disabled-content-icon-left: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-navbar-item-states-disabled-content-icon-right: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-popover-container-background: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-popover-container-shadow: 0 0 0 1px hsla(229, 15%, 6%, 3%), 0 2px 8px hsla(229, 15%, 6%, 6%), 0 3px 8px hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-popover-header-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-popover-header-scroll-shadow:  0   9px  8px -12px hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-popover-content-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-popover-footer-scroll-shadow:  0   -9px 8px -12px hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-popup-shadow: 0 0 0 1px hsla(229, 15%, 6%, 3%), 0 2px 8px hsla(229, 15%, 6%, 6%), 0 3px 8px hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-popup-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-popup-background: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-popup-footer-background: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-progress-bar-bar-background: hsla(229, 15%, 90%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-progress-bar-bar-foreground: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-progress-bar-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-progress-bar-caption-color: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-progress-spinner-circle-background: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-progress-spinner-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-progress-spinner-caption-color: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-default-outer-circle-border: hsla(229, 15%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-default-outer-circle-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-default-inner-circle-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-default-caption: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-hover-outer-circle-border: hsla(229, 15%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-hover-outer-circle-background: hsla(229, 15%, 50%, 8%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-hover-inner-circle-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-checked-outer-circle-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-checked-outer-circle-background: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-checked-inner-circle-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-checked-hover-outer-circle-border: hsla(216, 100%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-checked-hover-outer-circle-background: hsla(216, 100%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-checked-hover-inner-circle-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-checked-disabled-outer-circle-border: hsla(229, 15%, 50%, 32%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-checked-disabled-outer-circle-background: rgba(0, 0, 0, 0.05); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-checked-disabled-inner-circle-background: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-focused-outer-circle-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-focused-outer-circle-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-focused-inner-circle-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-focused-outer-circle-shadow: 0 0 0.1px 2px hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-checked-focused-outer-circle-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-checked-focused-outer-circle-background: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-checked-focused-inner-circle-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-checked-focused-outer-circle-shadow: 0 0 0.1px 2px hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-disabled-outer-circle-border: hsla(229, 15%, 50%, 32%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-disabled-outer-circle-background: rgba(0, 0, 0, 0.05); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-disabled-inner-circle-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-theme-states-disabled-caption: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-default-outer-circle-border: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-default-outer-circle-background: hsla(7, 97%, 94%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-default-inner-circle-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-hover-outer-circle-border: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-hover-outer-circle-background: hsla(7, 97%, 87%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-hover-inner-circle-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-checked-outer-circle-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-checked-outer-circle-background: hsla(7, 97%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-checked-inner-circle-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-checked-hover-outer-circle-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-checked-hover-outer-circle-background: hsla(7, 97%, 56%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-checked-hover-inner-circle-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-checked-disabled-outer-circle-border: hsla(229, 15%, 50%, 32%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-checked-disabled-outer-circle-background: rgba(0, 0, 0, 0.05); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-checked-disabled-inner-circle-background: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-focused-outer-circle-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-focused-outer-circle-background: hsla(7, 97%, 94%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-focused-inner-circle-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-focused-outer-circle-shadow: 0 0 0.1px 2px hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-checked-focused-outer-circle-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-checked-focused-outer-circle-background: hsla(7, 97%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-checked-focused-inner-circle-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-checked-focused-outer-circle-shadow: 0 0 0.1px 2px hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-disabled-outer-circle-border: hsla(229, 15%, 50%, 32%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-disabled-outer-circle-background: rgba(0, 0, 0, 0.05); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-radio-error-states-disabled-inner-circle-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-filled-fade-off-success-background: hsla(104, 64%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-filled-fade-off-success-text: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-filled-fade-off-warning-background: hsla(38, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-filled-fade-off-warning-text: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-filled-fade-off-error-background: hsla(7, 97%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-filled-fade-off-error-text: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-filled-fade-on-contrast-background: hsla(229, 15%, 90%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-filled-fade-on-contrast-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-filled-fade-on-success-background: hsla(104, 64%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-filled-fade-on-success-text: hsla(104, 64%, 30%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-filled-fade-on-warning-background: hsla(38, 100%, 85%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-filled-fade-on-warning-text: hsla(38, 100%, 33%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-filled-fade-on-error-background: hsla(7, 97%, 89%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-filled-fade-on-error-text: hsla(7, 97%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-outline-fade-on-contrast-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-outline-fade-on-contrast-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-outline-fade-on-contrast-border: hsla(229, 15%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-outline-fade-on-success-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-outline-fade-on-success-text: hsla(104, 64%, 30%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-outline-fade-on-success-border: hsla(104, 64%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-outline-fade-on-warning-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-outline-fade-on-warning-text: hsla(38, 100%, 33%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-outline-fade-on-warning-border: hsla(38, 100%, 55%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-outline-fade-on-error-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-outline-fade-on-error-text: hsla(7, 97%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-risk-level-outline-fade-on-error-border: hsla(7, 97%, 65%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-scrollbar-thumb-default-background: hsla(229, 15%, 50%, 32%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-scrollbar-thumb-hover-background: hsla(229, 15%, 50%, 48%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-scrollbar-thumb-active-background: hsla(229, 15%, 20%, 55%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-scrollbar-thumb-disabled-background: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-scrollbar-track-default-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-scrollbar-track-default-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-scrollbar-track-hover-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-scrollbar-track-hover-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-scrollbar-track-active-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-scrollbar-track-active-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-select-panel-dropdown-background: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-select-panel-dropdown-shadow: 0 0 0 1px hsla(229, 15%, 6%, 3%), 0 2px 8px hsla(229, 15%, 6%, 6%), 0 3px 8px hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-sidepanel-overlay-background: hsla(229, 15%, 20%, 32%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-sidepanel-container-background: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-sidepanel-container-shadow: 0 0 0 1px hsla(229, 15%, 6%, 3%), 0 3px 16px hsla(229, 15%, 6%, 6%), 0 4px 32px hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-sidepanel-header-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-sidepanel-header-scroll-shadow:  0   9px  8px -12px hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-sidepanel-footer-scroll-shadow:  0   -9px 8px -12px hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-sidepanel-content-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-skeleton-background: hsla(229, 15%, 96%, 100%);
+  --kbq-skeleton-animation-wave-start: oklch(0 0 0 / 0);
+  --kbq-skeleton-animation-wave-center: oklch(0.0% 0.0000 0.0 / 0.10);
+  --kbq-skeleton-animation-wave-end: oklch(0 0 0 / 0);
+  --kbq-tabs-tab-item-filled-on-background-default-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-background-default-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-background-default-icon-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-background-states-hover-background: hsla(229, 15%, 50%, 8%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-background-states-focused-focus-outline-color: hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-background-states-selected-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-background-states-selected-hover-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-background-states-selected-disabled-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-background-states-selected-disabled-text-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-background-states-selected-disabled-icon-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-background-states-disabled-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-background-states-disabled-text-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-background-states-disabled-icon-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-surface-default-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-surface-default-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-surface-default-icon-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-surface-states-hover-background: hsla(229, 15%, 50%, 8%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-surface-states-focused-focus-outline-color: hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-surface-states-selected-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-surface-states-selected-hover-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-surface-states-selected-disabled-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-surface-states-selected-disabled-text-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-surface-states-selected-disabled-icon-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-surface-states-disabled-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-surface-states-disabled-text-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-filled-on-surface-states-disabled-icon-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-background-default-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-background-default-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-background-default-icon-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-background-states-hover-background: hsla(229, 15%, 50%, 8%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-background-states-focused-focus-outline-color: hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-background-states-selected-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-background-states-selected-hover-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-background-states-selected-disabled-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-background-states-selected-disabled-text-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-background-states-selected-disabled-icon-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-background-states-disabled-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-background-states-disabled-text-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-background-states-disabled-icon-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-surface-default-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-surface-default-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-surface-default-icon-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-surface-states-hover-background: hsla(229, 15%, 50%, 8%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-surface-states-focused-focus-outline-color: hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-surface-states-selected-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-surface-states-selected-hover-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-surface-states-selected-disabled-background: hsla(229, 15%, 50%, 16%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-surface-states-selected-disabled-text-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-surface-states-selected-disabled-icon-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-surface-states-disabled-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-surface-states-disabled-text-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-item-transparent-on-surface-states-disabled-icon-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-stack-filled-on-background-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-stack-filled-on-surface-background: hsla(229, 15%, 90%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-stack-transparent-on-background-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tabs-tab-stack-transparent-on-surface-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-theme-fade-on-default-background: hsla(216, 100%, 88%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-theme-fade-on-default-text: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-theme-fade-on-default-icon: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-theme-fade-on-default-close-button: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-theme-fade-on-states-hover-background: hsla(216, 100%, 85%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-theme-fade-on-states-hover-text: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-theme-fade-on-states-hover-icon: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-theme-fade-on-states-hover-close-button: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-theme-fade-on-states-focus-background: hsla(216, 100%, 88%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-theme-fade-on-states-focus-text: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-theme-fade-on-states-focus-icon: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-theme-fade-on-states-focus-close-button: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-theme-fade-on-states-focus-outline: hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-theme-fade-on-states-disabled-background: rgba(0, 0, 0, 0.05); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-theme-fade-on-states-disabled-text: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-theme-fade-on-states-disabled-icon: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-theme-fade-on-states-disabled-close-button: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-contrast-fade-on-default-background: hsla(229, 15%, 90%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-contrast-fade-on-default-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-contrast-fade-on-default-icon: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-contrast-fade-on-default-close-button: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-contrast-fade-on-states-hover-background: hsla(229, 15%, 88%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-contrast-fade-on-states-hover-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-contrast-fade-on-states-hover-icon: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-contrast-fade-on-states-hover-close-button: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-contrast-fade-on-states-focus-background: hsla(229, 15%, 90%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-contrast-fade-on-states-focus-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-contrast-fade-on-states-focus-icon: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-contrast-fade-on-states-focus-close-button: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-contrast-fade-on-states-focus-outline: hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-contrast-fade-on-states-disabled-background: rgba(0, 0, 0, 0.05); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-contrast-fade-on-states-disabled-text: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-contrast-fade-on-states-disabled-icon: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-contrast-fade-on-states-disabled-close-button: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-error-fade-on-default-background: hsla(7, 97%, 89%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-error-fade-on-default-text: hsla(7, 97%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-error-fade-on-default-icon: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-error-fade-on-default-close-button: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-error-fade-on-states-hover-background: hsla(7, 97%, 87%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-error-fade-on-states-hover-text: hsla(7, 97%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-error-fade-on-states-hover-icon: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-error-fade-on-states-hover-close-button: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-error-fade-on-states-focus-background: hsla(7, 97%, 89%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-error-fade-on-states-focus-text: hsla(7, 97%, 40%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-error-fade-on-states-focus-icon: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-error-fade-on-states-focus-close-button: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-error-fade-on-states-focus-outline: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-error-fade-on-states-disabled-background: rgba(0, 0, 0, 0.05); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-error-fade-on-states-disabled-text: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-error-fade-on-states-disabled-icon: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tag-error-fade-on-states-disabled-close-button: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-timezone-option-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-timezone-option-caption: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-timezone-option-optgroup-label: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toast-contrast-container-background: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toast-contrast-container-title: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toast-contrast-container-text: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toast-contrast-container-shadow: 0 0 0 1px hsla(229, 15%, 6%, 3%), 0 2px 8px hsla(229, 15%, 6%, 6%), 0 3px 8px hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toast-error-container-background: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toast-error-container-title: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toast-error-container-text: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toast-error-container-shadow: 0 0 0 1px hsla(229, 15%, 6%, 3%), 0 2px 8px hsla(229, 15%, 6%, 6%), 0 3px 8px hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toast-warning-container-background: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toast-warning-container-title: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toast-warning-container-text: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toast-warning-container-shadow: 0 0 0 1px hsla(229, 15%, 6%, 3%), 0 2px 8px hsla(229, 15%, 6%, 6%), 0 3px 8px hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toast-success-container-background: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toast-success-container-title: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toast-success-container-text: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toast-success-container-shadow: 0 0 0 1px hsla(229, 15%, 6%, 3%), 0 2px 8px hsla(229, 15%, 6%, 6%), 0 3px 8px hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-default-border: hsla(229, 15%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-default-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-default-circle-background: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-states-hover-border: hsla(229, 15%, 80%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-states-hover-background: hsla(229, 15%, 50%, 8%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-states-hover-circle-background: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-states-checked-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-states-checked-background: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-states-checked-circle-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-states-checked-hover-border: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-states-checked-hover-background: hsla(216, 100%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-states-checked-hover-circle-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-states-focused-border: hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-states-focused-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-states-focused-circle-background: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-states-focused-focus-outline: hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-states-checked-focused-border: hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-states-checked-focused-background: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-states-checked-focused-circle-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-states-checked-focused-focus-outline: hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-states-disabled-border: hsla(229, 15%, 50%, 32%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-states-disabled-background: rgba(0, 0, 0, 0.05); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-theme-states-disabled-circle-background: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-default-border: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-default-background: hsla(7, 97%, 94%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-default-circle-background: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-states-hover-border: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-states-hover-background: hsla(7, 97%, 87%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-states-hover-circle-background: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-states-checked-border: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-states-checked-background: hsla(7, 97%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-states-checked-circle-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-states-checked-hover-border: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-states-checked-hover-background: hsla(7, 97%, 56%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-states-checked-hover-circle-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-states-focused-border: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-states-focused-background: hsla(7, 97%, 94%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-states-focused-circle-background: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-states-focused-focus-outline: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-states-checked-focused-border: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-states-checked-focused-background: hsla(7, 97%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-states-checked-focused-circle-background: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-states-checked-focused-focus-outline: hsla(7, 97%, 45%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-states-disabled-border: hsla(229, 15%, 50%, 32%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-states-disabled-background: rgba(0, 0, 0, 0.05); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-toggle-error-states-disabled-circle-background: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tooltip-contrast-fade-on-background: hsla(229, 15%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tooltip-contrast-fade-on-text: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tooltip-contrast-fade-on-shadow: 0 0 0 1px hsla(229, 15%, 6%, 3%), 0 2px 8px hsla(229, 15%, 6%, 6%), 0 3px 8px hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tooltip-contrast-fade-off-background: hsla(229, 15%, 25%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tooltip-contrast-fade-off-text: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tooltip-contrast-fade-off-shadow: 0 0 0 1px hsla(229, 15%, 6%, 3%), 0 2px 8px hsla(229, 15%, 6%, 6%), 0 3px 8px hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tooltip-theme-fade-off-background: hsla(216, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tooltip-theme-fade-off-text: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tooltip-theme-fade-off-shadow: 0 0 0 1px hsla(229, 15%, 6%, 3%), 0 2px 8px hsla(229, 15%, 6%, 6%), 0 3px 8px hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tooltip-warning-fade-off-background: hsla(38, 100%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tooltip-warning-fade-off-text: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tooltip-warning-fade-off-shadow: 0 0 0 1px hsla(229, 15%, 6%, 3%), 0 2px 8px hsla(229, 15%, 6%, 6%), 0 3px 8px hsla(229, 15%, 6%, 12%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tooltip-error-fade-off-background: hsla(7, 97%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tooltip-error-fade-off-text: hsla(0, 0%, 100%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tooltip-error-fade-off-shadow: 0 0 0 1px hsla(229, 100%, 85%, 15%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-default-container-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-default-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-default-icon-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-default-tree-toggle-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-default-action-button-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-default-caption-color: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-hover-container-background: hsla(229, 15%, 50%, 8%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-hover-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-hover-icon-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-hover-tree-toggle-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-hover-action-button-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-hover-caption-color: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-focused-focus-outline-color: hsla(216, 100%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-selected-container-background: hsla(216, 100%, 94%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-selected-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-selected-icon-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-selected-tree-toggle-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-selected-action-button-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-selected-caption-color: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-selected-hover-container-background: hsla(216, 100%, 92%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-selected-hover-text-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-selected-hover-icon-color: hsla(229, 15%, 15%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-selected-hover-tree-toggle-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-selected-hover-action-button-color: hsla(229, 15%, 60%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-selected-hover-caption-color: hsla(229, 15%, 50%, 100%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-disabled-container-background: transparent; /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-disabled-text-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-disabled-icon-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-disabled-tree-toggle-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-disabled-action-button-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+  --kbq-tree-states-disabled-caption-color: hsla(229, 15%, 60%, 60%); /* DEPRECATED: `component` token will be removed - use `global` token or raw value */
+}

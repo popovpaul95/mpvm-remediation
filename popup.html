@@ -1,36 +1,34 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="kbq-light">
 <head>
   <meta charset="UTF-8">
-  <title>MaxPatrol VM: устранение уязвимостей</title>
-  <style>
-    body { width: 340px; margin: 0; font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #1c1f27; background: #fff; }
-    .wrap { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
-    h1 { font-size: 14px; margin: 0; }
-    label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #6f7580; }
-    input { font: inherit; font-size: 13px; padding: 7px 9px; border: 1px solid #cfd3da; border-radius: 6px; outline: none; }
-    input:focus { border-color: #2f80ed; }
-    .row { display: flex; gap: 8px; }
-    button { font: inherit; font-size: 13px; padding: 7px 12px; border-radius: 6px; border: 1px solid #cfd3da; background: #fff; cursor: pointer; }
-    button.acc { background: #2f80ed; border-color: #2f80ed; color: #fff; font-weight: 600; }
-    .st { font-size: 12px; min-height: 16px; }
-    .st.ok { color: #1b8f4a; } .st.err { color: #d23c3c; }
-    .hint { font-size: 11.5px; color: #6f7580; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Подключение · MaxPatrol VM</title>
+  <link rel="stylesheet" href="vendor/koobiq/css-tokens.css">
+  <link rel="stylesheet" href="vendor/koobiq/css-tokens-light.css">
+  <link rel="stylesheet" href="vendor/koobiq/css-tokens-dark.css">
+  <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-<div class="wrap">
-  <h1>MaxPatrol VM: устранение уязвимостей</h1>
-  <label>Сервер MaxPatrol VM<input type="text" id="host" placeholder="maxpvm.company.ru"></label>
-  <label>Порт (оставьте пустым: API отвечает на порту интерфейса, обычно 443)<input type="text" id="port" placeholder="пусто"></label>
-  <label>Персональный токен (PT MC → Токены доступа)<input type="password" id="token" placeholder="pat_..."></label>
-  <div class="row">
-    <button class="acc" id="save">Сохранить</button>
-    <button id="test">Проверить</button>
-  </div>
-  <div class="st" id="st"></div>
-  <div class="hint">После сохранения откройте или обновите вкладку MaxPatrol VM: в левом меню появится пункт «Устранение». Проверка подключения выполняется из открытой вкладки сервера.</div>
-</div>
-<script src="popup.js"></script>
+  <header class="header">
+    <span class="mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="m12 3 8 3v6c0 4-3.5 7-8 9-4.5-2-8-5-8-9V6l8-3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="m8 12 2.5 2.5L16 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    <div><div class="product" translate="no">MaxPatrol VM</div><div class="subtitle">Устранение уязвимостей</div></div>
+    <span class="connection-label">API</span>
+  </header>
+  <main class="wrap">
+    <div class="intro"><h1>Подключение к серверу</h1><p>Укажите адрес MaxPatrol VM и персональный токен доступа.</p></div>
+    <div class="server-row">
+      <label for="host">Сервер<input type="text" id="host" name="host" placeholder="maxpvm.company.ru" autocomplete="url" spellcheck="false" autocapitalize="none" aria-describedby="host-hint"></label>
+      <label for="port">Порт<input type="text" id="port" name="port" placeholder="443" inputmode="numeric" maxlength="5" aria-describedby="host-hint"></label>
+    </div>
+    <p class="hint field-hint" id="host-hint">Пустой порт — как у страницы MaxPatrol VM.</p>
+    <label for="token">Персональный токен<input type="password" id="token" name="token" placeholder="Вставьте токен" autocomplete="off" spellcheck="false" aria-describedby="token-hint"></label>
+    <p class="hint field-hint" id="token-hint">Создайте в PT MC → Токены доступа.</p>
+    <div class="actions"><button class="acc" id="save" type="button">Сохранить</button><button id="test" type="button">Проверить подключение</button></div>
+    <div class="st" id="st" role="status" aria-live="polite" aria-atomic="true"></div>
+    <div class="guide"><span class="step" aria-hidden="true">→</span><p>После сохранения обновите вкладку MaxPatrol VM. В левом меню появится раздел <strong>«Устранение»</strong>.</p></div>
+  </main>
+  <footer>Подключение по персональному токену</footer>
+  <script src="popup.js"></script>
 </body>
 </html>

@@ -1,4 +1,7 @@
 'use strict';
+const theme = matchMedia('(prefers-color-scheme: dark)');
+const applyTheme = () => { document.documentElement.className = theme.matches ? 'kbq-dark' : 'kbq-light'; document.documentElement.style.colorScheme = theme.matches ? 'dark' : 'light'; };
+applyTheme(); theme.addEventListener('change', applyTheme);
 const F = ['host', 'port', 'token'];
 const $ = id => document.getElementById(id);
 const st = (msg, cls) => { const el = $('st'); el.textContent = msg; el.className = 'st ' + (cls || ''); };
@@ -17,6 +20,7 @@ chrome.storage.sync.get(F, c => {
 });
 let draftTimer = null;
 F.forEach(k => $(k).addEventListener('input', () => {
+  $(k).removeAttribute('aria-invalid');
   clearTimeout(draftTimer);
   draftTimer = setTimeout(() => chrome.storage.local.set({ [DRAFT]: { host: $('host').value, port: $('port').value, token: $('token').value } }), 150);
 }));
@@ -29,8 +33,8 @@ function read() {
 
 $('save').addEventListener('click', () => {
   const c = read();
-  if (!c.host || !c.token) { st('Укажите сервер и токен', 'err'); return; }
-  if (c.port && !/^\d{1,5}$/.test(c.port)) { st('Порт должен быть числом или пустым', 'err'); return; }
+  if (!c.host || !c.token) { const input = !c.host ? $('host') : $('token'); input.setAttribute('aria-invalid', 'true'); input.focus(); st(!c.host ? 'Укажите адрес сервера MaxPatrol VM' : 'Вставьте персональный токен из PT MC', 'err'); return; }
+  if (c.port && (!/^\d{1,5}$/.test(c.port) || Number(c.port) < 1 || Number(c.port) > 65535)) { $('port').setAttribute('aria-invalid', 'true'); $('port').focus(); st('Укажите порт от 1 до 65535 или оставьте поле пустым', 'err'); return; }
   chrome.storage.sync.set(c, () => { clearDraft(); st(c.port && c.port !== '443' ? `Сохранено с портом ${c.port}. Если будет «недоступен», очистите порт` : 'Сохранено. Обновите вкладку MaxPatrol VM', 'ok'); });
 });
 
@@ -74,10 +78,11 @@ function offerReload(tab, c) {
 }
 $('test').addEventListener('click', () => {
   const c = read();
-  if (!c.host || !c.token) { st('Укажите сервер и токен', 'err'); return; }
+  if (!c.host || !c.token) { const input = !c.host ? $('host') : $('token'); input.setAttribute('aria-invalid', 'true'); input.focus(); st(!c.host ? 'Укажите адрес сервера MaxPatrol VM' : 'Вставьте персональный токен из PT MC', 'err'); return; }
+  if (c.port && (!/^\d{1,5}$/.test(c.port) || Number(c.port) < 1 || Number(c.port) > 65535)) { $('port').setAttribute('aria-invalid', 'true'); $('port').focus(); st('Укажите порт от 1 до 65535 или оставьте поле пустым', 'err'); return; }
   chrome.storage.sync.set(c, async () => {
     clearDraft();
-    st('Проверяем...');
+    st('Проверяем подключение…');
     try { const v = await directCheck(c); st(`Подключено: MaxPatrol VM ${v}`, 'ok'); return; }
     catch (e) {
       if (!(e instanceof TypeError)) { st('Ошибка: ' + e.message, 'err'); return; }
