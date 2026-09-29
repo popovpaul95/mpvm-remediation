@@ -458,6 +458,7 @@ td a.lnk { white-space: nowrap; } a.lnk { color: var(--vr-accent); }
           </div>
           <div class="row"><button class="btn acc" id="s-save">Сохранить настройки</button><span class="muted" id="s-info"></span></div>
           <div class="muted">Подключение к серверу (адрес, порт, токен) задается в окне расширения на панели браузера.</div>
+          <div class="muted">Расширение распространяется по лицензии MIT: свободное использование, изменение и встраивание с сохранением уведомления об авторских правах. Не является продуктом Positive Technologies.</div>
         </div>
       </div>
       <div class="box">
