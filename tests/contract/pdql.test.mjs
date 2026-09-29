@@ -25,6 +25,10 @@ async function collect() {
   await grab('guidByCve', () => VR.guidByCve('CVE-2021-44228'));
   await grab('assetsInfo', () => VR.assetsInfo(['1e5569fb-4940-0001-0000-0000000000e9']));
   await grab('tagCoverage', () => VR.tagCoverage());
+  await grab('patches', () => VR.patches({}));
+  await grab('patchDetail', () => VR.patchDetail({ patch: 'Накопительное обновление KB1' }));
+  await grab('cveInstances', () => VR.cveInstances({ cve: 'CVE-2025-49723' }));
+  await grab('cveInstances:asset', () => VR.cveInstances({ cve: 'CVE-2025-49723', assetId: '1e5569fb-4940-0001-0000-0000000000e9' }));
   for (const [kind, arg] of [['open'], ['overdue', sla], ['soon', sla], ['sev', 'critical'], ['sevOverdue', { sev: 'high', days: 7 }], ['trend'], ['exploit'], ['new30'], ['status', 'fixed'], ['cve', 'CVE-2020-1472'], ['tag', 'proj:x'], ['age', '0-7'], ['age', '8-30'], ['age', '31-90'], ['age', '90+'], ['asset', '1e5569fb-4940-0001-0000-0000000000e9'], ['noImportance'], ['staleScan']]) named['drill:' + kind + (typeof arg === 'string' ? ':' + arg : '')] = VR.drillPdql(kind, arg);
   VR.autoTagRules().forEach(r => { named['rule:' + r.name] = r.pdql; });
   return { VR, named };

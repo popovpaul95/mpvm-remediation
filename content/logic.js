@@ -77,7 +77,7 @@
       const a = byProduct[g.soft] || (byProduct[g.soft] = { soft: g.soft, versions: 0, n: 0, hosts: 0, trend: 0, expl: 0, crit: 0, high: 0, maxScore: 0, risk: 0 });
       a.versions++; a.n += g.n; a.hosts += g.hosts; a.trend += g.trend; a.expl += g.expl; a.crit += g.crit; a.high += g.high; a.maxScore = Math.max(a.maxScore, g.maxScore || 0); a.risk += g.risk;
     });
-    return { scope, minScore, pdql, groups: groups.sort((a, b) => b.risk - a.risk), products: Object.values(byProduct).sort((a, b) => b.risk - a.risk), totalGroups: groups.length };
+    return { scope, minScore, pdql, groups: groups.sort((a, b) => b.risk - a.risk), products: Object.values(byProduct).sort((a, b) => b.risk - a.risk), totalGroups: groups.length, limit, truncated: rows.length >= limit };
   };
 
   VR.queueDetail = async ({ scope, soft, ver, limit = 20000, pkg }) => {
@@ -175,13 +175,211 @@
     let h = 5381; for (const ch of s) h = ((h * 33) ^ ch.charCodeAt(0)) >>> 0;
     return 'mpvm-h' + h.toString(16);
   };
-  // Ячейка CSV: кавычки по RFC 4180, перевод строки CR убран, формулы (=, +, -, @) нейтрализованы апострофом
+  // Ячейка CSV: кавычки по RFC 4180, переводы строк сохранены, формулы нейтрализованы апострофом.
   VR.csvCell = v => {
-    let s = String(v ?? '').replace(/\r\n?/g, ' ');
+    let s = String(v ?? '').replace(/\r\n?/g, '\n');
     if (/^[=+@\t]/.test(s) || (/^-/.test(s) && !/^-?\d+([.,]\d+)?%?$/.test(s))) s = "'" + s;
     return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   };
-  VR.csv = (rows, cols) => '﻿' + [cols.map(c => c[0]).join(';'), ...rows.map(r => cols.map(c => VR.csvCell(typeof c[1] === 'function' ? c[1](r) : r[c[1]])).join(';'))].join('\n');
+  VR.csv = (rows, cols) => '﻿' + [cols.map(c => VR.csvCell(c[0])).join(';'), ...rows.map(r => cols.map(c => VR.csvCell(typeof c[1] === 'function' ? c[1](r) : r[c[1]])).join(';'))].join('\n');
+
+  // ── Экземпляры уязвимости в MaxPatrol: по CVE, на активе, конкретный экземпляр ──
+  // Экземпляр = составной Id `asset_object_vuln` (три сегмента по 32 hex). Карточка экземпляра в продукте:
+  // /mpx/vm/vulnerability-card?vulnerabilityId=<guid паспорта>&vulnerabilityInstanceId=<Id>
+  const hex32ToGuid = s => /^[0-9a-f]{32}$/i.test(s || '') ? s.replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, '$1-$2-$3-$4-$5') : null;
+  VR.instanceAssetGuid = id => hex32ToGuid(String(id || '').split('_')[0]);
+  VR.instanceUrl = id => { const g = VR.vulnGuid(id); return g ? `${location.origin}/mpx/vm/vulnerability-card?vulnerabilityId=${g}&vulnerabilityInstanceId=${id}` : null; };
+  VR.cveInstances = async ({ cve, assetId, limit = 50 } = {}) => {
+    if (!cve) throw new Error('Не указан CVE');
+    if (assetId && !/^[0-9a-f-]{36}$/i.test(assetId)) throw new Error('Некорректный идентификатор актива');
+    const V = 'Host.@Vulners';
+    const pdql = `filter(${assetId ? `Host.@Id = ${assetId} and ` : ''}${V}.CVEs.Item = "${esc(cve)}") | select(@Host, Host.@Importance as Imp, Host.OsName as OS, ${V} as Name, ${V}.Id as Id, ${V}.Score as Score, ${V}.SeverityRating as Sev, ${V}.Status as St, ${V}.DiscoveryTime as Found, ${V}.IsTrend as T, ${V}.Metrics.Exploitable as E, ${V}.Metrics.HasPatch as P, ${V}.Patch.DisplayName as PatchName, ${V}.Patch.PatchLink as PatchLink, ${V}.CVEs.Item as CVE) | filter(CVE = "${esc(cve)}") | sort(Score desc)`;
+    const rows = VR.rows(await VR.pdql(pdql, limit, 0));
+    const byId = new Map();
+    rows.forEach(r => {
+      const id = VR.rowVal(r, 'Id'); if (!id || byId.has(id)) return;
+      const h = VR.getVal(r, '@Host'), link = VR.getVal(r, 'PatchLink');
+      byId.set(id, { id, host: h?.name || VR.rowVal(r, '@Host'), hostId: h?.id || VR.instanceAssetGuid(id), imp: VR.rowVal(r, 'Imp') || 'ND', os: VR.rowVal(r, 'OS'), name: VR.rowVal(r, 'Name'), vulnId: VR.vulnGuid(id), score: VR.num(VR.rowVal(r, 'Score')) || 0, sev: String(VR.rowVal(r, 'Sev') || '').toLowerCase(), st: VR.rowVal(r, 'St'), found: VR.rowVal(r, 'Found'), trend: VR.bool(VR.rowVal(r, 'T')), expl: VR.bool(VR.rowVal(r, 'E')), patch: VR.bool(VR.rowVal(r, 'P')), patchName: VR.rowVal(r, 'PatchName') || '', patchUrl: (link && typeof link === 'object' ? link.url : '') || '' });
+    });
+    const items = [...byId.values()];
+    const summary = { total: items.length, hosts: new Set(items.map(i => i.hostId)).size, open: 0, byStatus: {}, maxScore: 0, trend: 0, expl: 0, patch: 0 };
+    items.forEach(i => { summary.byStatus[i.st] = (summary.byStatus[i.st] || 0) + 1; if (!/^(fixed|excluded)$/.test(i.st)) summary.open++; summary.maxScore = Math.max(summary.maxScore, i.score); if (i.trend) summary.trend++; if (i.expl) summary.expl++; if (i.patch) summary.patch++; });
+    return { cve, assetId: assetId || null, items, summary, pdql, truncated: rows.length >= limit };
+  };
+  const RM = '/api/assets_temporal_readmodel/v1';
+  VR.instanceLocation = id => VR.get(`${RM}/vulnerabilities/instances/${id}/location`);
+  VR.instanceStatusLog = id => VR.get(`${RM}/vulnerabilities/instances/${id}/statusLog`);
+  VR.vulnStats = guid => VR.get(`${RM}/vulnerabilities/${guid}/statistics/assets`);
+  // Детали экземпляра (то, что показывает карточка): метрики CVSS актива, условия обнаружения, статус, патч
+  VR.instanceDetails = async id => {
+    const loc = await VR.instanceLocation(id);
+    if (!loc?.timelineToken) throw new Error('Местоположение экземпляра не получено');
+    const d = await VR.get(`${RM}/assets/${loc.timelineToken}/objects/${loc.objectId}/vulnerabilities/${loc.vulnerabilityLegacyId}`);
+    return { ...d, location: loc };
+  };
+  // Разбор условий обнаружения: продукт, ОС, выпуск, текущая версия и требуемая граница
+  VR.parseDetection = details => {
+    const c = details?.detectionInfo?.detectionDetails?.conditions; if (!c) return null;
+    const conds = (c.productConditions || []).map(p => ({ name: p.propertyName || '', value: p.propertyValue ?? '', required: p.rightValue ?? null, strict: !!p.rightValueStrict, min: p.leftValue ?? null, type: p.type || '' }));
+    const by = n => conds.find(p => new RegExp(n, 'i').test(p.name));
+    const ver = conds.find(p => p.required != null) || by('верси|version');
+    return { product: c.productName || '', className: c.productModelClassName || '', vulnerType: details?.detectionInfo?.vulnerType || '', detectedAt: details?.detectionInfo?.detectedAt || '', conditions: conds,
+      os: by('название ос|^ос$|os name')?.value || null, release: by('выпуск|release')?.value || null, arch: by('архитектур|arch')?.value || null, installType: by('тип установки')?.value || null,
+      versionLabel: ver?.name || 'Версия', current: ver?.value || null, required: ver?.required || null, requiredStrict: !!ver?.strict };
+  };
+  // Варианты исправления из «Как исправить» в ветке текущей версии: [{version, kb}], min и recommended
+  VR.fixOptions = (howToFix, current) => {
+    const text = String(howToFix || ''); const cands = VR.versionCandidates(text); const out = []; let pos = 0;
+    for (const v of cands) { const i = text.indexOf(v, pos); if (i < 0) continue; pos = i + v.length; const back = text.slice(Math.max(0, i - 40), i); const kb = (back.match(/KB\d{5,8}/gi) || []).pop() || null; out.push({ version: v, kb: kb ? kb.toUpperCase() : null }); }
+    let list = out;
+    if (current) {
+      const cur = []; for (const x of verTokens(current)) { if (/^\d+$/.test(x)) cur.push(x); else break; }
+      const branch = cur.length > 1 ? cur.slice(0, cur.length - 1) : cur;
+      list = out.filter(o => { const p = verTokens(o.version); return branch.every((c, i) => p[i] !== undefined && Number(p[i]) === Number(c)) && VR.cmpVersion(o.version, current) > 0; });
+    }
+    const seen = new Set(); list = list.filter(o => !seen.has(o.version) && seen.add(o.version)).sort((a, b) => VR.cmpVersion(a.version, b.version));
+    return { options: list, min: list[0] || null, recommended: list[list.length - 1] || null };
+  };
+  // Полный контекст одного экземпляра: детали, паспорт, статистика, журнал статусов, целевая версия
+  VR.instanceDetailContext = async item => {
+    const safe = p => p.catch(e => ({ error: e.message }));
+    const [details, passport, stats, log] = await Promise.all([safe(VR.instanceDetails(item.id)), item.vulnId ? safe(VR.passport(item.vulnId)) : Promise.resolve(null), item.vulnId ? safe(VR.vulnStats(item.vulnId)) : Promise.resolve(null), safe(VR.instanceStatusLog(item.id))]);
+    const det = details && !details.error ? VR.parseDetection(details) : null;
+    const fix = VR.fixOptions(passport?.howToFix, det?.current || null);
+    if (!fix.min && det?.required) fix.min = { version: det.required, kb: null };
+    const pjson = passport && !passport.error ? JSON.stringify(passport) : '';
+    const bdu = [...new Set((pjson.match(/BDU:\d{4}-\d{5}/g) || []))];
+    const links = [...new Set((JSON.stringify(passport?.links || []).match(/https?:\/\/[^"\\\s]+/g) || []))].slice(0, 10);
+    const m = details?.assetMetrics || null;
+    return { item, det, fix, bdu, links,
+      metrics: m ? { overall: m.overallScore ?? null, base: m.cvss3?.score ?? m.cvss2?.score ?? null, vector: m.cvss3?.vector || m.cvss2?.vector || '', environmental: m.cvss3?.environmentalScore ?? null, severity: m.severity || '' } : null,
+      status: details?.currentStatus || null, statusLog: Array.isArray(log) ? log : [], tags: details?.tags || [], lastFixedDate: details?.lastFixedDate || null,
+      patch: details?.patchInfo ? { name: details.patchInfo.displayName || '', url: details.patchInfo.link?.url || '', date: details.patchInfo.date || '', type: details.patchInfo.type || '' } : (item.patchName ? { name: item.patchName, url: item.patchUrl, date: '', type: '' } : null),
+      passport: passport && !passport.error ? { title: passport.title || '', description: passport.description || '', howToFix: passport.howToFix || '' } : null,
+      stats: stats && !stats.error ? stats : null, errors: [details?.error, passport?.error, stats?.error, log?.error].filter(Boolean),
+      urls: { card: VR.instanceUrl(item.id), passport: VR.passportUrl(item.vulnId), asset: VR.assetUrl(item.hostId) } };
+  };
+  // Контекст по CVE: все экземпляры плюс выбранный (по Id экземпляра из URL, по активу из URL или самый опасный)
+  VR.instanceContext = async ({ cve, instanceId, assetId, limit = 50 } = {}) => {
+    const scopeAsset = instanceId ? VR.instanceAssetGuid(instanceId) : (assetId || null);
+    const inst = await VR.cveInstances({ cve, assetId: scopeAsset, limit: scopeAsset ? 20 : limit });
+    const item = instanceId ? (inst.items.find(i => i.id === instanceId) || null) : (scopeAsset ? inst.items[0] || null : null);
+    return { cve, instances: inst, selected: item ? await VR.instanceDetailContext(item) : null, pickedBy: item ? (instanceId ? 'instance' : 'asset') : null };
+  };
+  // Задача Jira на один экземпляр: актив, условия обнаружения, патч, целевая версия, внешние сигналы
+  VR.buildInstanceJiraIssue = ({ ctx, enrich, sla, host }) => {
+    const it = ctx.item, det = ctx.det, fix = ctx.fix, cveKey = ctx.cve || it.cve || '';
+    const r = enrich?.results?.[cveKey] || null;
+    const kev = !!r?.kev, trend = !!it.trend;
+    const level = kev ? 'P0' : trend ? 'P0' : it.score >= 9 ? 'P1' : it.score >= 7 ? 'P2' : 'P3';
+    const days = level === 'P0' || level === 'P1' ? (sla?.slaCritDays ?? 1) : level === 'P2' ? (sla?.slaHighDays ?? 7) : (sla?.slaMedDays ?? 30);
+    const dueDate = VR.plusDays(Math.max(1, days));
+    const hostShort = String(it.host || '').replace(/\s*\(.*\)$/, '');
+    const cve = cveKey;
+    const target = fix.recommended?.version || fix.min?.version || null;
+    const what = ctx.patch?.name ? `установить ${ctx.patch.name}` : det?.product ? `обновить ${det.product}` : 'установить обновление';
+    const summary = `Устранить ${cve} на ${hostShort}: ${what}${target ? ` (${det?.versionLabel || 'версия'} ${det?.current || '?'} → не ниже ${fix.min?.version || target}${fix.recommended && fix.recommended.version !== fix.min?.version ? ', рекомендуется ' + fix.recommended.version : ''})` : ''}${kev ? ' [KEV]' : trend ? ' [трендовая]' : ''}`;
+    const impRu = { H: 'высокая', M: 'средняя', L: 'низкая', ND: 'не задана' };
+    const description = [
+      'h2. Что сделать',
+      `На активе *${it.host}* (значимость ${impRu[it.imp] || it.imp}${it.os ? ', ' + it.os : ''}) ${what}${target ? `: ${det?.versionLabel || 'версия'} должна стать не ниже *${fix.min?.version || target}*${fix.recommended && fix.recommended.version !== fix.min?.version ? ` (рекомендуется актуальная *${fix.recommended.version}*${fix.recommended.kb ? ', ' + fix.recommended.kb : ''})` : ''}` : ''}.`,
+      `Приоритет *${level}*, срок до ${dueDate} (${days} дн). Уязвимость *${ctx.passport?.title || it.name}* (${cve}), оценка в MaxPatrol ${ctx.metrics?.overall ?? it.score}${r?.nvd?.cvss31?.score != null ? ` (базовая CVSS 3.1 по NVD ${r.nvd.cvss31.score})` : ''}${kev ? ', в каталоге CISA KEV (эксплуатируется в атаках)' : ''}${trend ? ', трендовая по экспертизе PT' : ''}${it.expl ? ', есть публичный эксплойт' : ''}.`,
+      '',
+      ...(det ? ['h2. Где найдена', `Продукт: ${det.product}${det.os ? `, ${det.os}` : ''}${det.release ? ` ${det.release}` : ''}${det.arch ? `, ${det.arch}` : ''}${det.installType ? `, ${det.installType}` : ''}.`, ...det.conditions.filter(c => c.required != null).map(c => `${c.name}: ${c.value} (требуется ${c.strict ? '>=' : '>'} ${c.required})`), ''] : []),
+      ...(ctx.patch ? ['h2. Патч', `${ctx.patch.name}${ctx.patch.date ? ` от ${String(ctx.patch.date).slice(0, 10)}` : ''}${ctx.patch.url ? `: ${ctx.patch.url}` : ''}`, ''] : []),
+      ...(fix.options.length ? ['h2. Версии из рекомендации Positive Technologies (ветка текущей версии)', ...fix.options.map(o => `* ${o.version}${o.kb ? ' (' + o.kb + ')' : ''}`), ''] : []),
+      ...(ctx.passport?.howToFix ? ['h2. Как исправить (паспорт уязвимости)', String(ctx.passport.howToFix).replace(/\s+/g, ' ').slice(0, 600), ''] : []),
+      'h2. Внешние сигналы',
+      `EPSS: ${r?.epss?.epss != null ? (r.epss.epss * 100).toFixed(1) + '%' : 'нет данных'}; CISA KEV: ${kev ? 'да, с ' + (r.kev.dateAdded || '') : 'нет'}; NVD CVSS 3.1: ${r?.nvd?.cvss31?.score ?? 'нет данных'}${r?.nvd?.cvss40 ? `, CVSS 4.0: ${r.nvd.cvss40.score}` : ''}${ctx.bdu.length ? `; БДУ: ${ctx.bdu.join(', ')}` : ''}.`,
+      '',
+      'h2. Ссылки',
+      ...[ctx.urls.card ? `* Экземпляр в MaxPatrol VM: ${ctx.urls.card}` : '', ctx.urls.passport ? `* Паспорт уязвимости: ${ctx.urls.passport}` : '', ctx.urls.asset ? `* Актив: ${ctx.urls.asset}` : '', `* NVD: https://nvd.nist.gov/vuln/detail/${cve}`, ...ctx.bdu.map(b => `* БДУ: https://bdu.fstec.ru/vul/${b.replace(/^BDU:/, '')}`), ...ctx.links.filter(u => !/nvd\.nist|bdu\.fstec|cve\.mitre/.test(u)).slice(0, 5).map(u => `* ${u}`)].filter(Boolean),
+      '',
+      'h2. Проверка',
+      `После обновления запустить аудит узла в MaxPatrol VM: экземпляр должен перейти в статус «Устранена». Источник: MaxPatrol VM ${host || ''}, расширение «Устранение».`,
+    ].join('\n');
+    return { summary, description, priority: level, level, dueDate, labels: ['mpvm-remediation', 'mpvm-instance', VR.jiraLabel(det?.product || it.name || cve)], ids: [it.id], targetVersion: target };
+  };
+
+  // ── Патчи: открытые уязвимости, сгруппированные по патчу из паспорта (Patch.DisplayName / PatchLink) ──
+  // Один запрос патч x актив (список узлов на каждый патч) плюс запрос ссылок; детали патча (CVE, экземпляры)
+  // грузятся отдельно по клику: фильтр по названию патча ставится после select (до select он на 28.0 очень медленный).
+  const NO_PATCH = '__no_patch__';
+  VR.patchesPdql = () => {
+    const V = 'Host.@Vulners';
+    const base = `filter(${V} and ${V}.Metrics.HasPatch = true and ${V}.Status in ${OPEN})`;
+    return {
+      byHost: `${base} | select(@Host, Host.OsName as OS, Host.@Importance as Imp, ${V}.Patch.DisplayName as Patch, ${V}.Patch.PatchDate as PDate, ${V}.Score as Score, ${V}.Status as St, ${V}.IsTrend as T, ${V}.Metrics.Exploitable as E) | filter(St in ${OPEN}) | calc(if T = true then 1 else 0 as fT) | calc(if E = true then 1 else 0 as fE) | calc(if Score >= 9 then 1 else 0 as fC) | group(Patch, @Host, OS, Imp, COUNT(*) as N, MAX(Score) as MaxScore, MAX(PDate) as PDate, SUM(fT) as Trend, SUM(fE) as Expl, SUM(fC) as Crit)`,
+      links: `${base} | select(${V}.Patch.DisplayName as Patch, ${V}.Patch.PatchLink as Link, ${V}.Status as St) | filter(St in ${OPEN}) | group(Patch, Link, COUNT(*) as N)`,
+      detail: patch => `${base} | select(@Host, Host.OsName as OS, Host.@Importance as Imp, ${V}.Patch.DisplayName as Patch, ${V} as Name, ${V}.CVEs.Item as CVE, ${V}.Score as Score, ${V}.Id as Id, ${V}.Status as St, ${V}.IsTrend as T, ${V}.Metrics.Exploitable as E) | filter(St in ${OPEN} and Patch = "${esc(patch)}")`,
+    };
+  };
+  VR.patches = async ({ limit = 5000 } = {}) => {
+    const Q = VR.patchesPdql();
+    const [rows, linkRows] = await Promise.all([VR.pdql(Q.byHost, limit, 0).then(VR.rows), VR.pdql(Q.links, 2000, 0).then(VR.rows).catch(() => [])]);
+    const links = {}; linkRows.forEach(r => { const p = VR.rowVal(r, 'Patch'); const l = VR.getVal(r, 'Link'); if (p && l && typeof l === 'object' && l.url && !links[p]) links[p] = l.url; });
+    const byPatch = new Map();
+    rows.forEach(r => {
+      const name = VR.rowVal(r, 'Patch') || ''; const key = name || NO_PATCH;
+      const h = VR.getVal(r, '@Host'); const n = VR.num(VR.rowVal(r, 'N')) || 0;
+      const p = byPatch.get(key) || byPatch.set(key, { key, patch: name, noLink: !name, url: links[name] || '', date: '', n: 0, hosts: [], hostIds: new Set(), maxScore: 0, trend: 0, expl: 0, crit: 0 }).get(key);
+      p.n += n; p.maxScore = Math.max(p.maxScore, VR.num(VR.rowVal(r, 'MaxScore')) || 0); p.trend += VR.num(VR.rowVal(r, 'Trend')) || 0; p.expl += VR.num(VR.rowVal(r, 'Expl')) || 0; p.crit += VR.num(VR.rowVal(r, 'Crit')) || 0;
+      const d = VR.rowVal(r, 'PDate'); if (d && d > p.date) p.date = d;
+      const hostId = h?.id || ''; if (hostId && !p.hostIds.has(hostId)) { p.hostIds.add(hostId); p.hosts.push({ host: h?.name || VR.rowVal(r, '@Host'), id: hostId, os: VR.rowVal(r, 'OS'), imp: VR.rowVal(r, 'Imp') || 'ND', n, maxScore: VR.num(VR.rowVal(r, 'MaxScore')) || 0 }); }
+      else if (hostId) { const hh = p.hosts.find(x => x.id === hostId); if (hh) { hh.n += n; } }
+    });
+    const patches = [...byPatch.values()].map(p => { const { hostIds, ...rest } = p; rest.hostsCount = hostIds.size; rest.hosts.sort((a, b) => b.n - a.n); rest.kb = (p.patch.match(/KB\d{5,8}/i) || [''])[0].toUpperCase() || null; return rest; }).sort((a, b) => b.n - a.n);
+    const noLink = patches.find(p => p.noLink) || null;
+    const list = patches.filter(p => !p.noLink);
+    return { patches: list, noLink, total: { patches: list.length, vulns: list.reduce((s, p) => s + p.n, 0), hosts: new Set(list.flatMap(p => p.hosts.map(h => h.id))).size, noLinkVulns: noLink ? noLink.n : 0, noLinkHosts: noLink ? noLink.hostsCount : 0 }, pdql: Q.byHost, truncated: rows.length >= limit };
+  };
+  // Детали патча: CVE, экземпляры (ids для Jira, проекта, смены статуса), узлы с числом уязвимостей
+  VR.patchDetail = async ({ patch, limit = 20000 } = {}) => {
+    if (!patch) throw new Error('Не указан патч');
+    const pdql = VR.patchesPdql().detail(patch);
+    const rows = VR.rows(await VR.pdql(pdql, limit, 0));
+    const hosts = {}, cves = {}, ids = new Set(), vulns = {};
+    rows.forEach(r => {
+      const h = VR.getVal(r, '@Host'); const id = VR.rowVal(r, 'Id'); const cve = VR.rowVal(r, 'CVE'); const score = VR.num(VR.rowVal(r, 'Score')) || 0;
+      const hk = h?.id || h?.name || '?';
+      const hh = hosts[hk] || (hosts[hk] = { host: h?.name || VR.rowVal(r, '@Host'), id: h?.id || '', os: VR.rowVal(r, 'OS'), imp: VR.rowVal(r, 'Imp') || 'ND', n: 0, maxScore: 0, _ids: new Set() });
+      if (id && !hh._ids.has(id)) { hh._ids.add(id); hh.n++; } hh.maxScore = Math.max(hh.maxScore, score);
+      if (cve) { const c = cves[cve] || (cves[cve] = { cve, n: 0, score: 0, trend: false, exploit: false, vulnId: VR.vulnGuid(id) }); c.n++; c.score = Math.max(c.score, score); if (VR.bool(VR.rowVal(r, 'T'))) c.trend = true; if (VR.bool(VR.rowVal(r, 'E'))) c.exploit = true; }
+      const name = VR.rowVal(r, 'Name'); if (name) { const v = vulns[name] || (vulns[name] = { name, n: 0, score }); if (id && !ids.has(id)) v.n++; v.score = Math.max(v.score, score); }
+      if (id) ids.add(id);
+    });
+    return { patch, pdql, rows: ids.size || rows.length, truncated: rows.length >= limit, ids: [...ids],
+      hosts: Object.values(hosts).map(h => { const { _ids, ...rest } = h; return rest; }).sort((a, b) => b.n - a.n),
+      cves: Object.values(cves).sort((a, b) => b.score - a.score), vulns: Object.values(vulns).sort((a, b) => b.n - a.n) };
+  };
+  // Задача Jira на патч: установить патч на N узлах, закрывает M уязвимостей (K CVE)
+  VR.buildPatchJiraIssue = ({ patch, detail, enrich, sla, host }) => {
+    const p = patch, d = detail;
+    const kev = d.cves.filter(c => enrich?.results?.[c.cve]?.kev).map(c => c.cve), trend = d.cves.filter(c => c.trend).map(c => c.cve);
+    const level = kev.length ? 'P0' : trend.length ? 'P0' : p.maxScore >= 9 ? 'P1' : p.maxScore >= 7 ? 'P2' : 'P3';
+    const days = level === 'P0' || level === 'P1' ? (sla?.slaCritDays ?? 1) : level === 'P2' ? (sla?.slaHighDays ?? 7) : (sla?.slaMedDays ?? 30);
+    const dueDate = VR.plusDays(Math.max(1, days));
+    const summary = `Установить ${p.patch} на ${d.hosts.length} узлах: закрывает ${d.rows} уязвимостей (${d.cves.length} CVE)${kev.length ? ' [KEV]' : trend.length ? ' [трендовые]' : ''}`;
+    const impRu = { H: 'высокая', M: 'средняя', L: 'низкая', ND: 'не задана' };
+    const impCount = {}; d.hosts.forEach(h => { impCount[h.imp] = (impCount[h.imp] || 0) + 1; });
+    const cveRows = d.cves.slice(0, 40).map(c => { const r = enrich?.results?.[c.cve]; return `|${c.cve}|${c.score}|${r?.epss?.epss != null ? (r.epss.epss * 100).toFixed(0) + '%' : '-'}|${r?.kev ? 'да' : '-'}|${c.trend ? 'да' : '-'}|${c.exploit ? 'да' : '-'}|${c.n}|`; }).join('\n');
+    const description = [
+      'h2. Что сделать',
+      `Установить *${p.patch}*${p.url ? ` (${p.url})` : ''}${p.date ? `, выпущен ${String(p.date).slice(0, 10)}` : ''} на ${d.hosts.length} узлах. Патч закрывает ${d.truncated ? 'не менее ' : ''}${d.rows} экземпляров уязвимостей (${d.cves.length} CVE, ${d.vulns.length} уязвимостей).`,
+      `Приоритет *${level}*${kev.length ? `, ${kev.length} CVE в каталоге CISA KEV` : ''}${trend.length ? `, ${trend.length} трендовых по экспертизе PT` : ''}. Срок: до ${dueDate} (${days} дн).`,
+      `Узлы по значимости: ${Object.entries(impCount).map(([k, v]) => `${impRu[k] || k} ${v}`).join(', ')}.`,
+      '',
+      `h2. Уязвимости (топ ${Math.min(40, d.cves.length)} из ${d.cves.length})`,
+      '||CVE||CVSS||EPSS||KEV||Трендовая||Эксплойт||Экз.||', cveRows, '',
+      `h2. Узлы (${Math.min(100, d.hosts.length)} из ${d.hosts.length})`,
+      ...d.hosts.slice(0, 100).map(h => `* ${h.host} (${h.os || 'ОС не определена'}, значимость ${impRu[h.imp] || h.imp}, ${h.n} уязв., max CVSS ${h.maxScore})`),
+      '',
+      'h2. Проверка',
+      `После установки запустить аудит узлов в MaxPatrol VM: экземпляры должны перейти в статус «Устранена». Источник: MaxPatrol VM ${host || ''}, расширение «Устранение», вкладка «Патчи».`,
+    ].join('\n');
+    const csv = VR.reports.csv({ title: 'Патч: ' + p.patch, sections: VR.reports.dataSections('Патч и выбранная группа', { patch: p, detail: d, enrichment: enrich }) });
+    return { summary, description, priority: level, level, dueDate, labels: ['mpvm-remediation', 'mpvm-patch', VR.jiraLabel(p.kb || p.patch)], ids: d.ids, csv };
+  };
 
   // ── Универсальная выборка (drill-down) по PDQL: уязвимости с узлами ─────────
   VR.drill = async ({ pdql, limit = 500 }) => {
@@ -404,7 +602,7 @@
     const risky = items.filter(i => i.trend || i.expl || i.score >= 9 || (i.imp === 'H' && i.score >= 7)).sort((a, b) => (b.trend - a.trend) || (b.expl - a.expl) || (b.score - a.score));
     const byCve = {}; items.forEach(i => { const k = i.cves[0] || i.name; const b = byCve[k] || (byCve[k] = { key: k, cve: i.cves[0] || '', name: i.name, n: 0, hosts: new Set(), score: 0, trend: false, expl: false, ids: [] }); b.n++; b.hosts.add(i.host); b.score = Math.max(b.score, i.score); if (i.trend) b.trend = true; if (i.expl) b.expl = true; b.ids.push(i.id); });
     const groups = Object.values(byCve).map(b => ({ ...b, hosts: b.hosts.size })).sort((a, b) => (b.trend - a.trend) || (b.expl - a.expl) || (b.score - a.score) || (b.n - a.n));
-    return { total: items.length, truncated: rows.length >= limit, byReason: Object.values(byReason).sort((a, b) => b.n - a.n), risky, groups, pdql };
+    return { items, total: items.length, truncated: rows.length >= limit, byReason: Object.values(byReason).sort((a, b) => b.n - a.n), risky, groups, pdql };
   };
 
   // ── Проекты устранения: прогресс по меткам (jira:KEY, proj:NAME) ─────────
@@ -418,7 +616,7 @@
     const byTag = {};
     rows.forEach(r => { const tag = VR.rowVal(r, 'Tag'); if (!tag) return; const st = String(VR.rowVal(r, 'St')).toLowerCase(); const n = VR.num(VR.rowVal(r, 'N')) || 0; const b = byTag[tag] || (byTag[tag] = { tag, total: 0, fixed: 0, excluded: 0, open: 0, byStatus: {}, hosts: 0 }); b.total += n; b.byStatus[st] = (b.byStatus[st] || 0) + n; if (st === 'fixed') b.fixed += n; else if (st === 'excluded') b.excluded += n; else b.open += n; b.hosts = Math.max(b.hosts, VR.num(VR.rowVal(r, 'Hosts')) || 0); });
     const projects = Object.values(byTag).map(p => ({ ...p, progress: p.total ? Math.round((p.fixed + p.excluded) / p.total * 100) : 0, kind: /^jira:/i.test(p.tag) ? 'jira' : /^proj:/i.test(p.tag) ? 'proj' : 'tag' })).sort((a, b) => a.progress - b.progress || b.open - a.open);
-    return { projects, pdql };
+    return { projects, pdql, limit: 2000, truncated: rows.length >= 2000 };
   };
 
   // ── Веб-сайты: уязвимости из PT BlackBox / веб-сканирования (на стендах без веб-скана пусто) ──
@@ -570,15 +768,11 @@
     return { summary, description, priority: level, dueDate, labels, level, targetVersion };
   };
 
-  // CSV для вложения в задачу: все CVE группы и все узлы
-  VR.groupCsv = (detail, enrich) => {
-    const q = VR.csvCell;
-    const lines = ['\uFEFFCVE;CVSS;EPSS;KEV;Трендовая;Эксплойт;Экземпляров'];
-    detail.cves.forEach(c => { const r = enrich?.results?.[c.cve]; lines.push([c.cve, c.score, r?.epss?.epss != null ? (r.epss.epss * 100).toFixed(1) + '%' : '', r?.kev ? 'да' : '', c.trend ? 'да' : '', c.exploit ? 'да' : '', c.n].map(q).join(';')); });
-    lines.push('', 'Узел;ID актива;Уязвимостей;Max CVSS');
-    detail.hosts.forEach(h => lines.push([h.host, h.id, h.n, h.maxScore].map(q).join(';')));
-    return lines.join('\n');
-  };
+  // Полный CSV для вложения: те же данные, что в отчёте выбранной группы.
+  VR.groupCsv = (detail, enrich, context = {}) => VR.reports.csv({
+    title: `Группа: ${detail.soft} ${detail.ver}`,
+    sections: VR.reports.dataSections('Группа устранения', { ...detail, enrichment: enrich, ...context })
+  });
 
   // Задача Jira по активу: все открытые уязвимости узла
   VR.assetVulns = async assetId => {
@@ -586,7 +780,7 @@
     const rows = VR.rows(await VR.pdql(pdql, 50000, 0));
     const host = rows[0] ? (VR.getVal(rows[0], '@Host')?.name || assetId) : assetId;
     const items = rows.map(r => ({ name: VR.rowVal(r, 'Name'), ids: VR.rowVal(r, 'Ids'), cve: VR.rowVal(r, 'CVE'), score: VR.num(VR.rowVal(r, 'Score')) || 0, sev: String(VR.rowVal(r, 'Sev')).toLowerCase(), st: VR.rowVal(r, 'St'), found: VR.rowVal(r, 'Found'), trend: VR.bool(VR.rowVal(r, 'Trend')), expl: VR.bool(VR.rowVal(r, 'Expl')), patch: VR.bool(VR.rowVal(r, 'HasPatch')), id: VR.rowVal(r, 'Id') }));
-    return { assetId, host, items };
+    return { assetId, host, items, pdql, limit: 50000, truncated: rows.length >= 50000 };
   };
   VR.buildAssetJiraIssue = ({ asset, sla, host }) => {
     const by = { critical: 0, high: 0, medium: 0, low: 0 }; let trend = 0, expl = 0;
@@ -602,8 +796,7 @@
       ...top.map(i => `|${(i.name || i.ids || '').toString().slice(0, 60)}|${i.cve || '-'}|${i.score}|${i.sev}|${i.trend ? 'да' : '-'}|${i.expl ? 'да' : '-'}|${i.patch ? 'да' : '-'}|`), ``,
       `h2. Проверка`, `После установки обновлений запустить аудит узла в MaxPatrol VM; уязвимости должны перейти в статус «Устранена».`, `Источник: MaxPatrol VM ${host || ''}, расширение «Устранение».`,
     ].join('\n');
-    const q = VR.csvCell;
-    const csv = '\uFEFF' + ['Уязвимость;Идентификатор;CVE;CVSS;Уровень;Статус;Обнаружена;Трендовая;Эксплойт;Патч', ...asset.items.sort((a, b) => b.score - a.score).map(i => [i.name, i.ids, i.cve, i.score, i.sev, i.st, i.found, i.trend ? 'да' : '', i.expl ? 'да' : '', i.patch ? 'да' : ''].map(q).join(';'))].join('\n');
+    const csv = VR.reports.csv({ title: 'Уязвимости актива: ' + asset.host, sections: VR.reports.dataSections('Актив', asset) });
     return { summary: `${asset.host}: ${asset.items.length} открытых уязвимостей${trend ? ' [трендовые]' : ''}`, description, priority: level, dueDate, labels: ['mpvm-remediation', 'mpvm-asset'], csv, ids: asset.items.map(i => i.id).filter(Boolean) };
   };
 

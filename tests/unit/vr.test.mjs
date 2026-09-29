@@ -13,11 +13,11 @@ test('GUID паспорта из составного Id, числа и знач
 test('CSV: инъекции формул нейтрализованы, кавычки и переводы строк экранированы (D9)', () => {
   const rows = [{ a: '=HYPERLINK("http://x")', b: '+1', c: '-5', d: '-cmd', e: '@x', f: 'a;b', g: 'line1\r\nline2', h: 'say "hi"' }];
   const out = VR.csv(rows, [['A', 'a'], ['B', 'b'], ['C', 'c'], ['D', 'd'], ['E', 'e'], ['F', 'f'], ['G', 'g'], ['H', 'h']]);
-  const line = out.split('\n')[1];
+  const line = VR.csvRecords(out)[1];
   const cells = line.match(/("([^"]|"")*"|[^;]*)(;|$)/g).map(x => x.replace(/;$/, ''));
   assert.equal(cells[0], `"'=HYPERLINK(""http://x"")"`);
   assert.equal(cells[1], "'+1"); assert.equal(cells[2], '-5', 'отрицательное число не трогаем'); assert.equal(cells[3], "'-cmd"); assert.equal(cells[4], "'@x");
-  assert.equal(cells[5], '"a;b"'); assert.equal(cells[6], 'line1 line2'); assert.equal(cells[7], '"say ""hi"""');
+  assert.equal(cells[5], '"a;b"'); assert.equal(cells[6], '"line1\nline2"'); assert.equal(cells[7], '"say ""hi"""');
   assert.ok(out.startsWith('\uFEFF'));
 });
 test('разбор БДУ: CVE из идентификаторов, не из описания; CSV с переносом строки в кавычках (D8)', () => {

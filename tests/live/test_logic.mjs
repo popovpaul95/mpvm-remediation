@@ -53,7 +53,7 @@ const win = {
 };
 win.window = win; win.self = win; win.globalThis = win;
 vm.createContext(win);
-for (const f of ['content/api.js', 'content/logic.js']) vm.runInContext(fs.readFileSync(path.join(EXT, f), 'utf8'), win, { filename: f });
+for (const f of ['content/api.js', 'content/logic.js', 'content/reports.js']) vm.runInContext(fs.readFileSync(path.join(EXT, f), 'utf8'), win, { filename: f });
 const VR = win.VR;
 await VR.loadConfig();
 
@@ -172,6 +172,40 @@ if (mode === 'risk') {
   console.log('   target(Windows 2016 10.0.14393):', VR.targetVersionFromHowToFix('Windows 2016: v1607 - KB4601318 - 10.0.14393.4225; Windows 2019: 10.0.17763.1757; Windows 10 v2004 10.0.19041.1889', '10.0.14393'));
   console.log('   target(OpenSSL 3.0.2):', VR.targetVersionFromHowToFix('Обновите OpenSSL до версии 3.0.15, 3.1.7, 3.2.3 или 3.3.2', '3.0.2'));
   console.log('   target(7-Zip 24.07):', VR.targetVersionFromHowToFix('обновите до 24.09', '24.07'));
+}
+if (mode === 'instance') {
+  // Контекст экземпляра по CVE: instance <CVE> [instanceId|assetId]
+  const cve = process.argv[3] || 'CVE-2025-49723', ref = process.argv[4] || '';
+  const ctx = await run('instanceContext', () => VR.instanceContext({ cve, instanceId: /_/.test(ref) ? ref : undefined, assetId: !/_/.test(ref) && ref ? ref : undefined, limit: 50 }));
+  if (ctx) {
+    console.log(`   экземпляров ${ctx.instances.summary.total} на ${ctx.instances.summary.hosts} узлах, открыто ${ctx.instances.summary.open}, max ${ctx.instances.summary.maxScore}, pickedBy ${ctx.pickedBy}`);
+    check(ctx.instances.items.length > 0, 'экземпляры найдены');
+    check(ctx.instances.items.every(i => /^[0-9a-f-]{36}$/i.test(i.hostId) && /^[0-9a-f-]{36}$/i.test(i.vulnId)), 'hostId и vulnId в формате GUID');
+    const sel = ctx.selected || await run('instanceDetailContext (первый)', () => VR.instanceDetailContext(ctx.instances.items[0]));
+    if (sel) {
+      console.log('   det:', JSON.stringify(sel.det && { product: sel.det.product, os: sel.det.os, release: sel.det.release, label: sel.det.versionLabel, current: sel.det.current, required: sel.det.required }));
+      console.log('   fix:', JSON.stringify(sel.fix)); console.log('   patch:', JSON.stringify(sel.patch)); console.log('   metrics:', JSON.stringify(sel.metrics), 'bdu:', JSON.stringify(sel.bdu), 'links:', sel.links.length, 'errors:', JSON.stringify(sel.errors));
+      check(sel.errors.length === 0, 'все запросы деталей успешны');
+      check(sel.det && sel.det.current, 'условия обнаружения с текущей версией');
+      check(sel.fix.min && (!sel.det?.required || sel.fix.min.version === sel.det.required || VR.cmpVersion(sel.fix.min.version, sel.det.current) > 0), 'целевая версия не ниже требуемой');
+      check(sel.patch && sel.patch.url, 'патч со ссылкой');
+      const issue = VR.buildInstanceJiraIssue({ ctx: { ...sel, cve }, enrich: null, sla: { slaCritDays: 1, slaHighDays: 7, slaMedDays: 30 }, host: HOST });
+      console.log('   summary:', issue.summary); console.log(issue.description.split('\n').slice(0, 12).join('\n'));
+      check(issue.ids.length === 1 && issue.ids[0] === sel.item.id, 'задача на один экземпляр');
+    }
+  }
+}
+if (mode === 'patches') {
+  const pt = await run('patches', () => VR.patches({}), 'patches');
+  if (pt) {
+    console.log(`   патчей ${pt.total.patches}, уязвимостей ${pt.total.vulns}, узлов ${pt.total.hosts}; без ссылки ${pt.total.noLinkVulns} на ${pt.total.noLinkHosts} узлах`);
+    pt.patches.slice(0, 5).forEach(p => console.log('   ', JSON.stringify({ patch: p.patch, n: p.n, hosts: p.hostsCount, url: p.url, date: p.date, trend: p.trend, crit: p.crit })));
+    check(pt.patches.length > 0, 'патчи найдены'); check(pt.patches.every((p, i) => i === 0 || pt.patches[i - 1].n >= p.n), 'сортировка по числу уязвимостей'); check(pt.patches.filter(p => p.url).length > 0, 'есть ссылки на патчи');
+    const small = pt.patches.slice().sort((a, b) => a.n - b.n).find(p => p.n >= 10 && p.n <= 2000) || pt.patches[pt.patches.length - 1];
+    const d = await run(`patchDetail ${small.patch}`, () => VR.patchDetail({ patch: small.patch }), 'patchDetail');
+    if (d) { console.log(`   rows=${d.rows} hosts=${d.hosts.length} cves=${d.cves.length} vulns=${d.vulns.length} ids=${d.ids.length}`); check(d.hosts.length === small.hostsCount, `узлов в деталях (${d.hosts.length}) = узлов в сводке (${small.hostsCount})`); check(d.rows === small.n || d.truncated, `экземпляров в деталях (${d.rows}) = сводке (${small.n})`); const issue = VR.buildPatchJiraIssue({ patch: small, detail: d, enrich: null, sla: { slaCritDays: 1, slaHighDays: 7, slaMedDays: 30 }, host: HOST }); console.log('   summary:', issue.summary); }
+    const prev = fs.existsSync(path.join(OUT, 'fixtures.json')) ? JSON.parse(fs.readFileSync(path.join(OUT, 'fixtures.json'), 'utf8')) : {}; fs.writeFileSync(path.join(OUT, 'fixtures.json'), JSON.stringify({ ...prev, ...fixtures }));
+  }
 }
 if (mode === 'tags') {
   if (!ALLOW_WRITE) { console.error('Режим tags меняет данные стенда: задайте MP_ALLOW_WRITE=1'); process.exit(1); }

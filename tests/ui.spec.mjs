@@ -45,6 +45,7 @@ for (const theme of ['light', 'dark']) {
     await expect(page.locator('#m-out .empty-state')).toBeVisible();
     const tabs = [
       ['overview', 'm-run', '#m-out .kpi'], ['queue', 'q-run', '#q-out table'],
+      ['patches', 'pt-run', '#pt-out table'],
       ['assets', 'a-run', '#a-out table'], ['excl', 'x-run', '#x-out table'],
       ['proj', 'p-run', '#p-out table'], ['cw', 'w-images', '#w-out table'],
       ['inv', null, '#i-rules .grp'], ['cve', 'c-run', '#c-out .cve'], ['settings', null, '#s-save']
@@ -66,9 +67,20 @@ for (const theme of ['light', 'dark']) {
     await page.locator('#p-out .row-action').first().click();
     await expect(page.locator('#p-drill table')).toBeVisible();
     await audit(page);
+    await page.locator('#tab-patches').click();
+    await page.locator('#pt-out .row-action').first().click();
+    await expect(page.locator('#pt-d-apply')).toBeVisible();
+    await audit(page);
+    await page.getByLabel('Новый статус', { exact: true }).selectOption('SwitchToAwaitingFixStateCommand');
+    await expect(page.getByLabel('Исправить до', { exact: true })).toBeVisible();
+    await audit(page);
+    await page.locator('#tab-cve').click();
+    await page.locator('.mp-pick').first().selectOption({ index: 1 });
+    await expect(page.locator('.mp-jira').first()).toBeVisible();
+    await audit(page);
     for (const width of [1280, 1024, 768]) {
       await page.setViewportSize({ width, height: 900 });
-      for (const name of ['overview', 'queue', 'settings', 'inv', 'cve']) {
+      for (const name of ['overview', 'queue', 'patches', 'settings', 'inv', 'cve']) {
         await page.locator(`#tab-${name}`).click();
         await noPageOverflow(page);
       }
@@ -228,4 +240,205 @@ test('Опасные действия: отмена ничего не отпра
   const tags = await page.evaluate(() => window.__calls.tags);
   expect(tags).toHaveLength(1);
   expect(tags[0].tag).toBe('proj:test-proj');
+});
+
+test('CVE-контекст: экземпляры из MaxPatrol, выбор актива, задача Jira на экземпляр', async ({ page }) => {
+  await openWorkspace(page);
+  await page.evaluate(() => { window.__jira = []; const t = window.VR.tagInstances; window.VR.tagInstances = async (ids, tag) => { window.__jira.push({ ids, tag }); return t(ids, tag); }; });
+  await page.locator('#tab-cve').click();
+  await page.locator('#c-cves').fill('CVE-2025-49723');
+  await run(page, 'c-run');
+  const mp = page.locator('#c-out .cve[data-cve="CVE-2025-49723"] .mp');
+  await expect(mp.locator('.mp-summary')).toContainText('экземпляров на 2 узлах');
+  await expect(mp.locator('.mp-summary b').first()).toHaveText('2');
+  await expect(mp.locator('.mp-jira')).toHaveCount(0);
+  await mp.locator('.mp-pick').selectOption({ index: 1 });
+  await expect(mp).toContainText('Целевая версия');
+  await expect(mp).toContainText('не ниже 10.0.20348.3932');
+  await expect(mp).toContainText('рекомендуется 10.0.20348.5622');
+  await expect(mp).toContainText('KB5122882');
+  await expect(mp).toContainText('BDU:2025-08330');
+  await expect(mp).toContainText('Версия ядра 10.0.20348.3207');
+  page.once('dialog', d => d.dismiss());
+  await mp.locator('.mp-jira').click();
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(() => window.__jira.length)).toBe(0);
+  page.once('dialog', d => d.accept());
+  await mp.locator('.mp-jira').click();
+  await expect(mp.locator('[data-role=mp-jira-st]')).toContainText('создана');
+  await expect(mp.locator('[data-role=mp-jira-st]')).toContainText('jira:VM-101');
+  const calls = await page.evaluate(() => window.__jira);
+  expect(calls).toHaveLength(1);
+  expect(calls[0].ids).toEqual(['1e5566a8e0c000010000000000000012_1e5566a8e0c000010000000000000012_1e1e0794348140010000000000052b21']);
+  // «PoC на GitHub?» не теряет блок MaxPatrol, приоритет и обработчики
+  await page.locator('#c-out .cve[data-cve="CVE-2025-49723"] .gh').click();
+  await expect(page.locator('#c-out .cve[data-cve="CVE-2025-49723"]')).toContainText('GitHub:');
+  await expect(mp).toContainText('Целевая версия');
+  await expect(page.locator('#c-out .cve[data-cve="CVE-2025-49723"] .hd .badge')).toHaveCount(1);
+  await expect(mp.locator('.mp-jira')).toHaveCount(1);
+  await page.waitForTimeout(500); // мок хранилища пишет снимок с задержкой
+  await page.reload();
+  await page.locator('#vr-menu-item').click();
+  await page.locator('#tab-cve').click();
+  await expect(page.locator('#c-out .cve[data-cve="CVE-2025-49723"] .mp')).toContainText('Целевая версия');
+  await expect(page.locator('#c-out .cve[data-cve="CVE-2025-49723"]')).toContainText('GitHub:');
+  // без экземпляров MP VM: блока нет, обогащение быстрее
+  await expect(page.locator('#c-cves')).toHaveValue('CVE-2025-49723');
+  await page.locator('#c-skipmp').check();
+  await run(page, 'c-run');
+  await expect(page.locator('#c-out .cve[data-cve="CVE-2025-49723"] .mp')).toBeEmpty();
+});
+
+test('Патчи: список со ссылками, детали с узлами и CVE, задача Jira и смена статуса с подтверждением', async ({ page }) => {
+  await openWorkspace(page);
+  await page.evaluate(() => { window.__calls = { status: [], tags: [], jira: [] }; const s = window.VR.changeStatus; window.VR.changeStatus = async a => { window.__calls.status.push({ command: a.command, n: a.ids.length }); return s(a); }; const t = window.VR.tagInstances; window.VR.tagInstances = async (ids, tag) => { window.__calls.tags.push({ n: ids.length, tag }); return t(ids, tag); }; });
+  await page.locator('#tab-patches').click();
+  await expect(page.locator('#pt-sum .empty-state')).toBeVisible();
+  await run(page, 'pt-run');
+  await expect(page.locator('#pt-sum .kpi')).toHaveCount(4);
+  await expect(page.locator('#pt-sum')).toContainText('776 255');
+  const rows = page.locator('#pt-out tr.click');
+  await expect(rows).toHaveCount(3);
+  await expect(rows.first()).toContainText('KB5122876');
+  await expect(rows.first().locator('a.lnk')).toHaveAttribute('href', /KB5122876/);
+  await expect(page.locator('#pt-out table tr').last()).toContainText('ссылка не указана');
+  await rows.first().locator('.row-action').click();
+  await expect(page.locator('#pt-detail .detail-facts')).toContainText('Экземпляров: 3');
+  await expect(page.locator('#pt-detail table')).toHaveCount(2);
+  await expect(page.locator('#pt-detail')).toContainText('CVE-2025-49723');
+  await expect(page.locator('#pt-detail a[href*="pdqlQuery"]')).toHaveCount(1);
+  page.once('dialog', d => d.dismiss());
+  await page.locator('#pt-d-jira').click();
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(() => window.__calls.tags.length)).toBe(0);
+  page.once('dialog', d => d.accept());
+  await page.locator('#pt-d-jira').click();
+  await expect(page.locator('#pt-d-jira-st')).toContainText('VM-101');
+  expect(await page.evaluate(() => window.__calls.tags)).toEqual([{ n: 3, tag: 'jira:VM-101' }]);
+  page.once('dialog', d => d.accept());
+  await page.locator('#pt-d-apply').click();
+  await expect(page.locator('#pt-d-st')).toContainText('готово');
+  expect(await page.evaluate(() => window.__calls.status)).toEqual([{ command: 'SwitchToInProgressStateCommand', n: 3 }]);
+  await page.locator('#tab-patches').click();
+  const downloadPromise = page.waitForEvent('download');
+  await page.locator('#r-csv').click();
+  const dl = await downloadPromise;
+  expect(fs.readFileSync(await dl.path(), 'utf8')).toContain('KB5122876');
+});
+
+
+test('Патчи: сортировка без ссылки, поиск, клавиатура и возврат к выбранной строке', async ({ page }) => {
+  await openWorkspace(page);
+  await page.locator('#tab-patches').click();
+  await run(page, 'pt-run');
+  const table = page.locator('#pt-out table');
+  await expect(table).not.toContainText('undefined');
+  const header = table.locator('th').nth(3);
+  await header.focus(); await page.keyboard.press('Enter');
+  await expect(table.locator('tr.hasf').first()).toContainText('libcurl4');
+  await expect(table.locator('tr.hasf').last()).toContainText('ссылка не указана');
+  await page.keyboard.press('Enter');
+  await expect(table.locator('tr.hasf').first()).toContainText('ссылка не указана');
+  await page.locator('#pt-out .tfilter input').fill('5122882');
+  await expect(table.locator('tr.hasf:not(.hide)')).toHaveCount(1);
+  const patch = table.locator('tr:not(.hide) .row-action');
+  await patch.focus(); await page.keyboard.press('Enter');
+  await expect(page.locator('#pt-d-title')).toBeFocused();
+  await expect(patch).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('#pt-d-date')).toBeHidden();
+  await page.locator('#pt-d-cmd').selectOption('SwitchToAwaitingFixStateCommand');
+  await expect(page.locator('#pt-d-date')).toBeVisible();
+  await page.locator('#pt-d-cmd').selectOption('SwitchToNewStateCommand');
+  await expect(page.locator('#pt-d-date')).toBeHidden();
+  await page.locator('#pt-d-close').click();
+  await expect(page.locator('#pt-detail')).toBeHidden();
+  await expect(patch).toBeFocused();
+  await expect(patch).toHaveAttribute('aria-expanded', 'false');
+});
+
+test('Патчи: актуальный выбор при задержке ответа, ошибка с повтором и пустой список', async ({ page }) => {
+  await openWorkspace(page);
+  await page.locator('#tab-patches').click();
+  await run(page, 'pt-run');
+  await page.evaluate(() => {
+    const original = VR.patchDetail;
+    window.__patchRequests = [];
+    window.__finishPatch = async name => {
+      const request = window.__patchRequests.find(r => r.name === name);
+      request.resolve(await original({ patch: name }));
+    };
+    VR.patchDetail = ({ patch }) => new Promise(resolve => window.__patchRequests.push({ name: patch, resolve }));
+  });
+  const rows = page.locator('#pt-out tr.click');
+  const firstName = await rows.nth(0).getAttribute('data-patch');
+  const secondName = await rows.nth(1).getAttribute('data-patch');
+  await rows.nth(0).locator('.row-action').click();
+  await rows.nth(1).locator('.row-action').click();
+  await page.evaluate(name => window.__finishPatch(name), secondName);
+  await expect(page.locator('#pt-d-title')).toContainText(secondName);
+  await page.evaluate(name => window.__finishPatch(name), firstName);
+  await expect(page.locator('#pt-d-title')).toContainText(secondName);
+  await expect(rows.nth(1)).toHaveClass(/sel/);
+  await page.evaluate(() => { VR.patchDetail = async () => { throw new Error('Сервер недоступен'); }; });
+  await rows.nth(0).locator('.row-action').click();
+  await expect(page.locator('#pt-detail [role=alert]')).toContainText('Сервер недоступен');
+  await page.evaluate(() => { VR.patchDetail = async ({ patch }) => ({ patch, rows: 0, ids: [], hosts: [], cves: [], vulns: [], pdql: '' }); });
+  await page.locator('#pt-retry').click();
+  await expect(page.locator('#pt-d-title')).toContainText(firstName);
+  await expect(page.locator('#pt-detail .table-empty')).toHaveCount(2);
+  await page.evaluate(() => { VR.patches = async () => ({ patches: [], noLink: null, total: { patches: 0, vulns: 0, hosts: 0, noLinkVulns: 0, noLinkHosts: 0 }, pdql: '' }); });
+  await run(page, 'pt-run');
+  await expect(page.locator('#pt-detail')).toBeHidden();
+  await expect(page.locator('#pt-out .table-empty')).toBeVisible();
+  await expect(page.locator('#pt-sum .inline-notice')).toHaveCount(0);
+  await audit(page);
+});
+
+test('Экземпляр CVE: доступная загрузка, ошибка и сохранение фокуса при повторном выборе', async ({ page }) => {
+  await openWorkspace(page);
+  await page.locator('#tab-cve').click();
+  await page.locator('#c-cves').fill('CVE-2025-49723');
+  await run(page, 'c-run');
+  await page.evaluate(() => {
+    const original = VR.instanceDetailContext;
+    window.__instanceRequests = [];
+    VR.instanceDetailContext = item => new Promise((resolve, reject) => window.__instanceRequests.push({ item, resolve, reject }));
+    window.__finishInstance = async () => {
+      const request = window.__instanceRequests.at(-1); request.resolve(await original(request.item));
+    };
+  });
+  const picker = page.locator('.mp-pick');
+  await picker.focus(); await picker.selectOption({ index: 1 });
+  await expect(picker).toBeDisabled();
+  await expect(page.locator('[data-role=mp-st]')).toContainText('Загружаем');
+  await expect(page.locator('.mp-jira')).toHaveCount(0);
+  await page.evaluate(() => window.__instanceRequests.at(-1).reject(new Error('Ошибка соединения')));
+  await expect(picker).toBeEnabled(); await expect(picker).toBeFocused();
+  await expect(page.locator('[data-role=mp-st]')).toContainText('Ошибка соединения');
+  await picker.selectOption({ index: 2 });
+  await page.evaluate(() => window.__finishInstance());
+  await expect(page.locator('.mp-section').first()).toContainText('second.host');
+  await expect(picker).toBeFocused();
+  await expect(page.locator('.mp-jira')).toHaveCount(1);
+  await audit(page);
+});
+
+
+test('Патчи: закрытие панели во время операции не обновляет другой патч', async ({ page }) => {
+  const errors = []; page.on('pageerror', e => errors.push(e.message));
+  await openWorkspace(page);
+  await page.locator('#tab-patches').click(); await run(page, 'pt-run');
+  await page.locator('#pt-out .row-action').first().click();
+  await expect(page.locator('#pt-d-apply')).toBeVisible();
+  await page.evaluate(() => { VR.changeStatus = () => new Promise(resolve => { window.__completeStatus = resolve; }); });
+  page.once('dialog', d => d.accept());
+  await page.locator('#pt-d-apply').click();
+  await expect(page.locator('#pt-d-apply')).toBeDisabled();
+  await page.locator('#pt-d-close').click();
+  await page.locator('#pt-out .row-action').nth(1).click();
+  await expect(page.locator('#pt-d-title')).toContainText('KB5122882');
+  await page.evaluate(() => window.__completeStatus({ done: true, total: 3, succeed: 3 }));
+  await expect(page.locator('#pt-d-st')).toBeEmpty();
+  await expect(page.locator('#pt-d-apply')).toBeEnabled();
+  expect(errors).toEqual([]);
 });

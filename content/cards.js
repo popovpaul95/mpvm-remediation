@@ -38,7 +38,7 @@
 .vr-cb ul { margin: var(--kbq-size-xxs, 4px) 0 0 18px; padding: 0; } .vr-cb li { margin: 2px 0; } .vr-cb li a { color: var(--kbq-link-text, #2f80ed); text-decoration: none; } .vr-cb li a:hover { text-decoration: underline; }
 .vr-btn { font-family: inherit; font-size: var(--kbq-typography-text-normal-font-size, 14px); font-weight: 500; display: inline-flex; align-items: center; gap: var(--kbq-size-xs, 6px);
   min-height: 36px; padding: 0 var(--kbq-button-size-horizontal-padding, 12px); border-radius: var(--kbq-button-size-border-radius, 8px);
-  border: 1px solid var(--kbq-button-filled-contrast-fade-off-border, transparent); background: var(--kbq-button-filled-contrast-fade-off-background, #e3e5ea); color: var(--kbq-button-filled-contrast-fade-off-foreground, #262a35); cursor: pointer; white-space: nowrap; }
+  border: 1px solid var(--kbq-button-filled-contrast-fade-off-border, transparent); background: var(--kbq-button-filled-contrast-fade-off-background, #e3e5ea); color: var(--kbq-button-filled-contrast-fade-off-foreground, #262a35); cursor: pointer; white-space: normal; max-width: 100%; min-width: 0; line-height: 20px; padding-top: 7px; padding-bottom: 7px; justify-content: center; overflow-wrap: anywhere; }
 .vr-btn:hover { background: var(--kbq-button-filled-contrast-fade-off-states-hover-background, #d3d6dd); }
 .vr-btn.acc { background: var(--kbq-background-contrast, #242831); color: var(--kbq-foreground-on-contrast, #fff); font-weight: 500; }
 .vr-btn.acc:hover { background: var(--kbq-states-background-contrast-hover, #3e4655); }
@@ -139,13 +139,32 @@
       const container = cardContainer(h);
       const id = cardIdentity(container);
       if (!id.cve && !id.bdu && !id.name) continue;
+      const instId = new URLSearchParams(location.search).get('vulnerabilityInstanceId') || '';
       ensureStyleIn(h.getRootNode());
       const box = document.createElement('div');
       box.className = (section.className.includes('vulner-info-section') ? 'vulner-info-section ' : '') + 'vr-cb'; box.dataset.kind = 'vuln';
       box.innerHTML = `<div class="${section.className.includes('vulner-info-section') ? 'vulner-info-section__title' : ''} vr-title">Внешний контекст <span class="vr-src">расширение «Устранение»</span></div>
         <div class="vr-links">${linksHtml(id)}</div>
-        ${id.cve ? `<div class="vr-row"><button class="vr-btn acc" data-act="enrich">EPSS, KEV, SSVC и ссылки на патчи</button><span class="vr-muted" role="status" data-role="st"></span></div><div data-role="out"></div>` : '<div class="vr-line vr-muted">У уязвимости нет CVE: внешние базы эксплуатации (EPSS, KEV, NVD) ее не описывают.</div>'}`;
+        ${id.cve ? `<div class="vr-row"><button class="vr-btn acc" data-act="enrich">EPSS, KEV, SSVC и ссылки на патчи</button>${instId ? '<button class="vr-btn" data-act="jira-inst">Задача в Jira на этот экземпляр</button>' : ''}<span class="vr-muted" role="status" data-role="st"></span></div><div data-role="out"></div>` : '<div class="vr-line vr-muted">У уязвимости нет CVE: внешние базы эксплуатации (EPSS, KEV, NVD) ее не описывают.</div>'}`;
       section.insertAdjacentElement('afterend', box);
+      const jb = box.querySelector('[data-act=jira-inst]');
+      if (jb) jb.addEventListener('click', async () => {
+        const st = box.querySelector('[data-role=st]'); jb.disabled = true; st.textContent = 'собираем данные экземпляра...';
+        try {
+          const s = await VR.ext('settings-get');
+          if (!s.jiraUrl || !s.jiraToken || !s.jiraProject) throw new Error('Заполните Jira в настройках расширения (пункт «Устранение», вкладка «Настройки»)');
+          const ctx = await VR.instanceContext({ cve: id.cve, instanceId: instId });
+          if (!ctx.selected) throw new Error(`Экземпляр ${id.cve} по идентификатору из адреса страницы не найден`);
+          let enr = null; try { enr = await VR.ext('enrich', { cves: [id.cve], skipNvd: true, mp: { [id.cve]: { score: ctx.selected.item.score, trend: ctx.selected.item.trend, exploit: ctx.selected.item.expl } } }); } catch (_) {}
+          const issue = VR.buildInstanceJiraIssue({ ctx: { ...ctx.selected, cve: id.cve }, enrich: enr, sla: s, host: VR.config().host });
+          if (!confirm(`Создать задачу в Jira (${s.jiraProject}):\n${issue.summary}\nСрок: ${issue.dueDate}`)) { jb.disabled = false; st.textContent = ''; return; }
+          const r = await VR.ext('jira-create', issue);
+          let note = '';
+          if (s.jiraTagInstances !== false) { try { await VR.tagInstances(issue.ids, 'jira:' + r.key); note = `, метка jira:${r.key} на экземпляре`; } catch (e) { note = ', метку поставить не удалось'; } }
+          st.innerHTML = `создана <a href="${esc(r.url)}" target="_blank" rel="noopener" style="color:#2f80ed">${esc(r.key)}</a>${esc(note)}`;
+        } catch (e) { st.innerHTML = `<span class="vr-err">${esc(e.message)}</span>`; }
+        jb.disabled = false;
+      });
       const btn = box.querySelector('[data-act=enrich]');
       if (btn) btn.addEventListener('click', async () => {
         btn.disabled = true; const st = box.querySelector('[data-role=st]'); st.textContent = 'запрос (NVD без ключа до 10 с)...';
@@ -168,11 +187,10 @@
       const rows = VR.rows(await VR.pdql(pdql, 50000, 0));
       const host = rows[0] ? (VR.getVal(rows[0], '@Host')?.name || '') : assetId;
       const cols = [['Узел', r => VR.getVal(r, '@Host')?.name || ''], ['Уязвимость', r => VR.rowVal(r, 'Name')], ['Идентификатор', r => VR.rowVal(r, 'Ids')], ['CVE', r => VR.rowVal(r, 'CVE')], ['CVSS', r => VR.rowVal(r, 'Score')], ['Уровень', r => VR.rowVal(r, 'Sev')], ['Статус', r => VR.rowVal(r, 'St')], ['Обнаружена', r => VR.rowVal(r, 'Found')], ['Трендовая', r => VR.rowVal(r, 'Trend')], ['Эксплойт', r => VR.rowVal(r, 'Expl')], ['Есть патч', r => VR.rowVal(r, 'HasPatch')], ['Ссылка на патч', r => VR.rowVal(r, 'PatchLink')], ['Тип устранения', r => VR.rowVal(r, 'FixType')], ['Последствия', r => VR.rowVal(r, 'Impact')]];
-      const q = v => { const s = String(v ?? ''); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-      const csv = '﻿' + [cols.map(c => c[0]).join(';'), ...rows.map(r => cols.map(c => q(c[1](r))).join(';'))].join('\n');
+      const csv = VR.csv(rows, cols);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' }); const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = `vulns_${String(host).replace(/[^\w.\-]+/g, '_').slice(0, 60)}_${today()}.csv`; document.body.appendChild(a); a.click(); setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 1500);
-      st.textContent = `выгружено ${fmt(rows.length)} строк`;
+      st.textContent = `выгружено ${fmt(rows.length)} строк${rows.length >= 50000 ? "; достигнут лимит 50 000, на сервере могут быть дополнительные записи" : ""}`;
     } catch (e) { st.textContent = 'ошибка: ' + e.message; }
     btn.disabled = false;
   }
@@ -187,7 +205,7 @@
       const container = h.parentElement; if (!container || container.querySelector('.vr-asset-export')) continue;
       ensureStyleIn(h.getRootNode());
       const row = document.createElement('div'); row.className = 'vr-asset-export vr-cb'; row.dataset.asset = assetId;
-      row.innerHTML = `<div class="vr-row"><button class="vr-btn" data-act="csv">Выгрузить уязвимости в CSV</button><button class="vr-btn" data-act="jira">Задача в Jira</button></div><div class="vr-muted" role="status" data-role="st">Все открытые уязвимости узла с CVE, статусом, датой, признаками эксплойта и патча.</div>`;
+      row.innerHTML = `<div class="vr-row"><button class="vr-btn" data-act="csv">Выгрузить уязвимости в CSV</button><button class="vr-btn" data-act="jira">Задача в Jira</button></div><div class="vr-muted" role="status" data-role="st">Уязвимости узла во всех статусах: CVE, дата, признаки эксплойта и патча. До 50 000 строк.</div>`;
       h.insertAdjacentElement('afterend', row);
       row.querySelector('[data-act=csv]').addEventListener('click', () => exportAssetVulns(assetId, row.querySelector('[data-act=csv]'), row.querySelector('[data-role=st]')));
       row.querySelector('[data-act=jira]').addEventListener('click', async () => {

@@ -1,7 +1,8 @@
 * { box-sizing: border-box; }
 body { --popup-muted: color-mix(in srgb, var(--kbq-foreground-contrast-secondary, #656b78) 90%, var(--kbq-foreground-contrast, #222530)); width: 400px; margin: 0; font: 14px/20px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--kbq-foreground-contrast, #222530); background: var(--kbq-background-bg, #fff); -webkit-font-smoothing: antialiased; }
 .header { padding: 20px 24px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--kbq-line-contrast-less, #e4e7ec); }
-.mark { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; color: var(--kbq-foreground-theme, #1769e0); background: var(--kbq-background-theme-less, #edf4ff); }
+.mark { display: block; width: 42px; height: 42px; flex: none; }
+.mark img { display: block; width: 100%; height: 100%; }
 .product { font-size: 15px; font-weight: 650; }
 .subtitle { color: var(--popup-muted); font-size: 12px; margin-top: 2px; }
 .connection-label { font-size: 11px; letter-spacing: .5px; color: var(--popup-muted); border: 1px solid var(--kbq-line-contrast-less, #e4e7ec); padding: 2px 7px; border-radius: 5px; margin-left: auto; }

@@ -10,7 +10,7 @@ export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 export function loadVR({ now, ext } = {}) {
   const calls = { pdql: [], get: [], post: [], put: [], del: [], ext: [] };
   const ctx = {
-    console, URLSearchParams,
+    console, URL, URLSearchParams,
     setTimeout: fn => { Promise.resolve().then(fn); return 0; }, clearTimeout() {},
     location: { protocol: 'https:', hostname: 'mp.test', origin: 'https://mp.test', href: 'https://mp.test/' },
     fetch: async () => { throw new Error('сеть в unit-тестах отключена'); },
@@ -22,7 +22,7 @@ export function loadVR({ now, ext } = {}) {
   ctx.window = ctx; ctx.self = ctx; ctx.globalThis = ctx;
   vm.createContext(ctx);
   if (now) vm.runInContext(`var __RealDate = Date; Date = class extends __RealDate { constructor(...a) { super(...(a.length ? a : [${JSON.stringify(now)}])); } static now() { return new __RealDate(${JSON.stringify(now)}).getTime(); } };`, ctx);
-  for (const f of ['content/api.js', 'content/logic.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
+  for (const f of ['content/api.js', 'content/logic.js', 'content/reports.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
   const VR = ctx.VR;
   VR.pdql = async (pdql, limit, offset) => { calls.pdql.push({ pdql, limit, offset }); return { records: [] }; };
   VR.get = async p => { calls.get.push(p); throw new Error('VR.get не подменен: ' + p); };

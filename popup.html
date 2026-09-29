@@ -11,7 +11,7 @@
 </head>
 <body>
   <header class="header">
-    <span class="mark" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="m12 3 8 3v6c0 4-3.5 7-8 9-4.5-2-8-5-8-9V6l8-3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="m8 12 2.5 2.5L16 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    <span class="mark" aria-hidden="true"><img src="icons/logo.svg" width="42" height="42" alt=""></span>
     <div><div class="product" translate="no">MaxPatrol VM</div><div class="subtitle">Устранение уязвимостей</div></div>
     <span class="connection-label">API</span>
   </header>
@@ -21,7 +21,7 @@
       <label for="host">Сервер<input type="text" id="host" name="host" placeholder="maxpvm.company.ru" autocomplete="url" spellcheck="false" autocapitalize="none" aria-describedby="host-hint"></label>
       <label for="port">Порт<input type="text" id="port" name="port" placeholder="443" inputmode="numeric" maxlength="5" aria-describedby="host-hint"></label>
     </div>
-    <p class="hint field-hint" id="host-hint">Пустой порт — как у страницы MaxPatrol VM.</p>
+    <p class="hint field-hint" id="host-hint">Пустой порт: как у страницы MaxPatrol VM.</p>
     <label for="token">Персональный токен<input type="password" id="token" name="token" placeholder="Вставьте токен" autocomplete="off" spellcheck="false" aria-describedby="token-hint"></label>
     <p class="hint field-hint" id="token-hint">Создайте в PT MC → Токены доступа.</p>
     <div class="actions"><button class="acc" id="save" type="button">Сохранить</button><button id="test" type="button">Проверить подключение</button></div>
