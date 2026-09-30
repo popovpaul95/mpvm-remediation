@@ -21,6 +21,7 @@
   const CSS = `
 :host { all: initial; }
 *, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
 * { margin: 0; padding: 0; }
 .root {
   --vr-bg: var(--kbq-background-bg, #fff);
@@ -456,7 +457,11 @@ td a.lnk { white-space: nowrap; } a.lnk { color: var(--vr-accent); }
     </div>
 
     <div class="pane" data-t="inv">
-      <div class="box">
+      <div class="box" id="i-legacy" hidden>
+        <h3>Инвентаризация: автоматические теги активов</h3>
+        <div class="muted">Теги активов появились в MaxPatrol VM 28.0. На этом сервере (версия <span id="i-legacy-ver"></span>) раздел недоступен: правила инвентаризации, покрытие тегами и зоны риска как теги работают только с 28.0. Проекты по меткам экземпляров уязвимостей и остальные разделы доступны.</div>
+      </div>
+      <div class="box" id="i-main">
         <h3>Инвентаризация: автоматические теги активов</h3>
         <div class="muted">Модель MaxPatrol: актив (Host, ImageSet, WebSite) имеет группы (динамические по PDQL и статические), значимость, теги. Теги видны в списке активов, фильтруются в PDQL (<b>Host.@Tags.Item = "..."</b>), ими удобно строить дашборды и выборки. Тег ставится всем активам PDQL-выборки, результат проверяется по каждому активу. Отметьте нужные правила и нажмите «Применить». Повторное применение безопасно: тег не дублируется. Все теги с префиксом <b>auto:</b> удаляются одной кнопкой.</div>
         <div class="rules" id="i-rules"></div>
@@ -578,7 +583,7 @@ td a.lnk { white-space: nowrap; } a.lnk { color: var(--vr-accent); }
     for (let i = 0; i < kids.length; i++) collectText(kids[i], acc, depth + 1);
   }
   // Что открыто в MaxPatrol: карточка экземпляра, паспорт уязвимости или карточка актива
-  function pageContext() { const q = new URLSearchParams(location.search); return { instanceId: q.get('vulnerabilityInstanceId') || '', vulnId: q.get('vulnerabilityId') || '', assetId: q.get('assetId') || '' }; }
+  function pageContext() { const q = VR.pageParams(); return { instanceId: q.get('vulnerabilityInstanceId') || '', vulnId: q.get('vulnerabilityId') || '', assetId: q.get('assetId') || '' }; }
   function scanPageCves() {
     const acc = [location.href, document.title];
     try { collectText(document.body, acc, 0); } catch (_) {}
@@ -717,8 +722,8 @@ td a.lnk { white-space: nowrap; } a.lnk { color: var(--vr-accent); }
   const plink = (guid, text) => guid ? `<a class="lnk" href="${esc(VR.passportUrl(guid))}" title="Открыть паспорт уязвимости">${esc(text)}</a>` : esc(text);
   const alink = (id, text) => id ? `<a class="lnk" href="${esc(VR.assetUrl(id))}" title="Открыть карточку актива">${esc(text)}</a>` : esc(text);
   const kevBadge = cve => `<a class="badge tag kev" href="${esc(VR.kevUrl(cve))}" target="_blank" rel="noopener" title="Каталог CISA KEV">KEV</a>`;
-  // Страница активов 28.0 принимает запрос в параметре pdqlQuery (так переходят виджеты дашборда); параметр pdql игнорируется
-  const mpListUrl = pdql => `${location.origin}/mpx/common/am/assets?groupId=00000000-0000-0000-0000-000000000002&pdqlQuery=${encodeURIComponent(pdql)}`;
+  // Страница активов с запросом из адреса: адрес зависит от поколения интерфейса (см. VR.listUrl)
+  const mpListUrl = pdql => VR.listUrl(pdql);
   const SEV_RU = { critical: 'критический', high: 'высокий', medium: 'средний', low: 'низкий' };
   const ST_RU = { new: 'Новая', inProgress: 'В работе', awaitingFix: 'Исправляется', overdue: 'Просрочена', stale: 'Устарела', fixed: 'Устранена', excluded: 'Исключена' };
 
@@ -880,8 +885,10 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
 
   // ── Снимки состояния вкладок: chrome.storage.local через background, живут сутки ──
   const SNAP_TTL = 24 * 3600 * 1000;
-  const snapSave = (key, value) => VR.ext('cache-set', { key, value }).catch(() => {});
-  const snapLoad = async key => { try { const c = await VR.ext('cache-get', { key }); return c && c.value && Date.now() - c.ts < SNAP_TTL ? c : null; } catch (_) { return null; } };
+  // Снимки привязаны к серверу: при переключении расширения между стендами цифры одного не показываются на другом
+  const snapKey = key => `${String(VR.config().host || location.hostname).toLowerCase()}|${key}`;
+  const snapSave = (key, value) => VR.ext('cache-set', { key: snapKey(key), value }).catch(() => {});
+  const snapLoad = async key => { try { const c = await VR.ext('cache-get', { key: snapKey(key) }); return c && c.value && Date.now() - c.ts < SNAP_TTL ? c : null; } catch (_) { return null; } };
   const snapNote = ts => `снимок от ${new Date(ts).toLocaleString('ru-RU')}, обновление по кнопке`;
 
   // ── Рабочая область ───────────────────────────────────────────────────────
@@ -893,6 +900,9 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
 
   function positionRoot() {
     if (!host) return;
+    // 27.x: горизонтальное меню <ipn-navbar> сверху, область занимает всю ширину под ним
+    if (VR.isLegacyUi()) { const nb = document.querySelector('ipn-navbar'); host.style.top = (nb ? Math.round(nb.getBoundingClientRect().bottom) : 48) + 'px'; host.style.left = '0'; return; }
+    host.style.top = '0';
     // Реальный контейнер меню на 28.0: <platform-nav-bar> > kbq-vertical-navbar (241 px, сворачивается)
     const item = document.querySelector('.kbq-navbar-item:not(#vr-menu-item)');
     const nav = document.querySelector('platform-nav-bar, kbq-vertical-navbar, .kbq-vertical-navbar, .kbq-navbar, kbq-navbar')
@@ -913,16 +923,24 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
     bind();
     sh.addEventListener('click', e => { if (vfPop && !e.target.closest('.vf-pop') && !e.target.closest('.vf')) closePop(); });
     sh.addEventListener('scroll', () => { if (vfPop && Date.now() - (vfPop.__t || 0) > 400) closePop(); }, true);
+    // 27.x: ссылка на список активов, собранная до получения идентификатора запроса «Все активы», дополняется при клике
+    sh.addEventListener('click', e => {
+      const a = e.target.closest && e.target.closest('a[href*="pdqlQuery="]');
+      if (!a || !VR.isLegacyUi() || /[?&]queryId=/.test(a.getAttribute('href') || '')) return;
+      e.preventDefault();
+      VR.ensureDefaultQuery().then(q => { const href = a.getAttribute('href'); location.assign(q ? href.replace('&pdqlQuery=', `&queryId=${q}&pdqlQuery=`) : href); });
+    });
     window.addEventListener('resize', positionRoot);
   }
 
   function open() {
     mountRoot(); positionRoot();
     host.style.display = ''; opened = true;
-    document.querySelectorAll('.kbq-navbar-item.kbq-selected, .kbq-navbar-item.kbq-active').forEach(el => { if (el.id !== 'vr-menu-item') { el.dataset.vrWasSelected = el.classList.contains('kbq-active') ? 'active' : 'selected'; el.classList.remove('kbq-selected', 'kbq-active'); } });
-    const mi = document.getElementById('vr-menu-item'); if (mi) mi.classList.add('kbq-active');
+    navItems().forEach(el => { const was = ACTIVE_CLASSES.find(c => el.classList.contains(c)); if (was) { el.dataset.vrWasSelected = was; el.classList.remove(...ACTIVE_CLASSES); } });
+    const mi = menuItem(); if (mi) mi.classList.add(VR.isLegacyUi() ? 'mc-active' : 'kbq-active');
     const c = VR.config(); $('sub').textContent = 'MaxPatrol VM'; $('sub').title = c.host || location.hostname;
-    VR.systemInfo().then(d => { $('sub').textContent = `MaxPatrol VM ${d?.productVersion || ''}`; $('sub').title = `${c.host || location.hostname}, версия ${d?.productVersion || '?'}`; }).catch(e => { $('sub').textContent = 'нет подключения'; $('sub').title = e.message; });
+    VR.product().then(p => { $('sub').textContent = `MaxPatrol VM ${p.version}`; $('sub').title = `${c.host || location.hostname}, версия ${p.version || '?'}`; applyFeatures(); }).catch(e => { $('sub').textContent = 'нет подключения'; $('sub').title = e.message; applyFeatures(); });
+    VR.ensureDefaultQuery();
     if (!state.metricsLoaded) {
       state.metricsLoaded = true;
       // Не нагружаем систему при каждом открытии: показываем последний снимок, обновление по кнопке
@@ -936,9 +954,45 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
   }
   function close() {
     if (!host || !opened) return;
-    closePop(); host.style.display = 'none'; opened = false; document.getElementById('vr-menu-item')?.focus();
-    const mi = document.getElementById('vr-menu-item'); if (mi) mi.classList.remove('kbq-selected', 'kbq-active');
-    document.querySelectorAll('.kbq-navbar-item[data-vr-was-selected]').forEach(el => { el.classList.add(el.dataset.vrWasSelected === 'active' ? 'kbq-active' : 'kbq-selected'); delete el.dataset.vrWasSelected; });
+    closePop(); host.style.display = 'none'; opened = false; menuItem()?.focus();
+    const mi = menuItem(); if (mi) mi.classList.remove(...ACTIVE_CLASSES);
+    navItems().forEach(el => { if (el.dataset.vrWasSelected) { el.classList.add(el.dataset.vrWasSelected); delete el.dataset.vrWasSelected; } });
+  }
+  // Возможности, зависящие от версии сервера: теги активов (инвентаризация) есть только с 28.0
+  function applyFeatures() {
+    const ok = VR.hasAssetTags();
+    if ($('i-legacy')) { $('i-legacy').hidden = ok; $('i-main').hidden = !ok; if (!ok) $('i-legacy-ver').textContent = VR.productCached()?.version || ''; }
+  }
+
+  // ── Меню 27.x: горизонтальный <ipn-navbar> с shadow DOM, пункты a.mc-navbar-item ─────────────────
+  const ACTIVE_CLASSES = ['kbq-selected', 'kbq-active', 'mc-active'];
+  function legacyNavRoot() { const nb = document.querySelector('ipn-navbar'); return nb && nb.shadowRoot ? nb.shadowRoot : null; }
+  function menuItem() { return document.getElementById('vr-menu-item') || (legacyNavRoot() ? legacyNavRoot().getElementById('vr-menu-item') : null); }
+  function navItems() {
+    const root = legacyNavRoot();
+    return [...document.querySelectorAll('.kbq-navbar-item'), ...(root ? root.querySelectorAll('.mc-navbar-item') : [])].filter(el => el.id !== 'vr-menu-item');
+  }
+  function ensureLegacyMenuItem() {
+    const root = legacyNavRoot(); if (!root) return false;
+    if (root.getElementById('vr-menu-item')) return true;
+    const items = [...root.querySelectorAll('a.mc-navbar-item')].filter(a => a.id !== 'vr-menu-item');
+    const text = el => (el.textContent || '').replace(/\s+/g, ' ').trim();
+    const anchor = items.find(a => /^Активы$/i.test(text(a))) || items.find(a => /#\/assets(\b|$)/.test(a.getAttribute('href') || '')) || items.find(a => /^Дашборды$/i.test(text(a)));
+    if (!anchor) return false;
+    // Каждый пункт живет в своей секции <ipn-navbar-section> (колонка): клонируем секцию целиком и ставим ее рядом,
+    // иначе пункт встает под «Активы» внутри той же секции
+    const section = anchor.parentElement && anchor.parentElement.tagName === 'IPN-NAVBAR-SECTION' ? anchor.parentElement : null;
+    const clone = (section || anchor).cloneNode(true);
+    const item = section ? clone.querySelector('a.mc-navbar-item') : clone;
+    if (!item) return false;
+    if (section) [...clone.children].forEach(c => { if (c !== item) c.remove(); });
+    item.id = 'vr-menu-item'; item.classList.remove('mc-active'); item.setAttribute('href', '#vr-remediation'); item.setAttribute('tabindex', '0');
+    item.removeAttribute('routerlink'); item.removeAttribute('ng-reflect-router-link');
+    const title = item.querySelector('mc-navbar-title, .mc-navbar-title'); if (title) title.textContent = ' Устранение ';
+    item.title = 'Устранение уязвимостей: очередь по решениям, внешние сигналы, метрики процесса';
+    item.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); opened ? close() : open(); }, true);
+    (section || anchor).insertAdjacentElement('afterend', clone);
+    return true;
   }
 
   // ── Пункт меню ────────────────────────────────────────────────────────────
@@ -959,6 +1013,7 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
     catch (e) { console.error('[vr] не удалось вставить пункт меню:', e); return false; }
   }
   function ensureMenuItemUnsafe() {
+    if (legacyNavRoot()) return ensureLegacyMenuItem();
     if (document.getElementById('vr-menu-item')) return true;
     const found = findAnchorItem();
     if (!found) { if (!ensureMenuItem._warned && document.querySelectorAll('.kbq-navbar-item').length) { ensureMenuItem._warned = true; console.warn('[vr] пункты меню есть, но якорь не найден:', [...document.querySelectorAll('.kbq-navbar-item')].map(e => (e.querySelector('.kbq-navbar-title')?.textContent || '').trim()).join(' | ')); } return false; }
@@ -984,10 +1039,13 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
 
   // Клик по любому другому пункту меню или смена маршрута закрывает область
   document.addEventListener('click', e => {
-    const it = e.target.closest && e.target.closest('.kbq-navbar-item');
+    const path = typeof e.composedPath === 'function' ? e.composedPath() : [];
+    const it = path.find(n => n && n.classList && (n.classList.contains('kbq-navbar-item') || n.classList.contains('mc-navbar-item'))) || (e.target.closest && e.target.closest('.kbq-navbar-item'));
     if (it && it.id !== 'vr-menu-item') close();
   }, true);
   window.addEventListener('popstate', close);
+  // 27.x: после смены hash-маршрута меню может перерисоваться внутри shadow DOM, где наблюдатель не видит изменений
+  window.addEventListener('hashchange', () => { close(); setTimeout(ensureMenuItem, 800); });
 
   // ── Обработчики UI ────────────────────────────────────────────────────────
   // Клик по показателю обзора или ссылке с data-drill: выборка в панели
@@ -1835,12 +1893,12 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
       if (moQueued) return; moQueued = true;
       requestAnimationFrame(() => {
         moQueued = false;
-        const mi = document.getElementById('vr-menu-item');
+        const mi = menuItem();
         if (!mi) ensureMenuItem();
-        else { const f = findAnchorItem(); if (f && f.where === 'afterend' && mi.previousElementSibling !== f.el) f.el.insertAdjacentElement('afterend', mi); }
+        else if (!VR.isLegacyUi()) { const f = findAnchorItem(); if (f && f.where === 'afterend' && mi.previousElementSibling !== f.el) f.el.insertAdjacentElement('afterend', mi); }
         if (opened) positionRoot();
       });
     }).observe(document.body, { childList: true, subtree: true });
   });
-  chrome.storage.onChanged.addListener((ch, area) => { if (area === 'sync' && (ch.host || ch.token || ch.port)) VR.loadConfig(); });
+  chrome.storage.onChanged.addListener((ch, area) => { if (area === 'sync' && (ch.host || ch.token || ch.port)) { VR.loadConfig(); VR.resetProduct(); } });
 })(window.VR);

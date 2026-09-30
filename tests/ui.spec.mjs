@@ -508,3 +508,81 @@ test('Штатная карточка экземпляра: кнопка Jira ч
   expect(await page.evaluate(() => window.__tags)).toEqual([{ ids: [B], tag: 'jira:VM-101' }]);
   await expect(btn).toBeDisabled();
 });
+
+test('Интерфейс 27.x: пункт в горизонтальном меню, область под шапкой, инвентаризация недоступна, hash-маршруты', async ({ page }) => {
+  await page.goto('/tests/uitest/?ui=legacy&theme=light#/assets?viewMode=list&assetId=a-1&tabName=summary');
+  // Пункт «Устранение» вставлен в shadow DOM меню сразу после «Активы»
+  const item = page.locator('ipn-navbar #vr-menu-item');
+  await expect(item).toHaveText(/Устранение/);
+  // Пункт стоит в собственной секции меню сразу после секции «Активы» (внутри одной секции пункты встают столбиком)
+  expect(await item.evaluate(el => [el.parentElement.tagName, el.parentElement.children.length, el.parentElement.previousElementSibling?.textContent.trim()])).toEqual(['IPN-NAVBAR-SECTION', 1, 'Активы']);
+  const rows = await page.locator('ipn-navbar a.mc-navbar-item').evaluateAll(els => new Set(els.map(e => Math.round(e.getBoundingClientRect().top))).size);
+  expect(rows).toBe(1);
+  await item.click();
+  await expect(page.locator('#vr-root')).toBeVisible();
+  // Область занимает всю ширину под меню высотой 48 px
+  const box = await page.locator('#vr-root').evaluate(el => { const r = el.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.left)]; });
+  expect(box).toEqual([48, 0]);
+  await expect(item).toHaveClass(/mc-active/);
+  await expect(page.locator('ipn-navbar a.mc-navbar-item', { hasText: 'Активы' })).not.toHaveClass(/mc-active/);
+  await expect(page.locator('#sub')).toHaveText(/27\.6\.33103/);
+  // Инвентаризация: вместо правил объяснение, что теги активов появились в 28.0
+  await page.locator('.tabs button[data-t="inv"]').click();
+  await expect(page.locator('#i-legacy')).toBeVisible();
+  await expect(page.locator('#i-legacy')).toContainText('27.6.33103');
+  await expect(page.locator('#i-main')).toBeHidden();
+  // Выборка по показателю: ссылка в список активов с hash-маршрутом, queryId «Все активы» и select
+  await page.locator('.tabs button[data-t="overview"]').click();
+  await run(page, 'm-run');
+  await page.locator('#m-out [data-drill="overdue"]').click();
+  const link = page.locator('#m-drill a.btn', { hasText: 'Открыть в MaxPatrol' });
+  await expect(link).toBeVisible();
+  const href = await link.getAttribute('href');
+  expect(href).toMatch(/\/#\/assets\?groupId=00000000-0000-0000-0000-000000000002&queryId=q-all&pdqlQuery=/);
+  expect(decodeURIComponent(href)).toMatch(/select\(/);
+  await expect(page.locator('#m-drill a.lnk[href*="vulnerability-passport"]').first()).toHaveAttribute('href', /\/#\/assets\/vulnerability-passport\?vulnerabilityId=/);
+  await expect(page.locator('#m-drill a.lnk[href*="assetId="]').first()).toHaveAttribute('href', /\/#\/assets\?viewMode=list&groupId=.*&assetId=/);
+  // Проекты (метки экземпляров) в 27.x доступны: кнопка «В проект» на месте
+  await expect(page.locator('#m-drill [data-a=proj]')).toBeVisible();
+  await audit(page);
+  // Клик по другому пункту меню закрывает область и возвращает ему активность
+  await page.locator('ipn-navbar a.mc-navbar-item', { hasText: 'Активы' }).click();
+  await expect(page.locator('#vr-root')).toBeHidden();
+  await expect(page.locator('ipn-navbar a.mc-navbar-item', { hasText: 'Активы' })).toHaveClass(/mc-active/);
+  await expect(item).not.toHaveClass(/mc-active/);
+  // Повторное открытие с клавиатуры
+  await item.focus(); await page.keyboard.press('Enter');
+  await expect(page.locator('#vr-root')).toBeVisible();
+});
+
+test('Интерфейс 27.x: блок в карточке экземпляра внутри shadow DOM, экземпляр из hash', async ({ page }) => {
+  const A = '1e5566a8e0c000010000000000000012_1e5566a8e0c000010000000000000012_1e1e0794348140010000000000052b21';
+  await page.goto('/tests/uitest/?ui=legacy&theme=light#/assets/vulnerability-card?vulnerabilityId=1e1e0794-3481-4001-0000-000000052b21&vulnerabilityInstanceId=' + A);
+  await page.locator('ipn-navbar #vr-menu-item').waitFor();
+  await page.evaluate(() => {
+    // Оболочка 27.x: контент внутри shadow root, как ips-shell-remote-app
+    const host = document.createElement('div'); host.id = 'legacy-shell'; host.attachShadow({ mode: 'open' });
+    document.querySelector('main').appendChild(host);
+    chrome.runtime.getURL = path => '/' + path;
+    window.__created = [];
+    const x = window.VR.ext; window.VR.ext = async (op, p) => { if (op === 'jira-create') window.__created.push(p); return x(op, p); };
+  });
+  await page.addScriptTag({ url: '/content/cards.js' });
+  // Карточка отрисовывается позже и только внутри shadow root: наблюдатель за document.body этого не видит
+  await page.waitForTimeout(1500);
+  await page.evaluate(() => {
+    document.getElementById('legacy-shell').shadowRoot.innerHTML = '<div class="vulner"><div class="vulner__title">Уязвимость CVE-2025-49723</div><div class="vulner__primary-info"><div class="vulner-info-section"><div class="vulner-info-section__title">Описание</div><div>Описание</div></div><div class="vulner-info-section"><div class="vulner-info-section__title">Как исправить</div><div>Обновите</div></div><div class="vulner-info-section"><div class="vulner-info-section__title">Ссылки</div><div><a href="https://nvd.nist.gov/vuln/detail/CVE-2025-49723">nvd</a></div></div></div></div>';
+  });
+  const btn = page.locator('#legacy-shell .vr-cb [data-act=jira-inst]');
+  await expect(btn).toHaveCount(1, { timeout: 8000 });
+  await expect(page.locator('#legacy-shell .vr-cb')).toHaveCount(1);
+  page.once('dialog', d => d.accept());
+  await btn.click();
+  await expect(page.locator('#legacy-shell .vr-cb [data-role=st]')).toContainText('VM-101');
+  const created = await page.evaluate(() => window.__created);
+  expect(created).toHaveLength(1);
+  expect(created[0].ids).toEqual([A]);
+  // Повторные проверки по таймеру не дублируют блок
+  await page.waitForTimeout(2500);
+  await expect(page.locator('#legacy-shell .vr-cb')).toHaveCount(1);
+});

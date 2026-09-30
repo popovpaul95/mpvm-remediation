@@ -35,6 +35,21 @@
 <script>
 (async () => {
   document.documentElement.className = new URLSearchParams(location.search).get('theme') === 'light' ? 'kbq-light' : 'kbq-dark';
+  // ?ui=legacy: интерфейс 27.x (горизонтальное меню <ipn-navbar> с shadow DOM, hash-маршруты #/...)
+  const legacyUi = new URLSearchParams(location.search).get('ui') === 'legacy';
+  if (legacyUi) {
+    // В 27.x нет токенов Koobiq: панель должна выглядеть прилично на запасных цветах
+    document.querySelectorAll('link[href*="koobiq"]').forEach(l => l.remove());
+    document.documentElement.className = 'theme-light';
+    document.body.style.background = '#eef1f5'; document.body.style.color = '#21232b';
+    document.querySelector('nav.kbq-navbar').remove();
+    document.body.style.flexDirection = 'column';
+    const nb = document.createElement('ipn-navbar'); nb.className = 'navbar-root theme-light';
+    const item = (title, href, active) => `<ipn-navbar-section><a mc-navbar-item="" class="mc-navbar-item mc-navbar-focusable-item mc-horizontal${active ? ' mc-active' : ''}" tabindex="-1" href="${href}"><div class="mc-navbar-item__container"><div class="mc-navbar-item__title"><mc-navbar-title class="mc-navbar-title"> ${title} </mc-navbar-title></div></div><div class="mc-navbar-item__overlay"></div></a></ipn-navbar-section>`;
+    nb.attachShadow({ mode: 'open' }).innerHTML = `<style>:host { display: block; height: 48px; background: #1d4b78; color: #fff; font: 14px -apple-system, "Segoe UI", sans-serif; } .bar { display: flex; align-items: center; height: 48px; padding: 0 12px; } .mc-navbar-brand { font-weight: 700; margin-right: 16px; color: #fff; text-decoration: none; } ipn-navbar-section { display: flex; flex-direction: column; } .mc-navbar-item { display: inline-flex; align-items: center; height: 48px; padding: 0 12px; color: #dfe7f0; text-decoration: none; } .mc-navbar-item:hover { color: #fff; } .mc-navbar-item.mc-active { background: #0f3557; color: #fff; }</style>
+      <div class="bar"><a class="mc-navbar-brand mc-horizontal" href="#/dashboards/dashboard">MaxPatrol 10</a>${item('Дашборды', '#/dashboards/dashboard')}${item('Активы', '#/assets', true)}${item('События', '#/events/view')}${item('Система', '#/system')}</div>`;
+    document.body.prepend(nb);
+  }
   const fx = await fetch('fixtures.json').then(r => r.json());
   const settings = { jiraUrl: 'https://jira.example', jiraToken: 'x', jiraProject: 'VM', jiraAuth: 'bearer', jiraIssueType: 'Task', jiraLabels: 'maxpatrol-vm', jiraTagInstances: true, epssEnabled: true, kevEnabled: true, nvdEnabled: true, nvdApiKey: '', ghEnabled: false, ghToken: '', slaCritDays: 1, slaHighDays: 7, slaMedDays: 30, slaLowDays: 90, queueLimit: 300 };
   const delay = ms => new Promise(r => setTimeout(r, ms));
@@ -65,7 +80,8 @@
   };
   for (const f of ['content/api.js', 'content/logic.js', 'content/reports.js']) await new Promise((res, rej) => { const s = document.createElement('script'); s.src = '../../' + f + '?' + Date.now(); s.onload = res; s.onerror = rej; document.body.appendChild(s); });
   // Данные MaxPatrol подменяем фикстурами реального стенда
-  window.VR.systemInfo = async () => ({ productVersion: '28.0.42578 (мок)' });
+  window.VR.systemInfo = async () => ({ productVersion: legacyUi ? '27.6.33103' : '28.0.42578 (мок)' });
+  if (legacyUi) { const realGet = window.VR.get; window.VR.get = async (p, params) => p.includes('/stored_queries/folders/queries') ? { nodes: [{ id: 'q-all', displayName: 'Все активы' }] } : realGet(p, params); }
   window.VR.queue = async ({ scope }) => { await delay(400); return { packages: fx.queuePkg, os: fx.queueOs, images: fx.queueImages }[scope] || fx.queue; };
   window.VR.queueDetail = async ({ scope }) => { await delay(300); return { packages: fx.detailPkg, os: fx.detailOs, images: fx.detailImages }[scope] || fx.detail; };
   window.VR.drill = async ({ pdql, limit }) => { await delay(400); return { ...fx.drillOpen, pdql, truncated: true }; };

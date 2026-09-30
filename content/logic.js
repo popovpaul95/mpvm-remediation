@@ -109,8 +109,23 @@
 
   // GUID паспорта уязвимости из составного Id экземпляра (asset_object_vuln)
   VR.vulnGuid = id => { const s = String(id || '').split('_')[2] || ''; return /^[0-9a-f]{32}$/i.test(s) ? s.replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, '$1-$2-$3-$4-$5') : null; };
-  VR.passportUrl = guid => guid ? `${location.origin}/mpx/vm/vulnerability-passport-card?vulnerabilityId=${guid}` : null;
-  VR.assetUrl = assetId => assetId ? `${location.origin}/mpx/common/am/assets?groupId=00000000-0000-0000-0000-000000000002&viewMode=list&assetId=${assetId}&tabName=summary` : null;
+  // Адреса штатных экранов. 28.0: /mpx/vm/... и /mpx/common/am/assets; 27.x: hash-маршруты #/assets/...
+  const ROOT_GROUP = '00000000-0000-0000-0000-000000000002';
+  VR.passportUrl = guid => !guid ? null : VR.isLegacyUi()
+    ? `${location.origin}/#/assets/vulnerability-passport?vulnerabilityId=${guid}`
+    : `${location.origin}/mpx/vm/vulnerability-passport-card?vulnerabilityId=${guid}`;
+  VR.assetUrl = assetId => !assetId ? null : VR.isLegacyUi()
+    ? `${location.origin}/#/assets?viewMode=list&groupId=${ROOT_GROUP}&assetId=${assetId}&tabName=summary`
+    : `${location.origin}/mpx/common/am/assets?groupId=${ROOT_GROUP}&viewMode=list&assetId=${assetId}&tabName=summary`;
+  // Список активов с PDQL из адреса. В обоих поколениях параметр pdqlQuery (pdql игнорируется); в 27.x к нему обязательны
+  // идентификатор сохраненного запроса «Все активы» (queryId) и select в запросе, иначе «не удалось преобразовать запрос»
+  VR.listUrl = pdql => {
+    let q = String(pdql || '').trim();
+    if (!VR.isLegacyUi()) return `${location.origin}/mpx/common/am/assets?groupId=${ROOT_GROUP}&pdqlQuery=${encodeURIComponent(q)}`;
+    if (!/(^|\|)\s*select\s*\(/i.test(q)) q += ' | select(@Host)';
+    const qid = VR.defaultQueryId ? VR.defaultQueryId() : null;
+    return `${location.origin}/#/assets?groupId=${ROOT_GROUP}${qid ? '&queryId=' + qid : ''}&pdqlQuery=${encodeURIComponent(q)}`;
+  };
   VR.kevUrl = cve => `https://www.cisa.gov/known-exploited-vulnerabilities-catalog?search_api_fulltext=${encodeURIComponent(cve)}`;
   // Паспорт уязвимости (описание, рекомендации по устранению)
   VR.passport = async guid => VR.get(`/api/assets_temporal_readmodel/v1/vulnerabilities/${guid}`);
@@ -198,7 +213,10 @@
   // /mpx/vm/vulnerability-card?vulnerabilityId=<guid паспорта>&vulnerabilityInstanceId=<Id>
   const hex32ToGuid = s => /^[0-9a-f]{32}$/i.test(s || '') ? s.replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, '$1-$2-$3-$4-$5') : null;
   VR.instanceAssetGuid = id => hex32ToGuid(String(id || '').split('_')[0]);
-  VR.instanceUrl = id => { const g = VR.vulnGuid(id); return g ? `${location.origin}/mpx/vm/vulnerability-card?vulnerabilityId=${g}&vulnerabilityInstanceId=${id}` : null; };
+  VR.instanceUrl = id => {
+    const g = VR.vulnGuid(id); if (!g) return null;
+    return VR.isLegacyUi() ? `${location.origin}/#/assets/vulnerability-card?vulnerabilityId=${g}&vulnerabilityInstanceId=${id}` : `${location.origin}/mpx/vm/vulnerability-card?vulnerabilityId=${g}&vulnerabilityInstanceId=${id}`;
+  };
   VR.cveInstances = async ({ cve, assetId, limit = 50 } = {}) => {
     if (!cve) throw new Error('Не указан CVE');
     if (assetId && !/^[0-9a-f-]{36}$/i.test(assetId)) throw new Error('Некорректный идентификатор актива');
@@ -695,6 +713,7 @@
   // Теги по списку id активов (для тегов auto:risk-* по рассчитанному риску)
   // count: успешно обработанные активы, failed: активы с ошибкой PUT, requested: всего в выборке
   VR.assignAssetTagsByIds = async ({ ids, addIds = [], removeIds = [], onProgress }) => {
+    VR.requireAssetTags();
     const q = [...new Set((ids || []).filter(Boolean))]; const requested = q.length; let ok = 0, failed = 0, errors = [];
     const worker = async () => { while (q.length) { const id = q.shift(); try { await VR.put(`/api/tags/v1/entities/asset/${id}`, { tagIdsToAdd: addIds, tagIdsToRemove: removeIds }); ok++; } catch (e) { failed++; if (errors.length < 3) errors.push(e.message); } if (onProgress && (ok + failed) % 10 === 0) onProgress(ok + failed); } };
     await Promise.all(Array.from({ length: 8 }, worker));
@@ -709,9 +728,10 @@
     for (const z of zones) { const ids = result.assets.filter(a => a.zone === z).map(a => a.id); const r = await VR.assignAssetTagsByIds({ ids, addIds: [tagIds[z]], removeIds: zones.filter(x => x !== z).map(x => tagIds[x]), onProgress }); out.push({ zone: z, ...r }); }
     return out;
   };
-  VR.assetTags = () => VR.get('/api/tags/v1/asset/tags');
-  VR.createAssetTag = (name, color) => VR.post('/api/tags/v1/asset/tags', { name, color: color || 'grey' });
-  VR.deleteAssetTag = id => VR.del(`/api/tags/v1/asset/tags/${id}`);
+  // Теги активов есть только с 28.0 (VR.requireAssetTags бросает понятную ошибку на 27.x)
+  VR.assetTags = async () => { VR.requireAssetTags(); return VR.get('/api/tags/v1/asset/tags'); };
+  VR.createAssetTag = async (name, color) => { VR.requireAssetTags(); return VR.post('/api/tags/v1/asset/tags', { name, color: color || 'grey' }); };
+  VR.deleteAssetTag = async id => { VR.requireAssetTags(); return VR.del(`/api/tags/v1/asset/tags/${id}`); };
   // Назначить/снять теги активам по PDQL-выборке. Батч по selectionId (как делает грид активов) сервер 28.0
   // принимает (202), но на стенде не применяет, поэтому надежный путь: список узлов по PDQL и PUT по каждому
   // (/api/tags/v1/entities/asset/{id}), 8 запросов параллельно. Возвращает число обработанных узлов.
@@ -747,6 +767,7 @@
     return results;
   };
   VR.tagCoverage = async () => {
+    VR.requireAssetTags();
     const rows = VR.rows(await VR.pdql('filter(Host.@Tags) | select(@Host, Host.@Tags.Item as Tag) | group(Tag, COUNT(*) as N)', 500, 0));
     return rows.map(r => { const v = VR.getVal(r, 'Tag'); return { tag: v && typeof v === 'object' ? (v.displayName || '') : String(v ?? ''), n: VR.num(VR.rowVal(r, 'N')) || 0 }; }).filter(x => x.tag).sort((a, b) => b.n - a.n);
   };

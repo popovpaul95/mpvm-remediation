@@ -139,7 +139,7 @@
       const container = cardContainer(h);
       const id = cardIdentity(container);
       if (!id.cve && !id.bdu && !id.name) continue;
-      const instId = new URLSearchParams(location.search).get('vulnerabilityInstanceId') || '';
+      const instId = VR.pageParams().get('vulnerabilityInstanceId') || '';
       ensureStyleIn(h.getRootNode());
       const box = document.createElement('div');
       box.className = (section.className.includes('vulner-info-section') ? 'vulner-info-section ' : '') + 'vr-cb'; box.dataset.kind = 'vuln';
@@ -154,7 +154,7 @@
           const s = await VR.ext('settings-get');
           if (!s.jiraUrl || !s.jiraToken || !s.jiraProject) throw new Error('Заполните Jira в настройках расширения (пункт «Устранение», вкладка «Настройки»)');
           // Идентификатор экземпляра и CVE читаются в момент клика: при переходе внутри интерфейса блок не пересоздается
-          const instNow = new URLSearchParams(location.search).get('vulnerabilityInstanceId') || '';
+          const instNow = VR.pageParams().get('vulnerabilityInstanceId') || '';
           if (!instNow) throw new Error('В адресе страницы нет идентификатора экземпляра: откройте карточку экземпляра заново');
           const idNow = cardIdentity(container); const cveNow = idNow.cve || id.cve;
           const ctx = await VR.instanceContext({ cve: cveNow, instanceId: instNow });
@@ -184,7 +184,7 @@
   }
 
   // ── Кнопка выгрузки уязвимостей актива ────────────────────────────────────
-  function assetIdFromUrl() { return new URLSearchParams(location.search).get('assetId'); }
+  function assetIdFromUrl() { return VR.pageParams().get('assetId'); }
   async function exportAssetVulns(assetId, btn, st) {
     btn.disabled = true; st.textContent = 'PDQL...';
     try {
@@ -249,6 +249,12 @@
     try { const s = await VR.ext('settings-get'); injectSameTab(s.sameTabLinks !== false); } catch (_) {}
     schedule();
     new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true });
+    // В 27.x весь контент живет внутри shadow DOM: наблюдатель за document.body его перерисовок не видит,
+    // поэтому дополнительно реагируем на смену hash-маршрута и раз в 2 с проверяем карточку (обход дешевый,
+    // выполняется и в фоновой вкладке: блок должен быть на месте к моменту, когда пользователь в нее вернется)
+    window.addEventListener('hashchange', schedule);
+    window.addEventListener('popstate', schedule);
+    setInterval(schedule, 2000);
     chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch.vr_settings) injectSameTab(ch.vr_settings.newValue?.sameTabLinks !== false); });
   });
 })(window.VR);

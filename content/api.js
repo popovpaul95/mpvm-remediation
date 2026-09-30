@@ -68,6 +68,47 @@ window.VR = window.VR || {};
 
   VR.systemInfo = () => VR.get('/api/deployment_configuration/v1/system_info');
 
+  // ── Поколение интерфейса и версия продукта ────────────────────────────────
+  // 28.0: Koobiq, маршруты /mpx/..., вертикальное меню <platform-nav-bar>; 27.x: hash-маршруты #/..., горизонтальное
+  // меню <ipn-navbar> (shadow DOM). Определяется по странице, чтобы работать до ответа сервера о версии.
+  VR.isLegacyUi = () => {
+    try {
+      if (typeof document !== 'undefined' && document.querySelector && document.querySelector('ipn-navbar')) return true;
+      return /^#\//.test(String(location.hash || '')) && !/^\/mpx(\/|$)/.test(String(location.pathname || ''));
+    } catch (_) { return false; }
+  };
+  // Параметры страницы: в 28.0 они в строке запроса, в 27.x внутри hash (#/assets?assetId=...)
+  VR.pageParams = () => {
+    const q = new URLSearchParams(String(location.search || ''));
+    const h = String(location.hash || ''); const i = h.indexOf('?');
+    if (i !== -1) new URLSearchParams(h.slice(i + 1)).forEach((v, k) => { if (!q.has(k)) q.set(k, v); });
+    return q;
+  };
+  // Версия продукта с кэшем: { version: '27.6.33103', major: 27, minor: 6 }
+  let productCache = null;
+  VR.product = async () => {
+    if (productCache) return productCache;
+    const d = await VR.systemInfo();
+    const version = String(d?.productVersion || d?.version || '');
+    const m = version.match(/^(\d+)(?:\.(\d+))?/);
+    productCache = { version, major: m ? parseInt(m[1], 10) : 0, minor: m && m[2] ? parseInt(m[2], 10) : 0 };
+    return productCache;
+  };
+  VR.productCached = () => productCache;
+  VR.resetProduct = () => { productCache = null; defaultQueryId = null; };
+  // Теги активов появились в 28.0: до ответа о версии судим по поколению интерфейса
+  VR.hasAssetTags = () => productCache ? productCache.major >= 28 : !VR.isLegacyUi();
+  VR.requireAssetTags = () => { if (!VR.hasAssetTags()) throw new Error(`Теги активов появились в MaxPatrol VM 28.0${productCache ? ' (на сервере ' + productCache.version + ')' : ''}: на этой версии операция недоступна`); };
+  // Список активов 27.x открывает PDQL из адреса только вместе с идентификатором сохраненного запроса («Все активы»)
+  let defaultQueryId = null;
+  VR.defaultQueryId = () => defaultQueryId;
+  VR.ensureDefaultQuery = async () => {
+    if (defaultQueryId || !VR.isLegacyUi()) return defaultQueryId;
+    try { const d = await VR.get('/api/assets_temporal_readmodel/v1/stored_queries/folders/queries'); defaultQueryId = d?.nodes?.[0]?.id || null; }
+    catch (e) { console.warn('[vr] запрос «Все активы» не получен:', e.message); }
+    return defaultQueryId;
+  };
+
   VR.getVal = (obj, key) => {
     if (obj == null) return '';
     if (Object.prototype.hasOwnProperty.call(obj, key)) return obj[key];
