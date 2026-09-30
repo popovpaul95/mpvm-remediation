@@ -34,3 +34,17 @@ button:disabled { color: var(--kbq-states-foreground-disabled, #9299a6); backgro
 .step { color: var(--kbq-foreground-theme, #1769e0); font-size: 18px; }
 .guide strong { color: var(--kbq-foreground-contrast, #222530); font-weight: 500; }
 footer { padding: 12px 24px; border-top: 1px solid var(--kbq-line-contrast-less, #e4e7ec); color: var(--popup-muted); font-size: 11px; }
+/* Список серверов */
+.servers { display: flex; flex-direction: column; gap: 12px; }
+.srv { display: flex; flex-direction: column; gap: 12px; padding: 14px; border: 1px solid var(--kbq-line-contrast-less, #e4e7ec); border-radius: 10px; background: var(--kbq-background-card, #fff); }
+.srv-head { display: flex; align-items: center; gap: 8px; }
+.srv-title { font-weight: 600; font-size: 13px; }
+.srv-badge { font-size: 11px; padding: 1px 7px; border-radius: 5px; color: var(--kbq-foreground-success, #278112); background: var(--kbq-background-success-less, #edf8e9); }
+button.link { margin-left: auto; min-height: 24px; padding: 2px 6px; background: transparent; color: var(--popup-muted); font-weight: 400; }
+button.link:hover { color: var(--kbq-foreground-error, #bd2819); background: transparent; }
+.srv-actions { display: flex; flex-direction: column; gap: 8px; }
+.srv-st { font-size: 12px; line-height: 18px; overflow-wrap: anywhere; color: var(--popup-muted); }
+.srv-st:empty { display: none; }
+.srv-st.ok { color: var(--kbq-foreground-success, #278112); }
+.srv-st.err { color: var(--kbq-foreground-error, #bd2819); }
+.srv-st button { margin-top: 6px; }

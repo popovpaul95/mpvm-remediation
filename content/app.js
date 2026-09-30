@@ -1886,7 +1886,7 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
   // ── Запуск ────────────────────────────────────────────────────────────────
   VR.loadConfig().then(() => {
     console.info('[vr] настройки прочитаны, хост', VR.config().host || '(пусто)', 'страница', location.hostname);
-    if (!VR.isConfiguredHost()) { console.info('[vr] хост страницы не совпадает с настройками расширения, модуль не активен'); return; }
+    if (!VR.isConfiguredHost()) { console.info('[vr] для хоста страницы нет сервера в настройках расширения, модуль не активен; серверов в настройках:', VR.servers().length); return; }
     let tries = 0;
     const tick = () => { if (ensureMenuItem()) { console.info('[vr] пункт меню "Устранение" добавлен'); return; } if (++tries < 240) setTimeout(tick, 500); else console.warn('[vr] левое меню не найдено за 120 с'); };
     tick();
@@ -1903,5 +1903,5 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
       });
     }).observe(document.body, { childList: true, subtree: true });
   });
-  chrome.storage.onChanged.addListener((ch, area) => { if (area === 'sync' && (ch.host || ch.token || ch.port)) { VR.loadConfig(); VR.resetProduct(); } });
+  chrome.storage.onChanged.addListener((ch, area) => { if (area === 'sync' && (ch.servers || ch.host || ch.token || ch.port)) { VR.loadConfig(); VR.resetProduct(); } });
 })(window.VR);

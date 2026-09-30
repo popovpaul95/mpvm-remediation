@@ -160,32 +160,69 @@ test('Клавиатура, фильтры, экспорт, сохранение
   await expect(page.locator('#m-out .kpi')).toHaveCount(12);
 });
 
-test('Popup: светлая и тёмная тема, валидация, сохранение', async ({ page }) => {
+test('Popup: несколько серверов, миграция старых настроек, валидация, черновик, темы', async ({ page }) => {
   await page.addInitScript(() => {
-    const local = {}, sync = {};
+    // Хранилище переживает перезагрузку окна (как настоящее chrome.storage): держим его в sessionStorage
+    const store = name => ({ read: () => JSON.parse(sessionStorage.getItem(name) || 'null'), write: v => sessionStorage.setItem(name, JSON.stringify(v)) });
+    const S = store('sync'), L = store('local');
+    if (!S.read()) S.write({ host: 'legacy.example', port: '', token: 'legacy-token' });
+    if (!L.read()) L.write({});
+    Object.defineProperty(window, '__sync', { get: () => S.read() });
     window.chrome = {
       storage: {
-        sync: { get: (keys, cb) => cb(sync), set: (data, cb) => { Object.assign(sync, data); cb?.(); } },
-        local: { get: (keys, cb) => cb(local), set: data => Object.assign(local, data), remove: key => delete local[key] }
-      }, tabs: { query: (q, cb) => cb([]) }, runtime: {}
+        sync: { get: (keys, cb) => cb(S.read()), set: (data, cb) => { S.write({ ...S.read(), ...data }); cb?.(); }, remove: (keys, cb) => { const v = S.read(); keys.forEach(k => delete v[k]); S.write(v); cb?.(); } },
+        local: { get: (keys, cb) => cb(L.read()), set: data => L.write({ ...L.read(), ...data }), remove: key => { const v = L.read(); delete v[key]; L.write(v); } }
+      }, tabs: { query: (q, cb) => cb(q.active ? [{ url: 'https://second.example/#/assets' }] : []) }, runtime: {}
     };
-    window.fetch = async () => ({ ok: true, status: 200, json: async () => ({ productVersion: '28.0 (мок)' }) });
+    window.fetch = async url => ({ ok: true, status: 200, json: async () => ({ productVersion: url.includes('second.example') ? '27.6 (мок)' : '28.0 (мок)' }) });
   });
   await page.goto('/popup.html');
   await audit(page, null);
+  // Старые ключи host/token показаны как единственный сервер, кнопки удаления у единственного нет
+  await expect(page.locator('.srv')).toHaveCount(1);
+  await expect(page.locator('#host-0')).toHaveValue('legacy.example');
+  await expect(page.locator('#token-0')).toHaveValue('legacy-token');
+  await expect(page.locator('#del-0')).toBeHidden();
+  // Второй сервер: валидация пустых полей, порта и дубликата адреса
+  await page.locator('#add').click();
+  await expect(page.locator('.srv')).toHaveCount(2);
+  await expect(page.locator('#host-1')).toBeFocused();
   await page.locator('#save').click();
-  await expect(page.locator('#host')).toHaveAttribute('aria-invalid', 'true');
-  await expect(page.locator('#host')).toBeFocused();
-  await page.locator('#host').fill('demo.example');
-  await page.locator('#token').fill('test-only');
-  await page.locator('#port').fill('99999');
+  await expect(page.locator('#host-1')).toHaveAttribute('aria-invalid', 'true');
+  await expect(page.locator('#st')).toContainText('Сервер 2');
+  await page.locator('#host-1').fill('https://Legacy.example/');
+  await page.locator('#token-1').fill('t2');
   await page.locator('#save').click();
-  await expect(page.locator('#port')).toBeFocused();
-  await page.locator('#port').fill('');
+  await expect(page.locator('#st')).toContainText('уже есть в списке');
+  await page.locator('#host-1').fill('second.example');
+  await expect(page.locator('.srv').nth(1).locator('.srv-badge')).toBeVisible();
+  await page.locator('#port-1').fill('99999');
+  await page.locator('#save').click();
+  await expect(page.locator('#port-1')).toBeFocused();
+  await page.locator('#port-1').fill('');
   await page.locator('#save').click();
   await expect(page.locator('#st')).toHaveClass('st ok');
-  await page.locator('#test').click();
-  await expect(page.locator('#st')).toContainText('Подключено');
+  await expect(page.locator('#st')).toContainText('2 сервера');
+  // В хранилище массив servers без старых ключей
+  expect(await page.evaluate(() => window.__sync)).toEqual({ servers: [{ host: 'legacy.example', port: '', token: 'legacy-token' }, { host: 'second.example', port: '', token: 't2' }] });
+  // Проверка подключения конкретного сервера
+  await page.locator('#test-1').click();
+  await expect(page.locator('.srv').nth(1).locator('.srv-st')).toContainText('27.6');
+  await expect(page.locator('.srv').nth(0).locator('.srv-st')).toBeEmpty();
+  // Черновик: несохраненный третий сервер восстанавливается после закрытия окна
+  await page.locator('#add').click();
+  await page.locator('#host-2').fill('draft.example');
+  await page.waitForTimeout(300);
+  await page.reload();
+  await expect(page.locator('.srv')).toHaveCount(3);
+  await expect(page.locator('#host-2')).toHaveValue('draft.example');
+  await expect(page.locator('#st')).toContainText('Восстановлен');
+  // Удаление сервера
+  await page.locator('#del-2').click();
+  await expect(page.locator('.srv')).toHaveCount(2);
+  await page.locator('#save').click();
+  expect(await page.evaluate(() => window.__sync.servers.length)).toBe(2);
+  await page.screenshot({ path: 'tests/out/popup-servers.png', fullPage: true });
   await page.emulateMedia({ colorScheme: 'dark' });
   await expect(page.locator('html')).toHaveClass('kbq-dark');
   await audit(page, null);

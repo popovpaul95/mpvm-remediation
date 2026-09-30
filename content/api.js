@@ -3,16 +3,26 @@
 // Никакого OAuth и cookie-сессий: токен создается в PT MC (Токены доступа).
 window.VR = window.VR || {};
 (function (VR) {
-  let cfg = null;
+  let cfg = null, servers = [];
+  const normHost = v => String(v || '').trim().replace(/^https?:\/\//, '').split('/')[0].split(':')[0].toLowerCase();
 
-  VR.loadConfig = () => new Promise(res => chrome.storage.sync.get(['host', 'port', 'token'], c => { cfg = c || {}; res(cfg); }));
-  VR.config = () => cfg || {};
-
-  // Хост из настроек совпадает с хостом открытой страницы?
-  VR.isConfiguredHost = () => {
-    const raw = String(cfg?.host || '').replace(/^https?:\/\//, '').split('/')[0].split(':')[0].toLowerCase();
-    return !!raw && raw === location.hostname.toLowerCase();
+  // Настройки: список серверов servers: [{host, port, token}]; старые ключи host/port/token читаются как один сервер.
+  // Для страницы выбирается сервер с адресом, равным hostname вкладки, поэтому расширение работает на нескольких стендах сразу.
+  VR.normalizeServers = c => {
+    if (c && Array.isArray(c.servers) && c.servers.length) return c.servers.filter(s => s && s.host).map(s => ({ host: normHost(s.host), port: String(s.port || '').trim(), token: String(s.token || '').trim() }));
+    return c && c.host ? [{ host: normHost(c.host), port: String(c.port || '').trim(), token: String(c.token || '').trim() }] : [];
   };
+  VR.pickServer = (list, hostname) => { const h = String(hostname || '').toLowerCase(); return (list || []).find(s => s.host === h) || null; };
+  VR.loadConfig = () => new Promise(res => chrome.storage.sync.get(['servers', 'host', 'port', 'token'], c => {
+    servers = VR.normalizeServers(c || {});
+    cfg = VR.pickServer(servers, location.hostname) || {};
+    res(cfg);
+  }));
+  VR.config = () => cfg || {};
+  VR.servers = () => servers.map(s => ({ host: s.host, port: s.port }));
+
+  // Для открытой страницы есть сервер в настройках?
+  VR.isConfiguredHost = () => !!cfg?.host;
 
   const base = () => {
     const port = String(cfg?.port || '').trim();

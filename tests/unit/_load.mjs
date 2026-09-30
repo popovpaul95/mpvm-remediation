@@ -24,6 +24,7 @@ export function loadVR({ now, ext } = {}) {
   if (now) vm.runInContext(`var __RealDate = Date; Date = class extends __RealDate { constructor(...a) { super(...(a.length ? a : [${JSON.stringify(now)}])); } static now() { return new __RealDate(${JSON.stringify(now)}).getTime(); } };`, ctx);
   for (const f of ['content/api.js', 'content/logic.js', 'content/reports.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
   const VR = ctx.VR;
+  VR.raw = { get: VR.get, post: VR.post, put: VR.put, del: VR.del, pdql: VR.pdql }; // настоящие реализации для тестов транспорта
   VR.pdql = async (pdql, limit, offset) => { calls.pdql.push({ pdql, limit, offset }); return { records: [] }; };
   VR.get = async p => { calls.get.push(p); throw new Error('VR.get не подменен: ' + p); };
   VR.post = async (p, b) => { calls.post.push({ p, b }); throw new Error('VR.post не подменен: ' + p); };

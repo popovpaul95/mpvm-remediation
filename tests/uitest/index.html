@@ -54,7 +54,7 @@
   const settings = { jiraUrl: 'https://jira.example', jiraToken: 'x', jiraProject: 'VM', jiraAuth: 'bearer', jiraIssueType: 'Task', jiraLabels: 'maxpatrol-vm', jiraTagInstances: true, epssEnabled: true, kevEnabled: true, nvdEnabled: true, nvdApiKey: '', ghEnabled: false, ghToken: '', slaCritDays: 1, slaHighDays: 7, slaMedDays: 30, slaLowDays: 90, queueLimit: 300 };
   const delay = ms => new Promise(r => setTimeout(r, ms));
   window.chrome = {
-    storage: { sync: { get: (k, cb) => setTimeout(() => cb({ host: location.hostname, port: '', token: 'mock' }), 0) }, onChanged: { addListener() {} } },
+    storage: { sync: { get: (k, cb) => setTimeout(() => cb({ servers: [{ host: 'other.example', port: '', token: 'other' }, { host: location.hostname, port: '', token: 'mock' }] }), 0) }, onChanged: { addListener() {} } },
     runtime: {
       lastError: null, onMessage: { addListener() {} },
       sendMessage: (msg, cb) => { (async () => {

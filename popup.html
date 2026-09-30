@@ -16,19 +16,24 @@
     <span class="connection-label">API</span>
   </header>
   <main class="wrap">
-    <div class="intro"><h1>Подключение к серверу</h1><p>Укажите адрес MaxPatrol VM и персональный токен доступа.</p></div>
-    <div class="server-row">
-      <label for="host">Сервер<input type="text" id="host" name="host" placeholder="maxpvm.company.ru" autocomplete="url" spellcheck="false" autocapitalize="none" aria-describedby="host-hint"></label>
-      <label for="port">Порт<input type="text" id="port" name="port" placeholder="443" inputmode="numeric" maxlength="5" aria-describedby="host-hint"></label>
-    </div>
-    <p class="hint field-hint" id="host-hint">Пустой порт: как у страницы MaxPatrol VM.</p>
-    <label for="token">Персональный токен<input type="password" id="token" name="token" placeholder="Вставьте токен" autocomplete="off" spellcheck="false" aria-describedby="token-hint"></label>
-    <p class="hint field-hint" id="token-hint">Создайте в PT MC → Токены доступа.</p>
-    <div class="actions"><button class="acc" id="save" type="button">Сохранить</button><button id="test" type="button">Проверить подключение</button></div>
+    <div class="intro"><h1>Серверы MaxPatrol VM</h1><p>Для каждого сервера укажите адрес и персональный токен доступа. Расширение само выбирает сервер по адресу открытой вкладки.</p></div>
+    <div id="servers" class="servers" aria-live="polite"></div>
+    <div class="actions"><button class="acc" id="save" type="button">Сохранить</button><button id="add" type="button">Добавить сервер</button></div>
     <div class="st" id="st" role="status" aria-live="polite" aria-atomic="true"></div>
-    <div class="guide"><span class="step" aria-hidden="true">→</span><p>После сохранения обновите вкладку MaxPatrol VM. В левом меню появится раздел <strong>«Устранение»</strong>.</p></div>
+    <div class="guide"><span class="step" aria-hidden="true">→</span><p>После сохранения обновите вкладку MaxPatrol VM. В меню появится раздел <strong>«Устранение»</strong>. Токен создается в PT MC → Токены доступа; пустой порт означает порт страницы.</p></div>
   </main>
   <footer>Подключение по персональному токену · Лицензия MIT</footer>
+  <template id="srv-tpl">
+    <section class="srv" aria-label="Сервер">
+      <div class="srv-head"><span class="srv-title">Сервер</span><span class="srv-badge" hidden>открыт в текущей вкладке</span><button type="button" class="link del">Удалить</button></div>
+      <div class="server-row">
+        <label>Адрес<input type="text" data-k="host" placeholder="maxpvm.company.ru" autocomplete="url" spellcheck="false" autocapitalize="none"></label>
+        <label>Порт<input type="text" data-k="port" placeholder="443" inputmode="numeric" maxlength="5"></label>
+      </div>
+      <label>Персональный токен<input type="password" data-k="token" placeholder="Вставьте токен" autocomplete="off" spellcheck="false"></label>
+      <div class="srv-actions"><button type="button" class="test">Проверить подключение</button><span class="srv-st" role="status" aria-live="polite"></span></div>
+    </section>
+  </template>
   <script src="popup.js"></script>
 </body>
 </html>
