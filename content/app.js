@@ -986,11 +986,14 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
     const item = section ? clone.querySelector('a.mc-navbar-item') : clone;
     if (!item) return false;
     if (section) [...clone.children].forEach(c => { if (c !== item) c.remove(); });
-    item.id = 'vr-menu-item'; item.classList.remove('mc-active'); item.setAttribute('href', '#vr-remediation'); item.setAttribute('tabindex', '0');
+    // Без href: в hash-роутере переход по «#...» менял адрес и закрывал только что открытую область
+    item.id = 'vr-menu-item'; item.classList.remove('mc-active'); item.removeAttribute('href'); item.setAttribute('role', 'button'); item.setAttribute('tabindex', '0');
     item.removeAttribute('routerlink'); item.removeAttribute('ng-reflect-router-link');
     const title = item.querySelector('mc-navbar-title, .mc-navbar-title'); if (title) title.textContent = ' Устранение ';
     item.title = 'Устранение уязвимостей: очередь по решениям, внешние сигналы, метрики процесса';
-    item.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); opened ? close() : open(); }, true);
+    const toggle = e => { e.preventDefault(); e.stopPropagation(); opened ? close() : open(); };
+    item.addEventListener('click', toggle, true);
+    item.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') toggle(e); }, true);
     (section || anchor).insertAdjacentElement('afterend', clone);
     return true;
   }
@@ -1045,7 +1048,7 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
   }, true);
   window.addEventListener('popstate', close);
   // 27.x: после смены hash-маршрута меню может перерисоваться внутри shadow DOM, где наблюдатель не видит изменений
-  window.addEventListener('hashchange', () => { close(); setTimeout(ensureMenuItem, 800); });
+  window.addEventListener('hashchange', () => { if (location.hash === '#vr-remediation') return; close(); setTimeout(ensureMenuItem, 800); });
 
   // ── Обработчики UI ────────────────────────────────────────────────────────
   // Клик по показателю обзора или ссылке с data-drill: выборка в панели
