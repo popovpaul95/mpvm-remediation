@@ -188,6 +188,26 @@
   // Локальная дата YYYY-MM-DD (не UTC): срок «завтра» ночью по Москве не должен превращаться в «сегодня»
   VR.localDate = d => { const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
   VR.plusDays = n => { const x = new Date(); x.setDate(x.getDate() + (n || 0)); return VR.localDate(x); };
+  // Даты для показа: ДД-ММ-ГГГГ (и ЧЧ:ММ). Чистая дата ГГГГ-ММ-ДД и полночь UTC переставляются как есть, дата со временем
+  // переводится в локальное время. Технические значения (duedate Jira, input type=date, имена файлов) остаются в ISO.
+  const swapIso = s => `${s.slice(8, 10)}-${s.slice(5, 7)}-${s.slice(0, 4)}`;
+  VR.fmtDate = v => {
+    if (v == null || v === '') return '';
+    if (typeof v === 'object' && typeof v.getTime === 'function') return Number.isNaN(v.getTime()) ? '' : swapIso(VR.localDate(v));
+    if (typeof v === 'number') return VR.fmtDate(new Date(v));
+    const s = String(v).trim();
+    if (!/^\d{4}-\d{2}-\d{2}(?:$|[T ])/.test(s)) return s;
+    if (s.length === 10 || /[T ]00:00:00(?:\.0+)?Z?$/.test(s)) return swapIso(s);
+    const d = new Date(s.replace(' ', 'T'));
+    return Number.isNaN(d.getTime()) ? swapIso(s) : swapIso(VR.localDate(d));
+  };
+  VR.fmtDateTime = v => {
+    if (v == null || v === '') return '';
+    const d = typeof v === 'object' && typeof v.getTime === 'function' ? v : new Date(typeof v === 'string' ? v.trim().replace(' ', 'T') : v);
+    if (Number.isNaN(d.getTime())) return VR.fmtDate(v);
+    const p = n => String(n).padStart(2, '0');
+    return `${swapIso(VR.localDate(d))} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  };
   // Метка Jira по названию ПО: транслитерация кириллицы, при пустом результате короткий хеш (метки разных продуктов не совпадают)
   const TRANSLIT = { а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z', и: 'i', й: 'j', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'h', ц: 'c', ч: 'ch', ш: 'sh', щ: 'sch', ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya' };
   VR.jiraLabel = soft => {
@@ -328,14 +348,14 @@
     const description = [
       'h2. Что сделать',
       `На активе *${it.host}* (значимость ${impRu[it.imp] || it.imp}${it.os ? ', ' + it.os : ''}) ${what}${target ? `: ${det?.versionLabel || 'версия'} должна стать не ниже *${fix.min?.version || target}*${fix.recommended && fix.recommended.version !== fix.min?.version ? ` (рекомендуется актуальная *${fix.recommended.version}*${fix.recommended.kb ? ', ' + fix.recommended.kb : ''})` : ''}` : ''}.`,
-      `Приоритет *${level}*, срок задачи до ${dueDate} (${days} дн)${(() => { const sd = VR.slaDue({ found: it.found, sev: it.sev, st: it.st, sla }); return sd.dueDate ? `; срок по SLA от даты обнаружения ${sd.dueDate}${sd.overdue ? ' (просрочен)' : ''}` : ''; })()}. Уязвимость *${ctx.passport?.title || it.name}* (${cve}), оценка в MaxPatrol ${ctx.metrics?.overall ?? it.score}${r?.nvd?.cvss31?.score != null ? ` (базовая CVSS 3.1 по NVD ${r.nvd.cvss31.score})` : ''}${kev ? ', в каталоге CISA KEV (эксплуатируется в атаках)' : ''}${trend ? ', трендовая по экспертизе PT' : ''}${it.expl ? ', есть публичный эксплойт' : ''}.`,
+      `Приоритет *${level}*, срок задачи до ${VR.fmtDate(dueDate)} (${days} дн)${(() => { const sd = VR.slaDue({ found: it.found, sev: it.sev, st: it.st, sla }); return sd.dueDate ? `; срок по SLA от даты обнаружения ${VR.fmtDate(sd.dueDate)}${sd.overdue ? ' (просрочен)' : ''}` : ''; })()}. Уязвимость *${ctx.passport?.title || it.name}* (${cve}), оценка в MaxPatrol ${ctx.metrics?.overall ?? it.score}${r?.nvd?.cvss31?.score != null ? ` (базовая CVSS 3.1 по NVD ${r.nvd.cvss31.score})` : ''}${kev ? ', в каталоге CISA KEV (эксплуатируется в атаках)' : ''}${trend ? ', трендовая по экспертизе PT' : ''}${it.expl ? ', есть публичный эксплойт' : ''}.`,
       '',
       ...(det ? ['h2. Где найдена', `Продукт: ${det.product}${det.os ? `, ${det.os}` : ''}${det.release ? ` ${det.release}` : ''}${det.arch ? `, ${det.arch}` : ''}${det.installType ? `, ${det.installType}` : ''}.`, ...det.conditions.filter(c => c.required != null).map(c => `${c.name}: ${c.value} (требуется ${c.strict ? '>=' : '>'} ${c.required})`), ''] : []),
-      ...(ctx.patch ? ['h2. Патч', `${ctx.patch.name}${ctx.patch.date ? ` от ${String(ctx.patch.date).slice(0, 10)}` : ''}${ctx.patch.url ? `: ${ctx.patch.url}` : ''}`, ''] : []),
+      ...(ctx.patch ? ['h2. Патч', `${ctx.patch.name}${ctx.patch.date ? ` от ${VR.fmtDate(ctx.patch.date)}` : ''}${ctx.patch.url ? `: ${ctx.patch.url}` : ''}`, ''] : []),
       ...(fix.options.length ? ['h2. Версии из рекомендации Positive Technologies (ветка текущей версии)', ...fix.options.map(o => `* ${o.version}${o.kb ? ' (' + o.kb + ')' : ''}`), ''] : []),
       ...(ctx.passport?.howToFix ? ['h2. Как исправить (паспорт уязвимости)', String(ctx.passport.howToFix).replace(/\s+/g, ' ').slice(0, 600), ''] : []),
       'h2. Внешние сигналы',
-      `EPSS: ${r?.epss?.epss != null ? (r.epss.epss * 100).toFixed(1) + '%' : 'нет данных'}; CISA KEV: ${kev ? 'да, с ' + (r.kev.dateAdded || '') : 'нет'}; NVD CVSS 3.1: ${r?.nvd?.cvss31?.score ?? 'нет данных'}${r?.nvd?.cvss40 ? `, CVSS 4.0: ${r.nvd.cvss40.score}` : ''}${ctx.bdu.length ? `; БДУ: ${ctx.bdu.join(', ')}` : ''}.`,
+      `EPSS: ${r?.epss?.epss != null ? (r.epss.epss * 100).toFixed(1) + '%' : 'нет данных'}; CISA KEV: ${kev ? 'да, с ' + VR.fmtDate(r.kev.dateAdded) : 'нет'}; NVD CVSS 3.1: ${r?.nvd?.cvss31?.score ?? 'нет данных'}${r?.nvd?.cvss40 ? `, CVSS 4.0: ${r.nvd.cvss40.score}` : ''}${ctx.bdu.length ? `; БДУ: ${ctx.bdu.join(', ')}` : ''}.`,
       '',
       'h2. Ссылки',
       ...[ctx.urls.card ? `* Экземпляр в MaxPatrol VM: ${ctx.urls.card}` : '', ctx.urls.passport ? `* Паспорт уязвимости: ${ctx.urls.passport}` : '', ctx.urls.asset ? `* Актив: ${ctx.urls.asset}` : '', `* NVD: https://nvd.nist.gov/vuln/detail/${cve}`, ...ctx.bdu.map(b => `* БДУ: https://bdu.fstec.ru/vul/${b.replace(/^BDU:/, '')}`), ...ctx.links.filter(u => !/nvd\.nist|bdu\.fstec|cve\.mitre/.test(u)).slice(0, 5).map(u => `* ${u}`)].filter(Boolean),
@@ -412,8 +432,8 @@
     const cveRows = d.cves.slice(0, 40).map(c => { const r = enrich?.results?.[c.cve]; return `|${c.cve}|${c.score}|${r?.epss?.epss != null ? (r.epss.epss * 100).toFixed(0) + '%' : '-'}|${r?.kev ? 'да' : '-'}|${c.trend ? 'да' : '-'}|${c.exploit ? 'да' : '-'}|${c.n}|`; }).join('\n');
     const description = [
       'h2. Что сделать',
-      `Установить *${p.patch}*${p.url ? ` (${p.url})` : ''}${p.date ? `, выпущен ${String(p.date).slice(0, 10)}` : ''} на ${d.hosts.length} узлах. Патч закрывает ${d.truncated ? 'не менее ' : ''}${d.rows} экземпляров уязвимостей (${d.cves.length} CVE, ${d.vulns.length} уязвимостей).`,
-      `Приоритет *${level}*${kev.length ? `, ${kev.length} CVE в каталоге CISA KEV` : ''}${trend.length ? `, ${trend.length} трендовых по экспертизе PT` : ''}. Срок: до ${dueDate} (${days} дн).`,
+      `Установить *${p.patch}*${p.url ? ` (${p.url})` : ''}${p.date ? `, выпущен ${VR.fmtDate(p.date)}` : ''} на ${d.hosts.length} узлах. Патч закрывает ${d.truncated ? 'не менее ' : ''}${d.rows} экземпляров уязвимостей (${d.cves.length} CVE, ${d.vulns.length} уязвимостей).`,
+      `Приоритет *${level}*${kev.length ? `, ${kev.length} CVE в каталоге CISA KEV` : ''}${trend.length ? `, ${trend.length} трендовых по экспертизе PT` : ''}. Срок: до ${VR.fmtDate(dueDate)} (${days} дн).`,
       `Узлы по значимости: ${Object.entries(impCount).map(([k, v]) => `${impRu[k] || k} ${v}`).join(', ')}.`,
       '',
       `h2. Уязвимости (топ ${Math.min(40, d.cves.length)} из ${d.cves.length})`,
@@ -796,7 +816,7 @@
     const description = [
       `h2. Что сделать`,
       `Обновить *${d.soft}* с версии *${d.ver}*${targetVersion ? ` до версии *${targetVersion}* или новее (по рекомендации Positive Technologies)` : ' до актуальной версии вендора'} на ${d.hosts.length} узлах. Одно обновление закрывает ${d.truncated ? 'не менее ' : ''}${d.rows} экземпляров уязвимостей (${d.cves.length} CVE).`,
-      `Приоритет: *${level}*${kev.length ? `, ${kev.length} CVE в каталоге CISA KEV (эксплуатируются в атаках)` : ''}${trend.length ? `, ${trend.length} трендовых по экспертизе PT` : ''}. Срок: до ${dueDate} (${days} дн).`,
+      `Приоритет: *${level}*${kev.length ? `, ${kev.length} CVE в каталоге CISA KEV (эксплуатируются в атаках)` : ''}${trend.length ? `, ${trend.length} трендовых по экспертизе PT` : ''}. Срок: до ${VR.fmtDate(dueDate)} (${days} дн).`,
       ``,
       ...(howTo.length ? ['h2. Рекомендации по устранению (паспорт уязвимости)', ...howTo, ''] : []),
       ...(patchLinks.length ? ['h2. Патчи и бюллетени вендора (NVD)', ...patchLinks.slice(0, 8).map(u => `* ${u}`), ''] : []),
@@ -841,7 +861,7 @@
     const top = asset.items.slice().sort((a, b) => b.score - a.score).slice(0, 40);
     const description = [
       `h2. Что сделать`, `Устранить открытые уязвимости узла *${asset.host}*: всего ${asset.items.length}, critical ${by.critical}, high ${by.high}, medium ${by.medium}, low ${by.low}${trend ? `, трендовых ${trend}` : ''}${expl ? `, с публичным эксплойтом ${expl}` : ''}.`,
-      `Приоритет *${level}*, срок до ${dueDate} (${days} дн). Полный список во вложении.`, ``,
+      `Приоритет *${level}*, срок до ${VR.fmtDate(dueDate)} (${days} дн). Полный список во вложении.`, ``,
       `h2. Самые опасные (топ ${top.length})`, `||Уязвимость||CVE||CVSS||Уровень||Трендовая||Эксплойт||Патч||`,
       ...top.map(i => `|${(i.name || i.ids || '').toString().slice(0, 60)}|${i.cve || '-'}|${i.score}|${i.sev}|${i.trend ? 'да' : '-'}|${i.expl ? 'да' : '-'}|${i.patch ? 'да' : '-'}|`), ``,
       `h2. Проверка`, `После установки обновлений запустить аудит узла в MaxPatrol VM; уязвимости должны перейти в статус «Устранена».`, `Источник: MaxPatrol VM ${host || ''}, расширение «Устранение».`,

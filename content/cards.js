@@ -113,13 +113,13 @@
   function renderEnrich(cve, r) {
     const v = r.verdict || {}, n = r.nvd, out = [];
     out.push(`<div class="vr-line"><span class="vr-b ${esc(v.level || 'P3')}">${esc(v.level || '')}</span><b>${esc(v.title || '')}</b>${v.reasons?.length ? ': ' + esc(v.reasons.join('; ')) : ''}; рекомендуемый срок ${esc(v.slaDays)} дн</div>`);
-    if (r.epss?.epss != null) out.push(`<div class="vr-line">EPSS <b>${(r.epss.epss * 100).toFixed(1)}%</b> (перцентиль ${(r.epss.percentile * 100).toFixed(0)}, ${esc(r.epss.date)})</div>`);
-    if (r.kev) out.push(`<div class="vr-line"><a class="vr-b kev" href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog?search_api_fulltext=${encodeURIComponent(cve || '')}" target="_blank" rel="noopener" style="text-decoration:none">CISA KEV</a> добавлена ${esc(r.kev.dateAdded)}, срок ${esc(r.kev.dueDate)}${r.kev.ransomware === 'Known' ? ', <b>используется в ransomware</b>' : ''}</div>`);
+    if (r.epss?.epss != null) out.push(`<div class="vr-line">EPSS <b>${(r.epss.epss * 100).toFixed(1)}%</b> (перцентиль ${(r.epss.percentile * 100).toFixed(0)}, ${esc(VR.fmtDate(r.epss.date))})</div>`);
+    if (r.kev) out.push(`<div class="vr-line"><a class="vr-b kev" href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog?search_api_fulltext=${encodeURIComponent(cve || '')}" target="_blank" rel="noopener" style="text-decoration:none">CISA KEV</a> добавлена ${esc(VR.fmtDate(r.kev.dateAdded))}, срок ${esc(VR.fmtDate(r.kev.dueDate))}${r.kev.ransomware === 'Known' ? ', <b>используется в ransomware</b>' : ''}</div>`);
     if (n && !n.missing) {
       const p = [];
       if (n.cvss40) p.push(`CVSS 4.0 <b>${esc(n.cvss40.score)}</b>`); if (n.cvss31) p.push(`CVSS 3.1 <b>${esc(n.cvss31.score)}</b>`);
       if (n.ssvc?.exploitation) p.push(`SSVC: ${esc(n.ssvc.exploitation)} / ${esc(n.ssvc.automatable || '?')} / ${esc(n.ssvc.impact || '?')}`);
-      if (p.length) out.push(`<div class="vr-line">NVD: ${p.join(' | ')}; опубликована ${esc((n.published || '').slice(0, 10))}</div>`);
+      if (p.length) out.push(`<div class="vr-line">NVD: ${p.join(' | ')}; опубликована ${esc(VR.fmtDate(n.published))}</div>`);
       const patches = (n.refs || []).filter(x => x.tags.some(t => /patch/i.test(t)));
       const advis = (n.refs || []).filter(x => !x.tags.some(t => /patch/i.test(t)));
       if (patches.length) out.push(`<div class="vr-line"><b>Прямые ссылки на патчи (NVD, тег Patch):</b><ul>${patches.map(x => `<li><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url.replace(/^https?:\/\//, '').slice(0, 90))}</a></li>`).join('')}</ul></div>`);
@@ -161,7 +161,7 @@
           if (!ctx.selected) throw new Error(`Экземпляр ${cveNow} по идентификатору из адреса страницы не найден`);
           let enr = null; try { enr = await VR.ext('enrich', { cves: [cveNow], skipNvd: true, mp: { [cveNow]: { score: ctx.selected.item.score, trend: ctx.selected.item.trend, exploit: ctx.selected.item.expl } } }); } catch (_) {}
           const issue = VR.buildInstanceJiraIssue({ ctx: { ...ctx.selected, cve: cveNow }, enrich: enr, sla: s, host: VR.config().host });
-          if (!confirm(`Создать задачу в Jira (${s.jiraProject}):\n${issue.summary}\nСрок: ${issue.dueDate}`)) { jb.disabled = false; st.textContent = ''; return; }
+          if (!confirm(`Создать задачу в Jira (${s.jiraProject}):\n${issue.summary}\nСрок: ${VR.fmtDate(issue.dueDate)}`)) { jb.disabled = false; st.textContent = ''; return; }
           const r = await VR.ext('jira-create', issue);
           let note = '';
           if (s.jiraTagInstances !== false) { try { await VR.tagInstances(issue.ids, 'jira:' + r.key); note = `, метка jira:${r.key} на экземпляре`; } catch (e) { note = ', метку поставить не удалось'; } }
@@ -191,7 +191,7 @@
       const pdql = `filter(Host.@Id = ${assetId} and Host.@Vulners) | select(@Host, Host.@Vulners as Name, Host.@Vulners.Ids.Item as Ids, Host.@Vulners.CVEs.Item as CVE, Host.@Vulners.Score as Score, Host.@Vulners.SeverityRating as Sev, Host.@Vulners.Status as St, Host.@Vulners.DiscoveryTime as Found, Host.@Vulners.IsTrend as Trend, Host.@Vulners.Metrics.Exploitable as Expl, Host.@Vulners.Metrics.HasPatch as HasPatch, Host.@Vulners.Patch.PatchLink as PatchLink, Host.@Vulners.FixType as FixType, Host.@Vulners.Impact.PrimaryType as Impact)`;
       const rows = VR.rows(await VR.pdql(pdql, 50000, 0));
       const host = rows[0] ? (VR.getVal(rows[0], '@Host')?.name || '') : assetId;
-      const cols = [['Узел', r => VR.getVal(r, '@Host')?.name || ''], ['Уязвимость', r => VR.rowVal(r, 'Name')], ['Идентификатор', r => VR.rowVal(r, 'Ids')], ['CVE', r => VR.rowVal(r, 'CVE')], ['CVSS', r => VR.rowVal(r, 'Score')], ['Уровень', r => VR.rowVal(r, 'Sev')], ['Статус', r => VR.rowVal(r, 'St')], ['Обнаружена', r => VR.rowVal(r, 'Found')], ['Трендовая', r => VR.rowVal(r, 'Trend')], ['Эксплойт', r => VR.rowVal(r, 'Expl')], ['Есть патч', r => VR.rowVal(r, 'HasPatch')], ['Ссылка на патч', r => VR.rowVal(r, 'PatchLink')], ['Тип устранения', r => VR.rowVal(r, 'FixType')], ['Последствия', r => VR.rowVal(r, 'Impact')]];
+      const cols = [['Узел', r => VR.getVal(r, '@Host')?.name || ''], ['Уязвимость', r => VR.rowVal(r, 'Name')], ['Идентификатор', r => VR.rowVal(r, 'Ids')], ['CVE', r => VR.rowVal(r, 'CVE')], ['CVSS', r => VR.rowVal(r, 'Score')], ['Уровень', r => VR.rowVal(r, 'Sev')], ['Статус', r => VR.rowVal(r, 'St')], ['Обнаружена', r => VR.fmtDate(VR.rowVal(r, 'Found'))], ['Трендовая', r => VR.rowVal(r, 'Trend')], ['Эксплойт', r => VR.rowVal(r, 'Expl')], ['Есть патч', r => VR.rowVal(r, 'HasPatch')], ['Ссылка на патч', r => VR.rowVal(r, 'PatchLink')], ['Тип устранения', r => VR.rowVal(r, 'FixType')], ['Последствия', r => VR.rowVal(r, 'Impact')]];
       const csv = VR.csv(rows, cols);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' }); const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = `vulns_${String(host).replace(/[^\w.\-]+/g, '_').slice(0, 60)}_${today()}.csv`; document.body.appendChild(a); a.click(); setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 1500);
@@ -222,7 +222,7 @@
           const asset = await VR.assetVulns(assetId);
           if (!asset.items.length) throw new Error('Открытых уязвимостей у узла нет');
           const issue = VR.buildAssetJiraIssue({ asset, sla: s, host: VR.config().host });
-          if (!confirm(`Создать задачу в Jira (${s.jiraProject}):\n${issue.summary}\nСрок: ${issue.dueDate}`)) { btn.disabled = false; st.textContent = ''; return; }
+          if (!confirm(`Создать задачу в Jira (${s.jiraProject}):\n${issue.summary}\nСрок: ${VR.fmtDate(issue.dueDate)}`)) { btn.disabled = false; st.textContent = ''; return; }
           const r = await VR.ext('jira-create', issue);
           let note = '';
           try { await VR.ext('jira-attach', { key: r.key, filename: `mpvm_${String(asset.host).replace(/[^\w.\-]+/g, '_').slice(0, 50)}.csv`, content: issue.csv }); note += ', CSV приложен'; } catch (e) { note += ', вложение не удалось'; }

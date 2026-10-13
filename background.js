@@ -1,4 +1,6 @@
 'use strict';
+// Дата ГГГГ-ММ-ДД для показа: ДД-ММ-ГГГГ
+const ruDate = v => { const s = String(v || ''); return /^\d{4}-\d{2}-\d{2}/.test(s) ? `${s.slice(8, 10)}-${s.slice(5, 7)}-${s.slice(0, 4)}` : s; };
 // Service worker: внешние источники по CVE (EPSS, CISA KEV, NVD, GitHub), настройки
 // модуля и кэши. Запросы к самому MaxPatrol VM выполняет content-скрипт со страницы
 // стенда (тот же origin, Bearer-токен), сюда они не приходят.
@@ -158,7 +160,7 @@ function verdict(sig, s) {
   const score = sig.mp?.score ?? sig.nvd?.cvss31?.score ?? sig.nvd?.cvss40?.score ?? null;
   const reasons = [];
   let level = 'P3', title = 'Плановое устранение';
-  if (kev) { level = 'P0'; title = 'Эксплуатируется в атаках (CISA KEV)'; reasons.push(`KEV с ${kev.dateAdded}${kev.ransomware === 'Known' ? ', используется в ransomware' : ''}`); }
+  if (kev) { level = 'P0'; title = 'Эксплуатируется в атаках (CISA KEV)'; reasons.push(`KEV с ${ruDate(kev.dateAdded)}${kev.ransomware === 'Known' ? ', используется в ransomware' : ''}`); }
   else if (trend) { level = 'P0'; title = 'Трендовая уязвимость (экспертиза PT)'; reasons.push('отмечена PT как трендовая'); }
   else if (ep != null && ep >= 0.5) { level = 'P1'; title = 'Высокая вероятность эксплуатации'; reasons.push(`EPSS ${(ep * 100).toFixed(0)}%`); }
   else if (expl || (ep != null && ep >= 0.1)) { level = 'P2'; title = 'Есть эксплойт или заметный EPSS'; if (expl) reasons.push('публичный эксплойт'); if (ep != null && ep >= 0.1) reasons.push(`EPSS ${(ep * 100).toFixed(0)}%`); }

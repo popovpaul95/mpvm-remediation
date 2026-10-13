@@ -22,7 +22,7 @@ test('HTML и CSV сохраняют всё обогащение CVE и выбр
   } };
   const spec = { title: 'Отчёт', sections: VR.reports.cveSections(enrich, { 'CVE-2026-12345': ctx }, { slaHighDays: 7, jiraToken: 'SECRET_MUST_NOT_EXPORT' }) };
   for (const output of [VR.reports.html(spec), VR.reports.csv(spec)]) {
-    for (const expected of ['Обоснование из KEV', '0.987654321', '0.99991', 'Тестовый вендор', 'КОНЕЦ_ОПИСАНИЯ', 'CVSS:3.1/AV:N/AC:L', 'CWE-787', 'Vendor Advisory', 'BDU:2026-98765', 'example/poc', 'НОВОЕ_ПОЛЕ_ИСТОЧНИКА', 'ОШИБКА_ИСТОЧНИКА', 'all-instances.example', 'selected.example', '1.2.3', '1.2.4', '1.2.9', 'KB987654', 'УСТАНОВИТЕ_ИСПРАВЛЕНИЕ', 'ИСТОРИЯ_СТАТУСА', 'proj:export-test', 'ЧАСТИЧНАЯ_ОШИБКА', '2026-10-05T12:00:00.000Z', VR.reports.LIMIT_NOTE]) assert.ok(output.includes(expected), expected);
+    for (const expected of ['Обоснование из KEV', '0.987654321', '0.99991', 'Тестовый вендор', 'КОНЕЦ_ОПИСАНИЯ', 'CVSS:3.1/AV:N/AC:L', 'CWE-787', 'Vendor Advisory', 'BDU:2026-98765', 'example/poc', 'НОВОЕ_ПОЛЕ_ИСТОЧНИКА', 'ОШИБКА_ИСТОЧНИКА', 'all-instances.example', 'selected.example', '1.2.3', '1.2.4', '1.2.9', 'KB987654', 'УСТАНОВИТЕ_ИСПРАВЛЕНИЕ', 'ИСТОРИЯ_СТАТУСА', 'proj:export-test', 'ЧАСТИЧНАЯ_ОШИБКА', VR.fmtDateTime('2026-10-05T12:00:00.000Z'), VR.reports.LIMIT_NOTE]) assert.ok(output.includes(expected), expected);
     assert.ok(!output.includes('SECRET_MUST_NOT_EXPORT'));
     assert.ok(!output.includes('[object Object]'));
   }

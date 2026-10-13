@@ -28,6 +28,10 @@
     if (typeof value === 'boolean') return value ? 'да' : 'нет';
     if (Array.isArray(value)) return value.length ? value.map((v, i) => typeof v === 'object' && v !== null ? `${i + 1}. ${valueText(v)}` : valueText(v)).join('\n') : 'Нет записей';
     if (typeof value === 'object') return Object.entries(value).map(([k, v]) => `${label(k)}: ${valueText(v)}`).join('\n') || 'Нет данных';
+    // Даты ISO показываем как ДД-ММ-ГГГГ (со временем, если оно есть и это не полночь UTC)
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?)?$/.test(value.trim()) && typeof VR !== 'undefined' && VR.fmtDate) {
+      return /T/.test(value) && !/T00:00:00(\.0+)?Z?$/.test(value.trim()) ? VR.fmtDateTime(value) : VR.fmtDate(value);
+    }
     return String(value);
   };
   const cell = (row, col) => valueText(typeof col[1] === 'function' ? col[1](row) : row[col[1]]);
