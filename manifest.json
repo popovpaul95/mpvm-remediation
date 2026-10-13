@@ -33,6 +33,7 @@
         "content/api.js",
         "content/logic.js",
         "content/reports.js",
+        "content/experiment.js",
         "content/app.js",
         "content/cards.js"
       ],

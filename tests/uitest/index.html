@@ -78,7 +78,7 @@
       })(); },
     },
   };
-  for (const f of ['content/api.js', 'content/logic.js', 'content/reports.js']) await new Promise((res, rej) => { const s = document.createElement('script'); s.src = '../../' + f + '?' + Date.now(); s.onload = res; s.onerror = rej; document.body.appendChild(s); });
+  for (const f of ['content/api.js', 'content/logic.js', 'content/reports.js', 'content/experiment.js']) await new Promise((res, rej) => { const s = document.createElement('script'); s.src = '../../' + f + '?' + Date.now(); s.onload = res; s.onerror = rej; document.body.appendChild(s); });
   // Данные MaxPatrol подменяем фикстурами реального стенда
   window.VR.systemInfo = async () => ({ productVersion: legacyUi ? '27.6.33103' : '28.0.42578 (мок)' });
   if (legacyUi) { const realGet = window.VR.get; window.VR.get = async (p, params) => p.includes('/stored_queries/folders/queries') ? { nodes: [{ id: 'q-all', displayName: 'Все активы' }] } : realGet(p, params); }
@@ -113,6 +113,19 @@
   window.VR.assetRisk = async () => { await delay(400); return fx.assetRisk; };
   window.VR.exclusions = async () => { await delay(400); return fx.exclusions; };
   window.VR.projects = async () => { await delay(300); return fx.projects && fx.projects.projects.length ? fx.projects : { projects: [{ tag: 'jira:VM-101', total: 20000, fixed: 6400, excluded: 100, open: 13500, byStatus: { new: 9000, inProgress: 4500, fixed: 6400, excluded: 100 }, hosts: 162 }, { tag: 'proj:openssl-q4', total: 3000, fixed: 2900, excluded: 0, open: 100, byStatus: { fixed: 2900, new: 100 }, hosts: 40 }].map(p => ({ ...p, progress: Math.round((p.fixed + p.excluded) / p.total * 100), kind: p.tag.startsWith('jira:') ? 'jira' : 'proj' })), pdql: 'mock' }; };
+  // Моки вкладки «Эксперимент»
+  window.VR.auditCredentials = async ({ onProgress } = {}) => { onProgress && onProgress(1, 2); onProgress && onProgress(2, 2); return { items: [ { host: 'win-01 (10.0.0.5)', hostId: 'h1', imp: 'L', os: 'Windows 2022', port: '3389', proto: 'tcp', check: 'Remote Access', service: 'SSH/RDP', type: 'RemoteAccessAccountBruteforceArgument', login: 'administrator', password: 'P@ss', k21: true, k23: false, reasons: ['подобран при проверке'] }, { host: 'db-02 (10.0.0.9)', hostId: 'h2', imp: 'H', os: 'Ubuntu', port: '5432', proto: 'tcp', check: 'PostgreSQL', service: 'PostgreSQL', type: 'PostgreSqlBruteForceAccountsCheckArgument', login: 'postgres', password: 'postgres', k21: true, k23: true, reasons: ['значение по умолчанию'] } ], failed: [], generatedAt: '2026-10-13T12:00:00Z', summary: { accounts: 2, hosts: 2, k23: 1, byService: [ { service: 'SSH/RDP', n: 1 }, { service: 'PostgreSQL', n: 1 } ] } }; };
+  window.VR.pdqlTargets = async () => ({ pdql: 'mock', hosts: [ { host: 'win-01 (10.0.0.5)', id: 'h1', fqdn: 'win-01.corp.local', ip: '10.0.0.5', os: 'Windows 2022', imp: 'L', target: 'win-01.corp.local' }, { host: 'srv-02 (10.0.0.6)', id: 'h2', fqdn: '', ip: '10.0.0.6', os: 'Debian', imp: 'M', target: '10.0.0.6' } ], targets: ['win-01.corp.local', '10.0.0.6'], noTarget: 0 });
+  window.VR.tasks = async () => [ { id: 't1', name: 'Windows Audit', status: 'new', profile: 'Windows Audit', agent: 'a1', module: 'audit', targets: [], groups: [] } ];
+  window.VR.task = async () => ({ id: 't1', name: 'Windows Audit', agent: { id: 'a1' }, scope: { id: 's1' }, profile: { id: 'p1' }, credentials: [], hostDiscovery: { enabled: false, profile: null }, isFqdnPriority: true });
+  window.VR.updateTask = async () => ({ id: 't1' }); window.VR.runTask = async () => ({ ok: true });
+  window.VR.dynGroups = async () => [ { id: 'g1', name: 'AD', treePath: 'AD', predicate: 'DirectoryService', isReadOnly: false, isInvalid: false }, { id: 'g2', name: 'Astra', treePath: 'ОС / Astra', predicate: 'Host.OsName = "Astra"', isReadOnly: false, isInvalid: false } ];
+  window.VR.validatePredicate = async () => ({ isValid: true, isPotentiallySlow: false });
+  window.VR.predicateCount = async () => ({ count: 42 });
+  window.VR.updateGroupPredicate = async () => ({ operationId: 'op' });
+  window.VR.exclusionList = async () => [ { id: 'e1', name: '12312', description: '', allModules: true, modules: [], assetGroups: [{ id: 'ag1', name: 'DC' }], assets: [{ id: 'a1', name: '10.0.0.1' }], networks: ['10.0.0.0/24', '10.0.0.0/24', '10.1.0.0/24'], counts: { groups: 1, assets: 1, networks: 3, dupNetworks: 1 } } ];
+  window.VR.dedupExclusion = async () => ({ removed: { networks: 1, assets: 0, groups: 0 }, after: { networks: 2, assets: 1, groups: 1 } });
+  window.VR.modelTree = async () => [ { path: 'Host.Fqdn', title: 'FQDN', kind: 'primitive', type: 'String', collection: false, prop: 'fqdn' }, { path: 'Host.Softs', title: 'ПО', kind: 'entity', type: 'Core.Software', collection: true, prop: 'softs' }, { path: 'Host.Softs.Name', title: 'Название ПО', kind: 'primitive', type: 'String', collection: false, prop: 'name' } ];
   await new Promise((res, rej) => { const s = document.createElement('script'); s.src = '../../content/app.js?' + Date.now(); s.onload = res; s.onerror = rej; document.body.appendChild(s); });
 })();
 </script>

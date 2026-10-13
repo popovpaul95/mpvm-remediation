@@ -623,3 +623,100 @@ test('Интерфейс 27.x: блок в карточке экземпляра
   await page.waitForTimeout(2500);
   await expect(page.locator('#legacy-shell .vr-cb')).toHaveCount(1);
 });
+
+test('Даты ДД-ММ-ГГГГ: таблица выборки, сортировка по дате, панель патчей, CSV', async ({ page }) => {
+  await openWorkspace(page);
+  await run(page, 'm-run');
+  await page.locator('#m-out [data-drill="overdue"]').click();
+  const table = page.locator('#m-drill table');
+  await expect(table).toBeVisible();
+  const ths = await table.locator('th').allTextContents();
+  const di = ths.findIndex(t => /Обнаружена/.test(t));
+  expect(di).toBeGreaterThan(0);
+  const col = async () => (await table.locator('tr:not(.hide)').evaluateAll((rows, di) => rows.filter(r => r.querySelector('td')).map(r => r.children[di].textContent.trim()), di));
+  const before = await col();
+  expect(before.length).toBeGreaterThan(3);
+  for (const d of before) expect(d).toMatch(/^\d{2}-\d{2}-\d{4}$/);
+  // Снимок показателей и подпись отчета тоже в новом формате
+  await expect(page.locator('#m-info')).toHaveText(/готово|снимок от \d{2}-\d{2}-\d{4} \d{2}:\d{2}/);
+  // Сортировка по колонке даты хронологическая, а не строковая
+  const iso = s => s.slice(6, 10) + s.slice(3, 5) + s.slice(0, 2);
+  await table.locator('th').nth(di).click();
+  await expect(table.locator('th').nth(di)).toHaveAttribute('aria-sort', 'ascending');
+  const asc = (await col()).map(iso);
+  expect(asc).toEqual([...asc].sort());
+  await table.locator('th').nth(di).click();
+  const desc = (await col()).map(iso);
+  expect(desc).toEqual([...desc].sort().reverse());
+  // Патчи: дата выпуска
+  await page.locator('.tabs button[data-t="patches"]').click();
+  await run(page, 'pt-run');
+  const pt = page.locator('.pane[data-t="patches"] table').first();
+  const pths = await pt.locator('th').allTextContents();
+  const pi = pths.findIndex(t => /Выпущен/.test(t));
+  await expect(pt.locator('tr').nth(1).locator('td').nth(pi)).toHaveText(/^\d{2}-\d{2}-\d{4}$/);
+  // CSV выборки: даты в том же формате
+  await page.locator('.tabs button[data-t="overview"]').click();
+  const dl = page.waitForEvent('download');
+  await page.locator('#m-drill [data-a=csv]').click();
+  const file = await dl;
+  const csv = fs.readFileSync(await file.path(), 'utf8');
+  expect(csv).toMatch(/\b\d{2}-\d{2}-\d{4}\b/);
+  expect(csv).not.toMatch(/\b\d{4}-\d{2}-\d{2}T/);
+});
+
+test('Экспериментальный функционал: пять блоков работают на моках, отчёт выгружается, доступность', async ({ page }) => {
+  await openWorkspace(page);
+  await page.locator('#tab-experiment').click();
+  await expect(page.locator('#pane-experiment .page-heading h2')).toHaveText('Экспериментальный функционал');
+  // 1. Отчёт по учётным записям
+  await page.locator('#xp-cred-run').click();
+  await expect(page.locator('#xp-cred-info')).toContainText('учётных записей 2');
+  await expect(page.locator('#xp-cred-rep')).toBeVisible();
+  await expect(page.locator('#xp-cred-out table')).toHaveCount(2);
+  // отчёт HTML: пароли по умолчанию скрыты
+  const dl = page.waitForEvent('download');
+  await page.locator('#xp-cred-html').click();
+  const file = await (await dl).path();
+  const html = fs.readFileSync(file, 'utf8');
+  expect(html).toMatch(/K21/);
+  expect(html).toMatch(/K23/);
+  expect(html).not.toMatch(/P@ss/);
+  // CSV с паролями
+  await page.locator('#xp-cred-show').check();
+  const dl2 = page.waitForEvent('download');
+  await page.locator('#xp-cred-csv').click();
+  const csv = fs.readFileSync(await (await dl2).path(), 'utf8');
+  expect(csv).toMatch(/postgres/);
+  // 2. Сканирование по выборке
+  await page.locator('#xp-scan-pdql').fill('filter(WindowsHost)');
+  await page.locator('#xp-scan-preview').click();
+  await expect(page.locator('#xp-scan-info')).toContainText('целей 2');
+  await expect(page.locator('#xp-scan-out table tr')).not.toHaveCount(0);
+  await page.locator('#xp-scan-task').selectOption('t1');
+  await expect(page.locator('#xp-scan-apply')).toBeEnabled();
+  page.once('dialog', d => d.accept());
+  await page.locator('#xp-scan-apply').click();
+  await expect(page.locator('#xp-scan-info')).toContainText('цели записаны');
+  // 3. Группы
+  await page.locator('#xp-grp-load').click();
+  await expect(page.locator('#xp-grp-info')).toContainText('групп: 2');
+  const gbox = page.locator('#xp-grp-out .box[data-gid]').first();
+  await gbox.locator('.xp-grp-check').click();
+  await expect(gbox.locator('.xp-grp-st')).toContainText('активов: 42');
+  page.once('dialog', d => d.accept());
+  await gbox.locator('.xp-grp-save').click();
+  await expect(gbox.locator('.xp-grp-st')).toContainText('сохранено');
+  // 4. Исключения
+  await page.locator('#xp-excl-load').click();
+  await expect(page.locator('#xp-excl-info')).toContainText('дубликатов');
+  page.once('dialog', d => d.accept());
+  await page.locator('#xp-excl-out .xp-excl-dedup').first().click();
+  await expect(page.locator('#xp-excl-out .xp-excl-st').first()).toContainText('убрано сетей 1');
+  // 5. Модель актива
+  await page.locator('#xp-model-load').click();
+  await expect(page.locator('#xp-model-info')).toContainText('полей: 3');
+  await expect(page.locator('#xp-model-out tr.click')).toHaveCount(3);
+  await audit(page);
+  await noPageOverflow(page);
+});

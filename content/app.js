@@ -329,6 +329,7 @@ td a.lnk { white-space: nowrap; } a.lnk { color: var(--vr-accent); }
     <button data-t="cw">Контейнеры и веб</button>
     <button data-t="inv">Инвентаризация</button>
     <button data-t="cve">CVE-контекст</button>
+    <button data-t="experiment">Экспериментальный функционал</button>
     <button data-t="settings">Настройки</button>
   </div>
   <main class="body" aria-label="Рабочая область устранения">
@@ -498,6 +499,79 @@ td a.lnk { white-space: nowrap; } a.lnk { color: var(--vr-accent); }
       <div class="cves" id="c-out"></div>
     </div>
 
+    <div class="pane" data-t="experiment">
+      <div class="box" style="border-style:dashed">
+        <div class="muted">Экспериментальный раздел: функции в проверке. Всё работает через тот же API, что и интерфейс продукта (на 28.0 и 27.6). После оценки пользой — разнесём по постоянным разделам.</div>
+      </div>
+
+      <div class="box">
+        <h3>Отчёт по учётным записям (ФСТЭК, показатели K21 и K23)</h3>
+        <div class="muted">Собирает подобранные при проверке учётные записи по всем сервисам и строит отчёт: K21 — пароли, не соответствующие требованиям, K23 — пароли по умолчанию. Отчёт в HTML, PDF и CSV. Пароли по умолчанию скрыты.</div>
+        <div class="row">
+          <button class="btn acc" id="xp-cred-run">Собрать учётные записи</button>
+          <label title="Показать пароли открытым текстом в отчёте"><input type="checkbox" id="xp-cred-show"> показывать пароли</label>
+          <span class="muted" id="xp-cred-info" role="status"></span>
+        </div>
+        <div class="row" id="xp-cred-rep" hidden>
+          <label>Организация <input type="text" id="xp-cred-org" style="width:200px"></label>
+          <label>Система <input type="text" id="xp-cred-sys" style="width:200px"></label>
+          <label>Исполнитель <input type="text" id="xp-cred-exe" style="width:160px"></label>
+          <button class="btn" id="xp-cred-html">HTML</button>
+          <button class="btn" id="xp-cred-pdf">PDF</button>
+          <button class="btn" id="xp-cred-csv">CSV</button>
+        </div>
+        <div class="err" id="xp-cred-err"></div>
+        <div id="xp-cred-out"></div>
+      </div>
+
+      <div class="box">
+        <h3>Сканирование по PDQL-выборке</h3>
+        <div class="muted">Собирает цели по PDQL-условию и записывает их в выбранную задачу: без динамической группы, с приоритетом FQDN (нужно для Kerberos на Windows). Задача-образец задаёт инфраструктуру, профиль, коллектор и учётные записи.</div>
+        <textarea id="xp-scan-pdql" aria-label="PDQL-условие выборки узлов" spellcheck="false" placeholder="filter(WindowsHost)  или  filter(Host.OsName like &quot;%Astra%&quot;)"></textarea>
+        <div class="row">
+          <label><input type="checkbox" id="xp-scan-fqdn" checked> приоритет FQDN над IP</label>
+          <button class="btn" id="xp-scan-preview">Показать цели</button>
+          <span class="muted" id="xp-scan-info" role="status"></span>
+        </div>
+        <div class="row">
+          <label>Задача-образец <select id="xp-scan-task" style="min-width:220px"><option value="">загрузите список…</option></select></label>
+          <button class="btn" id="xp-scan-apply" disabled>Записать цели в задачу</button>
+          <button class="btn" id="xp-scan-run" disabled title="Записать и запустить задачу">Записать и запустить</button>
+        </div>
+        <div class="err" id="xp-scan-err"></div>
+        <div id="xp-scan-out"></div>
+      </div>
+
+      <div class="box">
+        <h3>Динамические группы: смена PDQL-запроса через API</h3>
+        <div class="muted">Список динамических групп с их запросами. Запрос можно изменить, проверить синтаксис и число активов. Меняет свойства группы через API, который в документации не описан.</div>
+        <div class="row"><button class="btn acc" id="xp-grp-load">Загрузить группы</button><span class="muted" id="xp-grp-info" role="status"></span></div>
+        <div class="err" id="xp-grp-err"></div>
+        <div id="xp-grp-out"></div>
+      </div>
+
+      <div class="box">
+        <h3>Исключения из сканирования: дубликаты и редактирование</h3>
+        <div class="muted">Глобальные исключения с подсчётом сетей, активов и групп. Кнопка «Убрать дубликаты» чистит повторы сетей и активов и сохраняет (как в задачах сканирования).</div>
+        <div class="row"><button class="btn acc" id="xp-excl-load">Загрузить исключения</button><span class="muted" id="xp-excl-info" role="status"></span></div>
+        <div class="err" id="xp-excl-err"></div>
+        <div id="xp-excl-out"></div>
+      </div>
+
+      <div class="box">
+        <h3>Обозреватель модели актива</h3>
+        <div class="muted">Поля объектной модели MaxPatrol с готовым путём для PDQL: помогает найти, где лежат собранные данные, даже если их нет в карточке. Источник — метаданные модели.</div>
+        <div class="row">
+          <label>Корень <select id="xp-model-root"><option value="Core.Host">Хост (Core.Host)</option></select></label>
+          <label>Глубина <select id="xp-model-depth"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select></label>
+          <button class="btn acc" id="xp-model-load">Построить</button>
+          <span class="muted" id="xp-model-info" role="status"></span>
+        </div>
+        <div class="err" id="xp-model-err"></div>
+        <div id="xp-model-out"></div>
+      </div>
+    </div>
+
     <div class="pane" data-t="settings">
       <div class="two">
         <div class="box">
@@ -618,6 +692,8 @@ td a.lnk { white-space: nowrap; } a.lnk { color: var(--vr-accent); }
   const closePop = (restoreFocus = false) => { if (vfPop) { const anchor = vfPop.__anchor; vfPop.remove(); vfPop = null; if (restoreFocus) anchor?.focus(); } };
   const cellText = td => (td.getAttribute('data-v') ?? td.textContent).replace(/\s+/g, ' ').trim();
   const numOf = s => { const x = parseFloat(String(s).replace(/\s/g, '').replace(',', '.')); return isNaN(x) ? null : x; };
+  // Даты в таблицах показаны как ДД-ММ-ГГГГ: для сортировки переводим их в ГГГГММДД
+  const dateKey = s => /^\d{2}-\d{2}-\d{4}( \d{2}:\d{2})?$/.test(s) ? s.slice(6, 10) + s.slice(3, 5) + s.slice(0, 2) + s.slice(10) : null;
   function tableState(table) {
     if (!table.__vf) table.__vf = { cols: {}, q: '', sort: null };
     return table.__vf;
@@ -633,7 +709,7 @@ td a.lnk { white-space: nowrap; } a.lnk { color: var(--vr-accent); }
     });
     if (st.sort) {
       const { col, dir } = st.sort; const tbody = rows[0]?.parentElement; if (tbody) {
-        const sorted = rows.slice().sort((a, b) => { const x = cellText(a.children[col] || a), y = cellText(b.children[col] || b); const nx = numOf(x), ny = numOf(y); const r = nx != null && ny != null ? nx - ny : x.localeCompare(y, 'ru'); return dir === 'asc' ? r : -r; });
+        const sorted = rows.slice().sort((a, b) => { const x = cellText(a.children[col] || a), y = cellText(b.children[col] || b); const dx = dateKey(x), dy = dateKey(y); const nx = numOf(x), ny = numOf(y); const r = dx && dy ? dx.localeCompare(dy) : nx != null && ny != null ? nx - ny : x.localeCompare(y, 'ru'); return dir === 'asc' ? r : -r; });
         sorted.forEach(tr => tbody.appendChild(tr));
       }
     }
@@ -741,7 +817,7 @@ td a.lnk { white-space: nowrap; } a.lnk { color: var(--vr-accent); }
       selection.data = d;
       const items = d.items;
       const hasHost = items.some(i => i.host);
-      const rows = items.map(i => `<tr><td>${plink(i.vulnId, i.CVE || i.Name || '')}</td><td class="ell" title="${esc(i.Name || '')}">${esc(i.Name || '')}</td>${hasHost ? `<td class="ell">${alink(i.hostId, i.host)}</td>` : ''}<td class="n">${esc(i.Score ?? '')}</td><td>${esc(SEV_RU[String(i.Sev || '').toLowerCase()] || i.Sev || '')}</td><td>${esc(ST_RU[i.St] || i.St || '')}</td><td class="n">${esc(String(i.Found || '').slice(0, 10))}</td><td>${VR.bool(i.T) ? '<span class="badge tag kev sm">Трендовая</span>' : ''}${VR.bool(i.E) ? '<span class="ttag">Есть эксплойт</span>' : ''}</td></tr>`).join('');
+      const rows = items.map(i => `<tr><td>${plink(i.vulnId, i.CVE || i.Name || '')}</td><td class="ell" title="${esc(i.Name || '')}">${esc(i.Name || '')}</td>${hasHost ? `<td class="ell">${alink(i.hostId, i.host)}</td>` : ''}<td class="n">${esc(i.Score ?? '')}</td><td>${esc(SEV_RU[String(i.Sev || '').toLowerCase()] || i.Sev || '')}</td><td>${esc(ST_RU[i.St] || i.St || '')}</td><td class="n">${esc(VR.fmtDate(i.Found))}</td><td>${VR.bool(i.T) ? '<span class="badge tag kev sm">Трендовая</span>' : ''}${VR.bool(i.E) ? '<span class="ttag">Есть эксплойт</span>' : ''}</td></tr>`).join('');
       container.innerHTML = `<div class="box drill"><h3>${esc(title)}<button aria-label="Закрыть выборку" class="x" title="Закрыть">×</button></h3>
         <div class="muted">${fmt(items.length)} экземпляров${d.truncated ? ' (показаны первые ' + fmt(opts.limit || 500) + ', полный список в MaxPatrol по кнопке)' : ''}.</div>
         <div class="row"><a class="btn" href="${esc(mpListUrl(pdql))}" style="text-decoration:none">Открыть в MaxPatrol</a><button class="btn" data-a="csv">CSV</button><button class="btn" data-a="pdql">Скопировать PDQL</button><button class="btn" data-a="proj">В проект (метка proj:)</button><span class="muted" role="status" data-role="st"></span></div>
@@ -764,13 +840,13 @@ td a.lnk { white-space: nowrap; } a.lnk { color: var(--vr-accent); }
     const v = r.verdict || {}, ep = r.epss?.epss, lines = [];
     if (r.mp) lines.push(`<div class="line">MP VM: <b>CVSS ${esc(r.mp.score ?? '?')}</b>${r.mp.trend ? ' <span class="badge tag trend">трендовая</span>' : ''}${r.mp.exploit ? ' <span class="badge tag hot">эксплойт</span>' : ''}</div>`);
     lines.push(ep != null ? `<div class="line">EPSS: <b>${(ep * 100).toFixed(1)}%</b> (перцентиль ${(r.epss.percentile * 100).toFixed(0)}, ${esc(r.epss.date)})<div class="bar"><i style="width:${Math.max(1, ep * 100)}%"></i></div></div>` : `<div class="line">EPSS: <span class="muted">${r.epss ? 'нет в базе' : 'не запрошено'}</span></div>`);
-    lines.push(r.kev ? `<div class="line"><span class="badge tag kev">CISA KEV</span> добавлена ${esc(r.kev.dateAdded)}, срок ${esc(r.kev.dueDate)}${r.kev.ransomware === 'Known' ? ', <b>ransomware</b>' : ''}: ${esc(r.kev.vendor)} ${esc(r.kev.product)}</div>` : '<div class="line">KEV: <span class="muted">нет в каталоге</span></div>');
+    lines.push(r.kev ? `<div class="line"><span class="badge tag kev">CISA KEV</span> добавлена ${esc(VR.fmtDate(r.kev.dateAdded))}, срок ${esc(VR.fmtDate(r.kev.dueDate))}${r.kev.ransomware === 'Known' ? ', <b>ransomware</b>' : ''}: ${esc(r.kev.vendor)} ${esc(r.kev.product)}</div>` : '<div class="line">KEV: <span class="muted">нет в каталоге</span></div>');
     if (r.nvd && !r.nvd.missing) {
       const n = r.nvd, p = [];
       if (n.cvss40) p.push(`CVSS 4.0 <b>${esc(n.cvss40.score)}</b> ${esc(n.cvss40.severity || '')}`);
       if (n.cvss31) p.push(`CVSS 3.1 <b>${esc(n.cvss31.score)}</b>`);
       if (n.ssvc?.exploitation) p.push(`SSVC: ${esc(n.ssvc.exploitation)} / ${esc(n.ssvc.automatable || '?')} / ${esc(n.ssvc.impact || '?')}`);
-      lines.push(`<div class="line">NVD: ${p.join(' | ') || 'без метрик'}; опубликована ${esc((n.published || '').slice(0, 10))}${n.cwes?.length ? '; ' + esc(n.cwes.join(', ')) : ''}</div>`);
+      lines.push(`<div class="line">NVD: ${p.join(' | ') || 'без метрик'}; опубликована ${esc(VR.fmtDate(n.published))}${n.cwes?.length ? '; ' + esc(n.cwes.join(', ')) : ''}</div>`);
       if (n.description) lines.push(`<div class="line muted">${esc(n.description.slice(0, 260))}${n.description.length > 260 ? '...' : ''}</div>`);
     } else if (r.nvd?.missing) lines.push('<div class="line">NVD: <span class="muted">не найдена</span></div>');
     if (r.bdu?.length) lines.push(`<div class="line">БДУ: <b>${r.bdu.map(b => esc(b.id)).join(', ')}</b>${r.bdu[0].level ? ' (' + esc(r.bdu[0].level) + ')' : ''}</div>`);
@@ -812,7 +888,7 @@ td a.lnk { white-space: nowrap; } a.lnk { color: var(--vr-accent); }
   ${kpi(fmt(c.st.new || 0), 'в статусе Новая (' + pct(c.st.new || 0, c.open) + '% открытых)', pct(c.st.new || 0, c.open) > 50 ? 'bad' : 'warn', 'status:new')}
   ${kpi(fmt(c.noImp) + ' / ' + fmt(c.assets), 'активов без значимости', c.noImp ? 'warn' : 'ok', 'noImportance')}
   ${kpi(fmt(c.stale + c.obsolete), 'активов с устаревшим сканом', c.stale + c.obsolete ? 'warn' : 'ok', 'staleScan')}
-</div><div class="muted metrics-note">Сроки: critical ${m.sla.crit} дн, high ${m.sla.high}, medium ${m.sla.med}, low ${m.sla.low}. Снимок ${esc(m.generatedAt.replace('T', ' ').slice(0, 16))} UTC. Клик по показателю открывает выборку: таблица, CSV, PDQL, переход в MaxPatrol.</div></div>
+</div><div class="muted metrics-note">Сроки: critical ${m.sla.crit} дн, high ${m.sla.high}, medium ${m.sla.med}, low ${m.sla.low}. Снимок ${esc(VR.fmtDateTime(m.generatedAt))}. Клик по показателю открывает выборку: таблица, CSV, PDQL, переход в MaxPatrol.</div></div>
 <div class="two">
   <div class="box"><h3>Соблюдение сроков по уровню опасности</h3><table><tr><th>уровень</th><th class="n">открыто</th><th class="n">в срок</th><th class="n">истекает</th><th class="n">просрочено</th><th data-nosort>Шкала</th></tr>${sevRows}</table><div class="muted">В срок · Истекает (80% срока) · Просрочено. Выберите число, чтобы открыть уязвимости.</div></div>
   <div class="box"><h3>Возраст открытых</h3><table><tr><th>возраст</th><th>штук</th><th>доля</th></tr>${ageRows}</table></div>
@@ -840,7 +916,7 @@ ${past}
     return `<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Отчет по процессу управления уязвимостями</title>
 <style>${REPORT_CSS}</style></head><body>
 <h1>Отчет по процессу управления уязвимостями</h1>
-<p class="muted">MaxPatrol VM, ${esc(host)}. Снимок ${esc(m.generatedAt.replace('T', ' ').slice(0, 16))} UTC. Сроки: critical ${m.sla.crit} дн, high ${m.sla.high} дн, medium ${m.sla.med} дн, low ${m.sla.low} дн.</p>
+<p class="muted">MaxPatrol VM, ${esc(host)}. Снимок ${esc(VR.fmtDateTime(m.generatedAt))}. Сроки: critical ${m.sla.crit} дн, high ${m.sla.high} дн, medium ${m.sla.med} дн, low ${m.sla.low} дн.</p>
 <h2>Резюме</h2><div class="kpis">
 <div class="kpi"><b>${fmt(c.open)}</b><span>открытых уязвимостей</span></div>
 <div class="kpi"><b class="${c.overdue ? 'bad' : 'ok'}">${fmt(c.overdue)}</b><span>просрочено по SLA (${pct(c.overdue, c.open)}%)</span></div>
@@ -881,7 +957,7 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
     w.document.querySelectorAll('details.report-section').forEach(section => { section.open = true; });
     setTimeout(() => { try { w.focus(); w.print(); } catch (_) {} }, 400);
   }
-  const reportSubtitle = () => `MaxPatrol VM, ${VR.config().host || location.hostname}, ${new Date().toLocaleString('ru-RU')}`;
+  const reportSubtitle = () => `MaxPatrol VM, ${VR.config().host || location.hostname}, ${VR.fmtDateTime(new Date())}`;
 
   // ── Снимки состояния вкладок: chrome.storage.local через background, живут сутки ──
   const SNAP_TTL = 24 * 3600 * 1000;
@@ -889,7 +965,7 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
   const snapKey = key => `${String(VR.config().host || location.hostname).toLowerCase()}|${key}`;
   const snapSave = (key, value) => VR.ext('cache-set', { key: snapKey(key), value }).catch(() => {});
   const snapLoad = async key => { try { const c = await VR.ext('cache-get', { key: snapKey(key) }); return c && c.value && Date.now() - c.ts < SNAP_TTL ? c : null; } catch (_) { return null; } };
-  const snapNote = ts => `снимок от ${new Date(ts).toLocaleString('ru-RU')}, обновление по кнопке`;
+  const snapNote = ts => `снимок от ${VR.fmtDateTime(ts)}, обновление по кнопке`;
 
   // ── Рабочая область ───────────────────────────────────────────────────────
   let host = null, sh = null, opened = false;
@@ -1174,7 +1250,7 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
           for (const c of d.cves.slice().sort((a, b) => b.score - a.score).slice(0, 3)) { if (c.vulnId) { try { passports[c.cve] = await VR.passport(c.vulnId); } catch (_) {} } }
           let assetsInfo = {}; try { assetsInfo = await VR.assetsInfo(d.hosts.map(h => h.id)); } catch (_) {}
           const issue = VR.buildJiraIssue({ detail: d, group: state.queue.groups.find(g => g.soft === soft && g.ver === ver), enrich: enr, sla: s, host: VR.config().host || location.hostname, passports, assetsInfo });
-          if (!confirm(`Создать задачу в Jira (${s.jiraProject}):\n${issue.summary}\nСрок: ${issue.dueDate}${issue.targetVersion ? '' : '\nЦелевая версия в паспортах не найдена: в задаче будет «до актуальной версии вендора»'}`)) { $('d-jira').disabled = false; st.textContent = ''; return; }
+          if (!confirm(`Создать задачу в Jira (${s.jiraProject}):\n${issue.summary}\nСрок: ${VR.fmtDate(issue.dueDate)}${issue.targetVersion ? '' : '\nЦелевая версия в паспортах не найдена: в задаче будет «до актуальной версии вендора»'}`)) { $('d-jira').disabled = false; st.textContent = ''; return; }
           const r = await VR.ext('jira-create', issue);
           let tagNote = '';
           try { await VR.ext('jira-attach', { key: r.key, filename: `mpvm_${soft}_${ver}.csv`.replace(/[^\w.\-]+/g, '_'), content: VR.groupCsv(d, enr, { passports, assetsInfo }) }); tagNote += ', CSV приложен'; } catch (e) { tagNote += `, вложение не удалось: ${e.message}`; }
@@ -1215,6 +1291,7 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
     cw: ['Контейнеры и веб-сайты', 'Уязвимости образов, пакетов и веб-приложений, которые устраняют отдельно от узлов.', 'Выберите область проверки', 'Загрузите сводку образов, очередь по пакетам или уязвимости веб-сайтов.', 'w-out', 'w-images'],
     inv: ['Инвентаризация активов', 'Объединяйте активы тегами по платформе, роли, угрозам и срокам.'],
     cve: ['Внешний контекст по CVE', 'Сопоставляйте EPSS, CISA KEV, NVD и БДУ, чтобы определить приоритет.', 'Добавьте уязвимости для анализа', 'Вставьте CVE или найдите их на открытой странице MaxPatrol. Затем нажмите «Обогатить».', 'c-out'],
+    experiment: ['Экспериментальный функционал', 'Новые функции в проверке: отчёт по учётным записям для ФСТЭК, сканирование по выборке, группы, исключения и модель актива.'],
     settings: ['Настройки', 'Источники данных, сроки устранения, модель риска и подключение Jira.']
   };
   function setupPresentation() {
@@ -1325,7 +1402,7 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
         ${d.total.noLinkVulns ? `<div class="inline-notice"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2 19 18H1L10 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 7v5m0 2v1" stroke="currentColor" stroke-width="1.5"/></svg><div><strong>Для ${fmt(d.total.noLinkVulns)} уязвимостей на ${fmt(d.total.noLinkHosts)} узлах не указана ссылка на патч</strong><p>Исправление есть в паспорте. Уточните обновление у вендора; эта группа не входит в показатели патчей выше.</p></div></div>` : ''}
         ${d.truncated ? '<div class="note">Пар «патч × узел» больше 5 000: список усечён.</div>' : ''}`;
       const sig = p => `${p.trend ? '<span class="badge tag kev sm">Трендовые · ' + fmt(p.trend) + '</span>' : ''}${p.expl ? '<span class="badge tag hot sm">С эксплойтом · ' + fmt(p.expl) + '</span>' : ''}` || '<span class="muted">—</span>';
-      const rows = d.patches.map(p => `<tr class="click" data-patch="${esc(p.patch)}"><td class="patch-name"><button type="button" class="row-action" aria-controls="pt-detail" aria-expanded="false">${esc(p.patch)}</button></td><td>${p.url ? `<a class="lnk" href="${esc(p.url)}" target="_blank" rel="noopener" title="Открыть страницу вендора: ${esc(p.url)}">${esc(p.kb || 'Вендор')} ↗</a>` : '<span class="muted">—</span>'}</td><td class="n" data-v="${esc(String(p.date || '').slice(0, 10))}">${esc(String(p.date || '').slice(0, 10)) || '—'}</td><td class="n">${fmt(p.n)}</td><td class="n">${fmt(p.hostsCount)}</td><td class="n">${p.crit ? cnt(p.crit, 'red') : '0'}</td><td class="n">${esc(p.maxScore ?? '—')}</td><td class="sig">${sig(p)}</td></tr>`).join('');
+      const rows = d.patches.map(p => `<tr class="click" data-patch="${esc(p.patch)}"><td class="patch-name"><button type="button" class="row-action" aria-controls="pt-detail" aria-expanded="false">${esc(p.patch)}</button></td><td>${p.url ? `<a class="lnk" href="${esc(p.url)}" target="_blank" rel="noopener" title="Открыть страницу вендора: ${esc(p.url)}">${esc(p.kb || 'Вендор')} ↗</a>` : '<span class="muted">—</span>'}</td><td class="n">${esc(VR.fmtDate(p.date)) || '—'}</td><td class="n">${fmt(p.n)}</td><td class="n">${fmt(p.hostsCount)}</td><td class="n">${p.crit ? cnt(p.crit, 'red') : '0'}</td><td class="n">${esc(p.maxScore ?? '—')}</td><td class="sig">${sig(p)}</td></tr>`).join('');
       // Ячейки совпадают с колонками: colspan ломает сортировку и фильтры.
       const noLink = d.noLink ? `<tr class="no-link"><td class="patch-name">Патч есть, но название и ссылка не указаны</td><td>—</td><td data-v="">—</td><td class="n">${fmt(d.noLink.n)}</td><td class="n">${fmt(d.noLink.hostsCount)}</td><td class="n">${d.noLink.crit == null ? '—' : fmt(d.noLink.crit)}</td><td class="n">${esc(d.noLink.maxScore ?? '—')}</td><td class="sig">${sig(d.noLink)}</td></tr>` : '';
       $('pt-out').innerHTML = `<div class="section-heading"><div><h3>Обновления вендоров</h3><p class="muted">Выберите патч, чтобы посмотреть узлы и CVE и запланировать установку.</p></div></div>${tfilter('Найти патч или KB…')}<div class="scroll"><table aria-label="Патчи для установки"><tr><th>патч</th><th>ссылка</th><th class="n">выпущен</th><th class="n">уязвимостей</th><th class="n">узлов</th><th class="n">critical</th><th class="n">CVSS</th><th>сигналы</th></tr>${rows}${noLink}</table></div>`;
@@ -1364,7 +1441,7 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
       const impRu = { H: 'высокая', M: 'средняя', L: 'низкая', ND: 'не задана' };
       const hostRows = d.hosts.slice(0, 200).map(h => `<tr><td class="ell" title="${esc(h.host)}">${alink(h.id, h.host)}</td><td>${esc(h.os || '')}</td><td>${esc(impRu[h.imp] || h.imp)}</td><td class="n">${fmt(h.n)}</td><td class="n">${h.maxScore}</td></tr>`).join('');
       const cveRows = d.cves.slice(0, 100).map(c => { const r = enr?.results[c.cve]; return `<tr><td>${plink(c.vulnId, c.cve)}</td><td class="n">${c.score}</td><td class="n">${fmt(c.n)}</td><td>${r?.kev ? kevBadge(c.cve) : ''}${c.trend ? '<span class="badge tag kev sm">Трендовая</span>' : ''}${c.exploit ? '<span class="ttag">Есть эксплойт</span>' : ''}${r?.epss?.epss != null ? '<span class="muted">EPSS ' + (r.epss.epss * 100).toFixed(0) + '%</span>' : ''}</td></tr>`; }).join('');
-      box.innerHTML = `<div class="detail-heading"><div><span class="eyebrow">Выбранный патч${p.date ? ' · выпущен ' + esc(String(p.date).slice(0, 10)) : ''}</span><h3 id="pt-d-title" tabindex="-1">${p.url ? `<a class="lnk" href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.patch)} ↗</a>` : esc(p.patch)}</h3></div><button type="button" class="close" id="pt-d-close" aria-label="Закрыть детали патча">×</button></div>
+      box.innerHTML = `<div class="detail-heading"><div><span class="eyebrow">Выбранный патч${p.date ? ' · выпущен ' + esc(VR.fmtDate(p.date)) : ''}</span><h3 id="pt-d-title" tabindex="-1">${p.url ? `<a class="lnk" href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.patch)} ↗</a>` : esc(p.patch)}</h3></div><button type="button" class="close" id="pt-d-close" aria-label="Закрыть детали патча">×</button></div>
         <div class="detail-facts"><span>Экземпляров: <b>${fmt(d.rows)}</b></span><span>Узлов: <b>${fmt(d.hosts.length)}</b></span><span>CVE: <b>${fmt(d.cves.length)}</b></span><span>Уязвимостей: <b>${fmt(d.vulns.length)}</b></span>${kevN ? `<span class="badge tag kev sm">CISA KEV · ${fmt(kevN)} CVE</span>` : ''}</div>
         ${d.truncated ? '<div class="note">Показаны первые 20 000 экземпляров. Действия применяются только к загруженной выборке.</div>' : ''}
         <div class="row"><button class="btn" id="pt-d-csv">CSV узлов и CVE</button><button class="btn" id="pt-d-copy">Скопировать узлы</button><a class="btn" href="${esc(mpListUrl(d.pdql))}">Открыть в MaxPatrol</a><button class="btn" id="pt-d-proj" title="Метка proj:название на все экземпляры патча">В проект</button><span class="muted" id="pt-d-proj-st" role="status"></span></div>
@@ -1401,7 +1478,7 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
           const s = await VR.ext('settings-get');
           if (!s.jiraUrl || !s.jiraToken || !s.jiraProject) throw new Error('Заполните Jira в настройках: адрес, токен, проект');
           const issue = VR.buildPatchJiraIssue({ patch: p, detail: d, enrich: enr, sla: s, host: VR.config().host || location.hostname });
-          if (!confirm(`Создать задачу в Jira (${s.jiraProject}):\n${issue.summary}\nСрок: ${issue.dueDate}`)) { btn.disabled = false; st.textContent = ''; return; }
+          if (!confirm(`Создать задачу в Jira (${s.jiraProject}):\n${issue.summary}\nСрок: ${VR.fmtDate(issue.dueDate)}`)) { btn.disabled = false; st.textContent = ''; return; }
           const r = await VR.ext('jira-create', issue);
           let note = '';
           try { await VR.ext('jira-attach', { key: r.key, filename: `mpvm_patch_${(p.kb || 'patch').replace(/[^\w.-]+/g, '_')}.csv`, content: issue.csv }); note += ', CSV приложен'; } catch (e) { note += ', вложение не удалось'; }
@@ -1561,7 +1638,7 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
     const renderWeb = w => {
       $('w-csv').disabled = false; state.wCsv = () => download(`web_vulns_${today()}.csv`, REPORTS.cw.csv(), 'text/csv;charset=utf-8');
       $('w-out').innerHTML = `<div class="box"><h3>Веб-сайты</h3>${w.sites.length ? '' : '<div class="muted">Активов типа WebSite с открытыми уязвимостями нет: веб-сканирование (PT BlackBox или профиль веб-аудита) в этой системе не выполнялось.</div>'}<table><tr><th>сайт</th><th>открытых</th><th>critical</th><th>high</th><th>max CVSS</th></tr>${w.sites.map(s => `<tr><td>${esc(s.site)}</td><td class="n">${fmt(s.n)}</td><td class="n">${fmt(s.crit)}</td><td class="n">${fmt(s.high)}</td><td class="n">${s.maxScore}</td></tr>`).join('')}</table></div>
-        ${w.items.length ? `<div class="box"><h3>Уязвимости веб-сайтов</h3>${tfilter('фильтр: сайт, уязвимость, CVE')}<div class="scroll" style="max-height:520px"><table><tr><th>сайт</th><th>уязвимость (паспорт)</th><th>CVE</th><th>CVSS</th><th>уровень</th><th>статус</th><th>обнаружена</th></tr>${w.items.slice(0, 1000).map(i => `<tr><td class="ell">${esc(i.site)}</td><td class="ell" title="${esc(i.name)}">${plink(i.vulnId, i.name)}</td><td>${esc(i.cve || '')}</td><td class="n">${i.score}</td><td>${esc(SEV_RU[i.sev] || i.sev)}</td><td>${esc(ST_RU[i.st] || i.st)}</td><td class="n">${esc(String(i.found || '').slice(0, 10))}</td></tr>`).join('')}</table></div></div>` : ''}`;
+        ${w.items.length ? `<div class="box"><h3>Уязвимости веб-сайтов</h3>${tfilter('фильтр: сайт, уязвимость, CVE')}<div class="scroll" style="max-height:520px"><table><tr><th>сайт</th><th>уязвимость (паспорт)</th><th>CVE</th><th>CVSS</th><th>уровень</th><th>статус</th><th>обнаружена</th></tr>${w.items.slice(0, 1000).map(i => `<tr><td class="ell">${esc(i.site)}</td><td class="ell" title="${esc(i.name)}">${plink(i.vulnId, i.name)}</td><td>${esc(i.cve || '')}</td><td class="n">${i.score}</td><td>${esc(SEV_RU[i.sev] || i.sev)}</td><td>${esc(ST_RU[i.st] || i.st)}</td><td class="n">${esc(VR.fmtDate(i.found))}</td></tr>`).join('')}</table></div></div>` : ''}`;
       bindFilters($('w-out'));
     };
     $('w-web').addEventListener('click', () => wRun($('w-web'), async () => {
@@ -1641,7 +1718,7 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
         state.enrich = r; state.mpCtx = mpCtx; snapSave('cve', { enrich: r, text: $('c-cves').value, mpCtx });
         renderCves(); updateReportButtons();
         const meta = r.meta || {};
-        $('c-info').textContent = `готово: ${r.cves.length} CVE; KEV от ${meta.kevDate ? meta.kevDate.slice(0, 10) : 'нет'}${meta.nvdSkipped ? '; NVD пропущено ' + meta.nvdSkipped + ' (лимит без ключа)' : ''}${meta.bdu ? '; БДУ ' + fmt(meta.bdu.rows) + ' CVE' : '; БДУ не импортирована'}`;
+        $('c-info').textContent = `готово: ${r.cves.length} CVE; KEV от ${meta.kevDate ? VR.fmtDate(meta.kevDate) : 'нет'}${meta.nvdSkipped ? '; NVD пропущено ' + meta.nvdSkipped + ' (лимит без ключа)' : ''}${meta.bdu ? '; БДУ ' + fmt(meta.bdu.rows) + ' CVE' : '; БДУ не импортирована'}`;
       } catch (e) { $('c-err').textContent = e.message; }
       $('c-run').disabled = false;
       if ($('c-err').textContent) $('c-info').textContent = '';
@@ -1664,11 +1741,11 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
       const sd = VR.slaDue({ found: it.found, sev: it.sev, st: it.st, sla: state.sla }); const due = sd.due, over = sd.overdue;
       const rows = [
         ['Актив', `${alink(it.hostId, it.host)}, значимость ${esc(impRuS[it.imp] || it.imp)}${it.os ? ', ' + esc(it.os) : ''}`],
-        ['Статус', `${esc(ST_RU[st?.status || it.st] || it.st)}${st?.statusReason ? ' (' + esc(st.statusReason) + ')' : ''}, обнаружена ${esc(String(it.found || '').slice(0, 10))}${due ? `, срок по SLA от обнаружения ${VR.localDate(due)}${over ? ' <span class="ttag">просрочен</span>' : ''}` : ''}`],
+        ['Статус', `${esc(ST_RU[st?.status || it.st] || it.st)}${st?.statusReason ? ' (' + esc(st.statusReason) + ')' : ''}, обнаружена ${esc(VR.fmtDate(it.found))}${due ? `, срок по SLA от обнаружения ${VR.localDate(due)}${over ? ' <span class="ttag">просрочен</span>' : ''}` : ''}`],
         ['Оценка MP', `<b>${esc(sel.metrics?.overall ?? it.score)}</b>${state.enrich?.results?.[cve]?.nvd?.cvss31?.score != null ? ` (базовая CVSS 3.1 по NVD ${esc(state.enrich.results[cve].nvd.cvss31.score)})` : ''}${sel.metrics?.vector ? ` <span class="muted" title="${esc(sel.metrics.vector)}">вектор для актива</span>` : ''}`],
         d ? ['Где найдена', `${esc(d.product)}${d.os ? ', ' + esc(d.os) : ''}${d.release ? ' ' + esc(d.release) : ''}${d.arch ? ', ' + esc(d.arch) : ''}${d.current ? `; ${esc(d.versionLabel)} <b>${esc(d.current)}</b>${d.required ? ' &lt; требуется ' + esc(d.required) : ''}` : ''}`] : null,
         ['Целевая версия', f.min ? `не ниже <b>${esc(f.min.version)}</b>${f.min.kb ? ' (' + esc(f.min.kb) + ')' : ''}${f.recommended && f.recommended.version !== f.min.version ? `, рекомендуется <b>${esc(f.recommended.version)}</b>${f.recommended.kb ? ' (' + esc(f.recommended.kb) + ')' : ''}` : ''}` : '<span class="muted">в паспорте не указана</span>'],
-        ['Патч', sel.patch ? `${sel.patch.url ? `<a href="${esc(sel.patch.url)}" target="_blank" rel="noopener">${esc(sel.patch.name)}</a>` : esc(sel.patch.name)}${sel.patch.date ? ' от ' + esc(String(sel.patch.date).slice(0, 10)) : ''}` : '<span class="muted">нет</span>'],
+        ['Патч', sel.patch ? `${sel.patch.url ? `<a href="${esc(sel.patch.url)}" target="_blank" rel="noopener">${esc(sel.patch.name)}</a>` : esc(sel.patch.name)}${sel.patch.date ? ' от ' + esc(VR.fmtDate(sel.patch.date)) : ''}` : '<span class="muted">нет</span>'],
         sel.bdu.length ? ['БДУ', sel.bdu.map(b => `<a href="https://bdu.fstec.ru/vul/${esc(b.replace(/^BDU:/, ''))}" target="_blank" rel="noopener">${esc(b)}</a>`).join(', ')] : null,
         ['Ссылки', `<a href="${esc(sel.urls.card)}">карточка экземпляра</a> · <a href="${esc(sel.urls.passport)}">паспорт</a>${sel.links.slice(0, 3).map(u => { let h = u; try { h = new URL(u).hostname; } catch (_) {} return ` · <a href="${esc(u)}" target="_blank" rel="noopener">${esc(h)}</a>`; }).join('')}`],
       ].filter(Boolean);
@@ -1726,7 +1803,7 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
         const s = await VR.ext('settings-get');
         if (!s.jiraUrl || !s.jiraToken || !s.jiraProject) throw new Error('Заполните Jira в настройках: адрес, токен, проект');
         const issue = VR.buildInstanceJiraIssue({ ctx: { ...sel, cve }, enrich: state.enrich, sla: s, host: VR.config().host || location.hostname });
-        if (!confirm(`Создать задачу в Jira (${s.jiraProject}):\n${issue.summary}\nСрок: ${issue.dueDate}`)) { btn.disabled = false; st.textContent = ''; return; }
+        if (!confirm(`Создать задачу в Jira (${s.jiraProject}):\n${issue.summary}\nСрок: ${VR.fmtDate(issue.dueDate)}`)) { btn.disabled = false; st.textContent = ''; return; }
         const r = await VR.ext('jira-create', issue);
         let note = '';
         if (s.jiraTagInstances !== false) { try { await VR.tagInstances(issue.ids, 'jira:' + r.key); note = `, метка jira:${r.key} на экземпляре`; } catch (e) { note = ', метку поставить не удалось: ' + e.message; } }
@@ -1749,6 +1826,151 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
           catch (err) { a.textContent = 'GitHub: ' + err.message; }
         }));
     };
+
+    // ══ Эксперимент ══════════════════════════════════════════════════════
+    const xpErr = (id, e) => { $(id).textContent = e && e.message ? e.message : String(e || ''); };
+
+    // 1. Отчёт по учётным записям (ФСТЭК K21/K23)
+    $('xp-cred-run').addEventListener('click', async () => {
+      const b = $('xp-cred-run'); b.disabled = true; $('xp-cred-err').textContent = ''; $('xp-cred-rep').hidden = true;
+      try {
+        const data = await VR.auditCredentials({ onProgress: (d, n) => { $('xp-cred-info').innerHTML = `<span class="spin"></span>проверка ${d} из ${n}`; } });
+        state.xpCred = data;
+        const s = data.summary;
+        $('xp-cred-info').textContent = `учётных записей ${fmt(s.accounts)} на ${fmt(s.hosts)} узлах; со значениями по умолчанию ${fmt(s.k23)}`;
+        const svc = s.byService.map(r => `<tr><td>${esc(r.service)}</td><td class="n">${fmt(r.n)}</td></tr>`).join('');
+        const prev = data.items.slice(0, 50).map(i => `<tr><td class="ell">${esc(i.host)}</td><td>${esc(i.service)}</td><td>${esc(i.login)}</td><td>${i.k23 ? '<b>по умолчанию</b>' : esc(i.reasons.join('; '))}</td></tr>`).join('');
+        $('xp-cred-out').innerHTML = s.accounts
+          ? `<div class="box"><h3>По сервисам</h3><table><tr><th>сервис</th><th>записей</th></tr>${svc}</table></div>
+             <div class="box"><h3>Записи (первые 50 из ${fmt(s.accounts)})</h3><div class="muted">Пароли в отчёте; здесь только основания. K23 отмечены.</div><div class="scroll" style="max-height:360px"><table><tr><th>узел</th><th>сервис</th><th>логин</th><th>основание</th></tr>${prev}</table></div></div>`
+          : '<div class="box"><div class="muted">Подобранных учётных записей не найдено. Это возможно, если профиль Pentest не выполнялся или подбор не дал результатов.</div></div>';
+        $('xp-cred-rep').hidden = s.accounts === 0;
+        if (data.failed.length) $('xp-cred-err').textContent = `не удалось выгрузить проверок: ${data.failed.length} (${data.failed.map(f => f.service).join(', ')})`;
+      } catch (e) { xpErr('xp-cred-err', e); $('xp-cred-info').textContent = ''; }
+      b.disabled = false;
+    });
+    const credSpec = () => makeSpec('Отчёт по учётным записям (ФСТЭК, показатели K21 и K23)',
+      VR.credReportSections(state.xpCred, { showPasswords: $('xp-cred-show').checked, org: $('xp-cred-org').value.trim(), system: $('xp-cred-sys').value.trim(), executor: $('xp-cred-exe').value.trim() }),
+      'Пароли ' + ($('xp-cred-show').checked ? 'показаны открытым текстом по требованию регулятора.' : 'скрыты; включите «показывать пароли» перед выгрузкой, если отчёт нужен с паролями.'));
+    $('xp-cred-html').addEventListener('click', () => { if (state.xpCred) download(`fstek_passwords_${today()}.html`, VR.reports.html(credSpec()), 'text/html;charset=utf-8'); });
+    $('xp-cred-pdf').addEventListener('click', () => { if (state.xpCred) printHtml(VR.reports.html(credSpec()), `fstek_passwords_${today()}.html`); });
+    $('xp-cred-csv').addEventListener('click', () => { if (state.xpCred) download(`fstek_passwords_${today()}.csv`, VR.reports.csv(credSpec()), 'text/csv;charset=utf-8'); });
+
+    // 2. Сканирование по PDQL-выборке
+    let xpTasksLoaded = false;
+    const populateTasks = async () => {
+      if (xpTasksLoaded) return;
+      try {
+        const list = await VR.tasks();
+        $('xp-scan-task').innerHTML = '<option value="">выберите задачу-образец…</option>' + list.map(t => `<option value="${esc(t.id)}">${esc(t.name)} (${esc(t.module || t.profile || '')})</option>`).join('');
+        xpTasksLoaded = true;
+      } catch (e) { xpErr('xp-scan-err', e); }
+    };
+    const xpScanApplyState = () => { const ok = !!(state.xpTargets && state.xpTargets.targets.length && $('xp-scan-task').value); $('xp-scan-apply').disabled = !ok; $('xp-scan-run').disabled = !ok; };
+    $('xp-scan-task').addEventListener('change', xpScanApplyState);
+    $('xp-scan-preview').addEventListener('click', async () => {
+      $('xp-scan-err').textContent = ''; const b = $('xp-scan-preview'); b.disabled = true; $('xp-scan-info').innerHTML = '<span class="spin"></span>выборка…';
+      try {
+        await populateTasks();
+        const r = await VR.pdqlTargets({ pdql: $('xp-scan-pdql').value, preferFqdn: $('xp-scan-fqdn').checked });
+        state.xpTargets = r;
+        $('xp-scan-info').textContent = `узлов ${fmt(r.hosts.length)}, уникальных целей ${fmt(r.targets.length)}${r.noTarget ? `, без адреса ${fmt(r.noTarget)}` : ''}`;
+        const rowsHtml = r.hosts.slice(0, 200).map(h => `<tr><td class="ell">${esc(h.host)}</td><td>${esc(h.os || '')}</td><td>${esc(h.fqdn || '')}</td><td>${esc(h.ip || '')}</td><td><b>${esc(h.target || '—')}</b></td></tr>`).join('');
+        $('xp-scan-out').innerHTML = `<div class="box"><h3>Цели (первые 200 из ${fmt(r.hosts.length)})</h3><div class="muted">В задачу пойдёт ${fmt(r.targets.length)} уникальных целей.</div><div class="scroll" style="max-height:340px"><table><tr><th>узел</th><th>ОС</th><th>FQDN</th><th>IP</th><th>цель</th></tr>${rowsHtml}</table></div></div>`;
+      } catch (e) { xpErr('xp-scan-err', e); $('xp-scan-info').textContent = ''; }
+      b.disabled = false; xpScanApplyState();
+    });
+    const xpApplyTargets = async (run) => {
+      const tid = $('xp-scan-task').value; if (!tid || !state.xpTargets) return;
+      $('xp-scan-err').textContent = '';
+      if (!confirm(`Записать ${state.xpTargets.targets.length} целей в задачу${run ? ' и запустить её' : ''}? Текущие цели задачи будут заменены.`)) return;
+      $('xp-scan-apply').disabled = true; $('xp-scan-run').disabled = true; $('xp-scan-info').innerHTML = '<span class="spin"></span>запись…';
+      try {
+        const src = await VR.task(tid);
+        const body = VR.taskBodyWithTargets(src, state.xpTargets.targets, { preferFqdn: $('xp-scan-fqdn').checked });
+        await VR.updateTask(tid, body);
+        if (run) { await VR.runTask(tid); $('xp-scan-info').textContent = `цели записаны (${state.xpTargets.targets.length}), задача запущена`; }
+        else $('xp-scan-info').textContent = `цели записаны (${state.xpTargets.targets.length})`;
+      } catch (e) { xpErr('xp-scan-err', e); $('xp-scan-info').textContent = ''; }
+      xpScanApplyState();
+    };
+    $('xp-scan-apply').addEventListener('click', () => xpApplyTargets(false));
+    $('xp-scan-run').addEventListener('click', () => xpApplyTargets(true));
+
+    // 3. Динамические группы
+    const renderGroups = list => {
+      $('xp-grp-out').innerHTML = list.length ? list.map((g, i) => `<div class="box" data-gid="${esc(g.id)}">
+        <h3 style="font-size:15px">${esc(g.name)}${g.isInvalid ? ' <span class="badge tag" style="color:var(--vr-error)">запрос неверный</span>' : ''}${g.isReadOnly ? ' <span class="badge tag">только чтение</span>' : ''}</h3>
+        <div class="muted">${esc(g.treePath)}</div>
+        <textarea class="xp-grp-pdql" aria-label="PDQL-запрос группы ${esc(g.name)}" ${g.isReadOnly ? 'readonly' : ''} spellcheck="false">${esc(g.predicate)}</textarea>
+        <div class="row"><button class="btn xp-grp-check">Проверить</button>${g.isReadOnly ? '' : '<button class="btn acc xp-grp-save">Сохранить запрос</button>'}<span class="muted xp-grp-st" role="status"></span></div>
+      </div>`).join('') : '<div class="box"><div class="muted">Динамических групп нет.</div></div>';
+      $('xp-grp-out').querySelectorAll('.box[data-gid]').forEach(box => {
+        const gid = box.dataset.gid, ta = box.querySelector('.xp-grp-pdql'), st = box.querySelector('.xp-grp-st');
+        box.querySelector('.xp-grp-check').addEventListener('click', async () => {
+          st.innerHTML = '<span class="spin"></span>проверка'; try { const v = await VR.validatePredicate(ta.value.trim()); if (!v.isValid) { st.textContent = 'запрос неверный'; return; } const c = await VR.predicateCount(ta.value.trim()); st.textContent = `корректно, активов: ${fmt(c.count)}${v.isPotentiallySlow ? ' (запрос тяжёлый)' : ''}`; } catch (e) { st.textContent = 'ошибка: ' + e.message; }
+        });
+        const saveBtn = box.querySelector('.xp-grp-save');
+        if (saveBtn) saveBtn.addEventListener('click', async () => {
+          const pred = ta.value.trim();
+          try { const v = await VR.validatePredicate(pred); if (!v.isValid) { st.textContent = 'запрос неверный, не сохранено'; return; } } catch (e) { st.textContent = 'ошибка проверки: ' + e.message; return; }
+          if (!confirm(`Сохранить новый PDQL-запрос группы? Состав группы пересчитается.`)) return;
+          saveBtn.disabled = true; st.innerHTML = '<span class="spin"></span>сохранение';
+          try { await VR.updateGroupPredicate(gid, pred); st.textContent = 'сохранено'; } catch (e) { st.textContent = 'ошибка: ' + e.message; }
+          saveBtn.disabled = false;
+        });
+      });
+    };
+    $('xp-grp-load').addEventListener('click', async () => {
+      const b = $('xp-grp-load'); b.disabled = true; $('xp-grp-err').textContent = ''; $('xp-grp-info').innerHTML = '<span class="spin"></span>загрузка';
+      try { const list = await VR.dynGroups(); state.xpGroups = list; $('xp-grp-info').textContent = `динамических групп: ${list.length}`; renderGroups(list); }
+      catch (e) { xpErr('xp-grp-err', e); $('xp-grp-info').textContent = ''; }
+      b.disabled = false;
+    });
+
+    // 4. Исключения
+    const renderExclList = list => {
+      $('xp-excl-out').innerHTML = list.length ? list.map(e => {
+        const c = e.counts;
+        return `<div class="box" data-eid="${esc(e.id)}">
+          <h3 style="font-size:15px">${esc(e.name || '(без имени)')}</h3>
+          <div class="muted">${esc(e.description || '')}</div>
+          <div class="muted">сети: ${fmt(c.networks)}${c.dupNetworks ? ` (дубликатов ${fmt(c.dupNetworks)})` : ''} · активы: ${fmt(c.assets)} · группы: ${fmt(c.groups)} · модули: ${e.allModules ? 'все' : fmt((e.modules || []).length)}</div>
+          <div class="row"><button class="btn xp-excl-dedup"${c.dupNetworks ? '' : ' disabled'}>Убрать дубликаты${c.dupNetworks ? ` (${fmt(c.dupNetworks)})` : ''}</button><span class="muted xp-excl-st" role="status"></span></div>
+        </div>`;
+      }).join('') : '<div class="box"><div class="muted">Глобальных исключений нет.</div></div>';
+      $('xp-excl-out').querySelectorAll('.box[data-eid]').forEach(box => {
+        const e = list.find(x => x.id === box.dataset.eid), st = box.querySelector('.xp-excl-st'), btn = box.querySelector('.xp-excl-dedup');
+        if (btn) btn.addEventListener('click', async () => {
+          if (!confirm(`Убрать повторы в исключении «${e.name}» и сохранить?`)) return;
+          btn.disabled = true; st.innerHTML = '<span class="spin"></span>сохранение';
+          try { const r = await VR.dedupExclusion(e); st.textContent = `убрано сетей ${fmt(r.removed.networks)}, активов ${fmt(r.removed.assets)}, групп ${fmt(r.removed.groups)}`; }
+          catch (err) { st.textContent = 'ошибка: ' + err.message; btn.disabled = false; }
+        });
+      });
+    };
+    $('xp-excl-load').addEventListener('click', async () => {
+      const b = $('xp-excl-load'); b.disabled = true; $('xp-excl-err').textContent = ''; $('xp-excl-info').innerHTML = '<span class="spin"></span>загрузка';
+      try { const list = await VR.exclusionList(); state.xpExcl = list; const dup = list.reduce((n, e) => n + e.counts.dupNetworks, 0); $('xp-excl-info').textContent = `исключений: ${list.length}${dup ? `, дубликатов сетей всего: ${fmt(dup)}` : ''}`; renderExclList(list); }
+      catch (e) { xpErr('xp-excl-err', e); $('xp-excl-info').textContent = ''; }
+      b.disabled = false;
+    });
+
+    // 5. Обозреватель модели актива
+    $('xp-model-load').addEventListener('click', async () => {
+      const b = $('xp-model-load'); b.disabled = true; $('xp-model-err').textContent = ''; $('xp-model-info').innerHTML = '<span class="spin"></span>построение';
+      try {
+        const paths = await VR.modelTree({ root: $('xp-model-root').value, depth: +$('xp-model-depth').value });
+        state.xpModel = paths;
+        $('xp-model-info').textContent = `полей: ${fmt(paths.length)}`;
+        const KIND = { entity: 'объект', struct: 'структура', primitive: 'поле', collection: 'коллекция' };
+        const rowsHtml = paths.map(p => `<tr class="click" data-path="${esc(p.path)}"><td class="ell" title="${esc(p.path)}"><code>${esc(p.path)}</code></td><td>${esc(p.title || '')}</td><td>${esc(KIND[p.kind] || p.kind)}${p.collection ? ' []' : ''}</td><td>${esc(p.type || '')}</td></tr>`).join('');
+        $('xp-model-out').innerHTML = `<div class="box"><h3>Поля модели</h3><div class="muted">Клик по строке копирует путь. Для коллекций добавьте <code>.Item</code> и фильтр, для уязвимостей — <code>Host.@Vulners</code>.</div>${tfilter('фильтр: путь, название, тип')}<div class="scroll" style="max-height:460px"><table><tr><th>путь PDQL</th><th>название</th><th>вид</th><th>тип</th></tr>${rowsHtml}</table></div></div>`;
+        bindFilters($('xp-model-out'));
+        $('xp-model-out').querySelectorAll('tr.click[data-path]').forEach(tr => tr.addEventListener('click', () => { navigator.clipboard.writeText(tr.dataset.path).catch(() => {}); $('xp-model-info').textContent = 'скопировано: ' + tr.dataset.path; }));
+      } catch (e) { xpErr('xp-model-err', e); $('xp-model-info').textContent = ''; }
+      b.disabled = false;
+    });
 
     // ── Восстановление снимков всех вкладок (сутки) ──
     restoreSnapshots = async function () {
@@ -1854,7 +2076,7 @@ ${VR.reports.disclosure('Рекомендации', `<ul>
     const readRw = () => { const o = {}; RW.forEach(k => { const el = $('s-rw-' + k); const v = parseFloat(el?.value); if (!isNaN(v)) o[k] = v; }); return o; };
     VR.ext('settings-get').then(s => { state.sla = s; fill(s); fillRw({ ...VR.riskDefaults(), ...(s.riskWeights || {}) }); }).catch(() => {});
     $('s-rw-reset').addEventListener('click', () => fillRw(VR.riskDefaults()));
-    VR.ext('bdu-info').then(m => { if (m) $('s-bduinfo').textContent = `импортировано ${fmt(m.rows)} CVE (${new Date(m.ts).toLocaleDateString('ru-RU')})`; }).catch(() => {});
+    VR.ext('bdu-info').then(m => { if (m) $('s-bduinfo').textContent = `импортировано ${fmt(m.rows)} CVE (${VR.fmtDate(m.ts)})`; }).catch(() => {});
     $('s-save').addEventListener('click', async () => { try { await VR.ext('settings-set', { settings: { ...read(), riskWeights: readRw() } }); $('s-info').textContent = 'сохранено'; } catch (e) { $('s-info').textContent = e.message; } });
     const J = { jiraUrl: 's-jurl', jiraAuth: 's-jauth', jiraUser: 's-juser', jiraToken: 's-jtoken', jiraProject: 's-jproject', jiraIssueType: 's-jtype', jiraLabels: 's-jlabels', jiraTagInstances: 's-jtag' };
     const fillJ = s => Object.entries(J).forEach(([k, id]) => { const el = $(id); if (!el) return; if (el.type === 'checkbox') el.checked = s[k] !== false; else el.value = s[k] ?? ''; });
